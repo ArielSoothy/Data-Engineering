@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Data Engineering</title>
+  <script type="text/javascript">
+    // Single Page Apps for GitHub Pages
+    // MIT License
+    // https://github.com/rafgraph/spa-github-pages
+    var pathSegmentsToKeep = 1;
+
+    var l = window.location;
+    var path = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/';
+    var query = l.search ? l.search : '';
+    var hash = l.hash ? l.hash : '';
+    
+    window.history.replaceState(null, null,
+      path + 'index.html' + query + hash
+    );
+    
+    // Redirect to the index.html
+    l.replace(
+      path + 'index.html' + query + hash
+    );
+  </script>
+</head>
+<body>
+  Redirecting...
+</body>
+</html>

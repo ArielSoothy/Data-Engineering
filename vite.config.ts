@@ -9,5 +9,6 @@ export default defineConfig({
     // Explicitly expose the VITE_CLAUDE_API_KEY env variable
     'import.meta.env.VITE_CLAUDE_API_KEY': JSON.stringify(process.env.VITE_CLAUDE_API_KEY),
   },
-  base: './', // Use relative paths instead of repo-specific path
+  // Let's try different base path configuration
+  base: '',
 })
