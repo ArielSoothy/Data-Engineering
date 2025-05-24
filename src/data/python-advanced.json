@@ -1,0 +1,157 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "Implement a function to optimize the performance of a slow pandas operation on a large dataset.",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Several techniques can optimize pandas: (1) Use vectorized operations instead of loops, (2) Apply dtype optimization with categorical or smaller numeric types, (3) Use chunking with itertools for large datasets, (4) Consider specialized libraries like Dask for distributed computing, (5) Use query() or eval() for optimized filtering.",
+      "pseudoCode": "# Before: Slow loop\nfor i in range(len(df)):\n    df.iloc[i, 'new_col'] = process(df.iloc[i, 'col'])\n\n# After: Vectorized operation\ndf['new_col'] = df['col'].map(process)\n\n# Memory optimization\ndf['category_col'] = df['category_col'].astype('category')\ndf['small_int'] = df['small_int'].astype('int32')\n\n# Chunking for large files\nimport pandas as pd\nchunk_size = 100000\nresult = []\n\nfor chunk in pd.read_csv('large_file.csv', chunksize=chunk_size):\n    # Process each chunk\n    processed = process_data(chunk)\n    result.append(processed)\n\n# Combine results\nfinal_df = pd.concat(result)",
+      "aiApproach": "Profiling is key to optimization. Use %timeit in Jupyter or the built-in timeit module to measure performance before and after changes. Focus on the bottlenecks, not premature optimization."
+    },
+    {
+      "id": 2,
+      "question": "Design an efficient algorithm to find patterns in time series data.",
+      "difficulty": "Hard",
+      "timeEstimate": 20,
+      "answer": "A comprehensive approach involves: (1) Preprocessing with detrending, seasonality removal, and normalization, (2) Feature extraction using statistical measures, Fourier transforms, or wavelets, (3) Pattern recognition with techniques like Dynamic Time Warping (DTW), (4) Machine learning models like ARIMA, Prophet, or LSTM networks for prediction.",
+      "pseudoCode": "import pandas as pd\nimport numpy as np\nfrom statsmodels.tsa.seasonal import seasonal_decompose\nfrom sklearn.cluster import KMeans\n\n# Load and prepare time series data\ndf = pd.read_csv('timeseries.csv', parse_dates=['date'])\ndf.set_index('date', inplace=True)\n\n# Decompose to extract trend, seasonality, residual\ndecomposition = seasonal_decompose(df['value'], period=30)\n\n# Extract features for pattern detection\ndef extract_features(window):\n    return {\n        'mean': window.mean(),\n        'std': window.std(),\n        'trend': ...,  # Extract trend features\n        'fft': np.abs(np.fft.fft(window))[:5]  # First 5 FFT components\n    }\n\n# Apply rolling window to extract features\nwindow_size = 24  # e.g., 24 hours\nfeatures = []\nfor i in range(len(df) - window_size + 1):\n    window = df['value'].iloc[i:i+window_size]\n    features.append(extract_features(window))\n\n# Cluster similar patterns\nkmeans = KMeans(n_clusters=5)\npattern_labels = kmeans.fit_predict(features)\n\n# Identify when patterns occur\npattern_occurrences = pd.DataFrame({\n    'date': df.index[window_size-1:],\n    'pattern': pattern_labels\n})",
+      "aiApproach": "Dimensionality reduction techniques like PCA or t-SNE can be valuable preprocessing steps before clustering time series patterns, especially with high-dimensional feature spaces."
+    },
+    {
+      "id": 3,
+      "question": "Implement a custom data structure for efficient stream processing.",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "A sliding window data structure allows efficient stream processing by maintaining only relevant data points within a window. This can be implemented with a deque (double-ended queue) for O(1) operations on both ends.",
+      "pseudoCode": "from collections import deque\n\nclass SlidingWindowAggregator:\n    def __init__(self, window_size):\n        self.window = deque(maxlen=window_size)\n        self.window_sum = 0\n        \n    def add(self, value):\n        # If window is full, remove oldest element\n        if len(self.window) == self.window.maxlen:\n            self.window_sum -= self.window[0]\n            \n        # Add new value\n        self.window.append(value)\n        self.window_sum += value\n        \n    def get_average(self):\n        if not self.window:\n            return None\n        return self.window_sum / len(self.window)\n        \n    def get_max(self):\n        if not self.window:\n            return None\n        return max(self.window)",
+      "aiApproach": "For streaming data, consider using algorithms like Count-Min Sketch for approximate frequency counting or HyperLogLog for cardinality estimation when exact answers aren't required but memory efficiency is critical."
+    },
+    {
+      "id": 4,
+      "question": "Design a parallel processing solution for data transformation.",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "answer": "Python offers several options for parallel processing: (1) multiprocessing for CPU-bound tasks using multiple processes, (2) concurrent.futures for a higher-level interface to multiprocessing, (3) Dask for parallel computing with larger-than-memory datasets, (4) Ray for distributed computing, and (5) joblib for simple parallelization of functions.",
+      "pseudoCode": "from multiprocessing import Pool\nimport numpy as np\n\ndef process_chunk(data):\n    return complex_transformation(data)\n\ndef parallel_process(data, num_processes=None):\n    # Split data into chunks\n    chunks = np.array_split(data, num_processes)\n    \n    # Process chunks in parallel\n    with Pool(processes=num_processes) as pool:\n        results = pool.map(process_chunk, chunks)\n    \n    # Combine results\n    return np.concatenate(results)",
+      "aiApproach": "When designing parallel solutions, consider the overhead of process creation and data serialization. For small datasets or simple operations, the overhead might outweigh the benefits of parallelization."
+    },
+    {
+      "id": 5,
+      "question": "Implement an algorithm to efficiently detect anomalies in a large dataset.",
+      "difficulty": "Hard",
+      "timeEstimate": 20,
+      "answer": "Effective anomaly detection techniques include: (1) Statistical methods like Z-score or IQR for univariate data, (2) Isolation Forest for unsupervised detection with high dimensionality, (3) DBSCAN for density-based clustering, (4) Autoencoders for reconstruction-based detection, and (5) One-class SVM for boundary-based detection.",
+      "pseudoCode": "import pandas as pd\nimport numpy as np\nfrom sklearn.ensemble import IsolationForest\n\ndef detect_anomalies(df, contamination=0.05):\n    # Prepare data\n    scaler = StandardScaler()\n    scaled_data = scaler.fit_transform(df)\n    \n    # Train Isolation Forest\n    model = IsolationForest(contamination=contamination)\n    predictions = model.fit_predict(scaled_data)\n    \n    # Add anomaly scores\n    scores = model.decision_function(scaled_data)\n    return predictions, scores",
+      "aiApproach": "For real-world anomaly detection, ensemble multiple methods for higher accuracy. Consider the domain context when setting thresholds."
+    },
+    {
+      "id": 6,
+      "question": "Explain different Python serialization methods and their use cases.",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "Python offers multiple serialization options: (1) JSON for human-readable, language-agnostic data, (2) Pickle for Python-specific objects, (3) Protocol Buffers for efficient binary format, (4) MessagePack for fast JSON alternative, (5) Parquet/HDF5 for large datasets.",
+      "pseudoCode": "import json\nimport pickle\nimport msgpack\n\n# JSON serialization\nwith open('data.json', 'w') as f:\n    json.dump(data, f)\n\n# Pickle serialization\nwith open('data.pkl', 'wb') as f:\n    pickle.dump(complex_object, f)\n\n# MessagePack\nwith open('data.msgpack', 'wb') as f:\n    packed = msgpack.packb(data)\n    f.write(packed)",
+      "aiApproach": "I choose serialization based on use case: JSON for interoperability, Pickle for Python-specific caching, Parquet for analytics."
+    },
+    {
+      "id": 7,
+      "question": "How does the Global Interpreter Lock (GIL) affect Python performance?",
+      "difficulty": "Medium",
+      "timeEstimate": 5,
+      "answer": "The GIL prevents multiple native threads from executing Python bytecodes simultaneously. It impacts CPU-bound tasks but not I/O-bound operations. Use multiprocessing for CPU-intensive tasks to bypass GIL limitations.",
+      "pseudoCode": "# CPU-bound: Use multiprocessing\nfrom multiprocessing import Pool\n\ndef cpu_intensive_task(data):\n    return heavy_computation(data)\n\nwith Pool(processes=4) as pool:\n    results = pool.map(cpu_intensive_task, data)\n\n# I/O-bound: Threading works fine\nfrom threading import Thread\n\ndef io_task(url):\n    response = requests.get(url)\n    process_response(response)\n\nthreads = [Thread(target=io_task, args=(url,)) for url in urls]\nfor t in threads: t.start()\nfor t in threads: t.join()",
+      "aiApproach": "Understanding GIL helps architect data processing systems correctly. For CPU-intensive transformations, use multiprocessing."
+    },
+    {
+      "id": 8,
+      "question": "Design a system for real-time data processing with both streaming and batch components.",
+      "difficulty": "Hard",
+      "timeEstimate": 10,
+      "answer": "Lambda architecture combines: (1) Speed layer for real-time processing using streaming, (2) Batch layer for accurate, complete processing, (3) Serving layer to combine results. Use Apache Kafka for streaming, Spark for batch processing.",
+      "pseudoCode": "from confluent_kafka import Consumer, Producer\nimport apache_beam as beam\n\n# Streaming component\nclass StreamProcessor:\n    def process_message(self, msg):\n        data = parse_message(msg)\n        result = quick_process(data)\n        save_to_speed_layer(result)\n\n# Batch component\nclass BatchProcessor:\n    def process_window(self, data_window):\n        result = accurate_process(data_window)\n        save_to_batch_layer(result)\n\n# Serving layer\ndef combine_results(speed_layer, batch_layer):\n    return merge_strategies[data_type](speed_layer, batch_layer)",
+      "aiApproach": "I design hybrid streaming/batch architectures based on latency requirements and data volume."
+    },
+    {
+      "id": 9,
+      "question": "Implement efficient text processing for large documents.",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "Efficient text processing strategies: (1) Use generators for memory efficiency, (2) Apply regular expressions for pattern matching, (3) Utilize NLTK or spaCy for NLP tasks, (4) Implement parallel processing for batch operations, (5) Consider memory-mapped files for large documents.",
+      "pseudoCode": "import re\nfrom pathlib import Path\nimport mmap\n\ndef process_large_text(file_path):\n    # Memory-mapped file reading\n    with Path(file_path).open('r') as f:\n        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:\n            for line in iter(mm.readline, b''):\n                # Process each line\n                text = line.decode('utf-8')\n                yield text\n\ndef batch_process_documents(file_list, pattern):\n    compiled_pattern = re.compile(pattern)\n    \n    for file_path in file_list:\n        for text in process_large_text(file_path):\n            matches = compiled_pattern.findall(text)\n            yield from matches",
+      "aiApproach": "For large text processing, I focus on memory efficiency and use specialized NLP libraries."
+    },
+    {
+      "id": 10,
+      "question": "Design a caching system for expensive computations.",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "Implement caching using: (1) functools.lru_cache for function results, (2) Redis for distributed caching, (3) Memcached for simple key-value storage, (4) Custom cache with TTL, (5) Disk caching for large results.",
+      "pseudoCode": "from functools import lru_cache\nimport redis\nimport time\n\n# Function result caching\n@lru_cache(maxsize=1000)\ndef expensive_computation(x):\n    return x ** 2\n\n# Custom cache with TTL\nclass TTLCache:\n    def __init__(self, ttl_seconds):\n        self.cache = {}\n        self.ttl = ttl_seconds\n    \n    def get(self, key):\n        if key in self.cache:\n            value, timestamp = self.cache[key]\n            if time.time() - timestamp < self.ttl:\n                return value\n            del self.cache[key]\n        return None\n    \n    def set(self, key, value):\n        self.cache[key] = (value, time.time())",
+      "aiApproach": "I implement caching strategies based on data size, access patterns, and consistency requirements."
+    },
+    {
+      "id": 11,
+      "question": "Describe how you would implement a custom iterator class for processing large datasets.",
+      "difficulty": "Medium-Hard",
+      "timeEstimate": 7,
+      "answer": "Custom iterators implement __iter__() and __next__() methods. They're useful for complex data access patterns, memory-efficient processing, and custom data sources. Essential for creating reusable data processing components.",
+      "pseudoCode": "class DatabaseRecordIterator:\n    def __init__(self, connection, query, batch_size=1000):\n        self.connection = connection\n        self.query = query\n        self.batch_size = batch_size\n        self.cursor = None\n        self.current_batch = []\n        self.batch_index = 0\n    \n    def __iter__(self):\n        self.cursor = self.connection.cursor()\n        self.cursor.execute(self.query)\n        return self\n    \n    def __next__(self):\n        if self.batch_index >= len(self.current_batch):\n            self.current_batch = self.cursor.fetchmany(self.batch_size)\n            self.batch_index = 0\n            if not self.current_batch:\n                self.cursor.close()\n                raise StopIteration\n        record = self.current_batch[self.batch_index]\n        self.batch_index += 1\n        return record",
+      "aiApproach": "I create custom iterators for complex data sources that don't fit standard patterns."
+    },
+    {
+      "id": 12,
+      "question": "How do you handle asynchronous programming in Python for I/O-heavy data operations?",
+      "difficulty": "Hard",
+      "timeEstimate": 8,
+      "answer": "Use asyncio for concurrent I/O operations without thread overhead. Async/await syntax allows non-blocking operations. Essential for high-throughput data collection from APIs, databases, or file systems.",
+      "pseudoCode": "import asyncio\nimport aiohttp\n\nasync def fetch_api_data(session, url):\n    async with session.get(url) as response:\n        return await response.json()\n\nasync def collect_data_from_apis(urls):\n    async with aiohttp.ClientSession() as session:\n        tasks = [fetch_api_data(session, url) for url in urls]\n        return await asyncio.gather(*tasks)",
+      "aiApproach": "I use async programming for I/O-intensive data collection and storage operations."
+    },
+    {
+      "id": 13,
+      "question": "Explain generators vs lists for processing large datasets. When would you use each?",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "Generators: Memory-efficient, process one item at a time, lazy evaluation. Use for large datasets that don't fit in memory.\nLists: Store all items in memory, faster random access. Use when you need to access items multiple times or need indexing.",
+      "pseudoCode": "# Generator - memory efficient\ndef process_large_file(filename):\n    with open(filename, 'r') as f:\n        for line in f:\n            yield process_line(line)\n\n# List - loads everything\ndef load_all_data(filename):\n    with open(filename, 'r') as f:\n        return [process_line(line) for line in f]",
+      "aiApproach": "I architect data pipelines using generators for memory-constrained environments."
+    },
+    {
+      "id": 14,
+      "question": "How do you handle memory optimization when processing large datasets in Python?",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "Key strategies:\n1. Use generators/iterators instead of loading all data\n2. Process data in chunks (pandas.read_csv with chunksize)\n3. Use efficient data types (numpy arrays vs Python lists)\n4. Delete unused objects with 'del' and gc.collect()\n5. Use memory profiling tools to identify bottlenecks",
+      "pseudoCode": "import pandas as pd\nimport gc\n\ndef process_large_csv(filename):\n    chunk_size = 10000\n    for chunk in pd.read_csv(filename, chunksize=chunk_size):\n        processed = chunk.groupby('category').sum()\n        yield processed\n        del chunk\n        gc.collect()",
+      "aiApproach": "I design memory-efficient data pipelines by profiling first, then optimizing based on data."
+    },
+    {
+      "id": 15,
+      "question": "Explain multiprocessing vs multithreading in Python for data processing tasks.",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "Multiprocessing: True parallelism, separate memory spaces, good for CPU-bound tasks like data transformation.\nMultithreading: Concurrent execution (not parallel due to GIL), shared memory, good for I/O-bound tasks like file/database operations.",
+      "pseudoCode": "from multiprocessing import Pool\nfrom concurrent.futures import ThreadPoolExecutor\n\n# Multiprocessing for CPU-intensive tasks\nwith Pool(processes=4) as pool:\n    results = pool.map(transform_data_chunk, data_chunks)\n\n# Threading for I/O-bound operations\nwith ThreadPoolExecutor(max_workers=10) as executor:\n    api_results = list(executor.map(fetch_api_data, api_urls))",
+      "aiApproach": "I choose multiprocessing for data transformations and threading for I/O operations."
+    },
+    {
+      "id": 16,
+      "question": "How would you implement error handling and retry logic in a data pipeline?",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "Use try-except blocks with specific exception types, implement exponential backoff for retries, log errors for monitoring, and use circuit breaker pattern for external services. Create custom exceptions for business logic errors.",
+      "pseudoCode": "import time\nimport logging\nfrom functools import wraps\n\ndef retry_with_backoff(max_retries=3, backoff_factor=2):\n    def decorator(func):\n        @wraps(func)\n        def wrapper(*args, **kwargs):\n            for attempt in range(max_retries):\n                try:\n                    return func(*args, **kwargs)\n                except (ConnectionError, TimeoutError) as e:\n                    if attempt == max_retries - 1:\n                        raise\n                    wait_time = backoff_factor ** attempt\n                    time.sleep(wait_time)\n        return wrapper\n    return decorator",
+      "aiApproach": "I design fault-tolerant pipelines with comprehensive error handling and monitoring."
+    },
+    {
+      "id": 17,
+      "question": "Explain context managers and their use in data engineering. Provide a practical example.",
+      "difficulty": "Easy-Medium",
+      "timeEstimate": 5,
+      "answer": "Context managers ensure proper resource management using 'with' statement. They automatically handle setup/cleanup (like file closing, database connections). Essential for data pipelines to prevent resource leaks.",
+      "pseudoCode": "from contextlib import contextmanager\nimport sqlite3\n\n@contextmanager\ndef database_connection(db_path):\n    conn = sqlite3.connect(db_path)\n    try:\n        yield conn\n    finally:\n        conn.close()\n\nwith database_connection('data.db') as conn:\n    cursor = conn.cursor()\n    cursor.execute('SELECT * FROM table')",
+      "aiApproach": "I use context managers to ensure resource cleanup in data pipelines."
+    }
+  ]
+}

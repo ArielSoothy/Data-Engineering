@@ -1,0 +1,1374 @@
+SQL ADVANCED - COMPLETE ANSWERS & EXPLANATIONS (20 Questions)
+Window Functions (Questions 1-10)
+1. ACTUAL MICROSOFT QUESTION: "Get the current salary for each employee from the payroll table where an ETL error caused multiple salary entries"
+Answer:
+sqlWITH CurrentSalaries AS (
+    SELECT 
+        employee_id,
+        salary,
+        effective_date,
+        ROW_NUMBER() OVER (
+            PARTITION BY employee_id 
+            ORDER BY effective_date DESC, created_timestamp DESC
+        ) as rn
+    FROM payroll
+)
+SELECT 
+    employee_id,
+    salary as current_salary,
+    effective_date
+FROM CurrentSalaries
+WHERE rn = 1;
+Alternative using FIRST_VALUE:
+sqlSELECT DISTINCT
+    employee_id,
+    FIRST_VALUE(salary) OVER (
+        PARTITION BY employee_id 
+        ORDER BY effective_date DESC, created_timestamp DESC
+    ) as current_salary
+FROM payroll;
+Explanation: ROW_NUMBER() creates a ranking within each employee's salary records, ordered by most recent first. The WHERE rn = 1 filter keeps only the most current salary for each employee.
+Pseudo-code:
+1. For each employee, rank their salary records by date (newest first)
+2. Assign row number 1 to the most recent record
+3. Select only records with row number 1
+4. Return employee_id and their current salary
+
+2. Write a query using RANK() and DENSE_RANK()
+Answer:
+sqlSELECT 
+    employee_id,
+    name,
+    salary,
+    RANK() OVER (ORDER BY salary DESC) as salary_rank,
+    DENSE_RANK() OVER (ORDER BY salary DESC) as salary_dense_rank,
+    ROW_NUMBER() OVER (ORDER BY salary DESC) as salary_row_num
+FROM employees
+ORDER BY salary DESC;
+Example output:
+| name  | salary | rank | dense_rank | row_number |
+|-------|--------|------|------------|------------|
+| Alice | 100000 | 1    | 1          | 1          |
+| Bob   | 90000  | 2    | 2          | 2          |
+| Carol | 90000  | 2    | 2          | 3          |
+| Dave  | 80000  | 4    | 3          | 4          |
+Explanation:
+
+RANK() leaves gaps after ties (1,2,2,4)
+DENSE_RANK() doesn't leave gaps (1,2,2,3)
+ROW_NUMBER() assigns unique numbers (1,2,3,4)
+
+
+3. What's the difference between ROW_NUMBER(), RANK(), and DENSE_RANK()?
+Answer:
+
+ROW_NUMBER(): Assigns unique sequential numbers, no ties
+RANK(): Assigns same rank to ties, leaves gaps after ties
+DENSE_RANK(): Assigns same rank to ties, no gaps after ties
+
+sql-- Demonstrating differences with tied salaries
+SELECT 
+    name,
+    salary,
+    ROW_NUMBER() OVER (ORDER BY salary DESC) as row_num,
+    RANK() OVER (ORDER BY salary DESC) as rank_num,
+    DENSE_RANK() OVER (ORDER BY salary DESC) as dense_rank_num
+FROM employees
+WHERE department_id = 1
+ORDER BY salary DESC;
+Use cases:
+
+ROW_NUMBER(): Pagination, unique identifiers
+RANK(): Traditional ranking (like sports rankings)
+DENSE_RANK(): Compact ranking without gaps
+
+Explanation: Choose based on how you want to handle ties in your ranking system.
+
+4. Write a query using LAG and LEAD functions
+Answer:
+sqlSELECT 
+    employee_id,
+    name,
+    salary,
+    hire_date,
+    LAG(salary, 1) OVER (ORDER BY hire_date) as previous_employee_salary,
+    LEAD(salary, 1) OVER (ORDER BY hire_date) as next_employee_salary,
+    salary - LAG(salary, 1) OVER (ORDER BY hire_date) as salary_diff_from_previous
+FROM employees
+ORDER BY hire_date;
+Year-over-year comparison:
+sqlSELECT 
+    employee_id,
+    YEAR(review_date) as review_year,
+    salary,
+    LAG(salary, 1) OVER (
+        PARTITION BY employee_id 
+        ORDER BY review_date
+    ) as previous_year_salary,
+    salary - LAG(salary, 1) OVER (
+        PARTITION BY employee_id 
+        ORDER BY review_date
+    ) as salary_increase
+FROM salary_reviews
+ORDER BY employee_id, review_date;
+Explanation: LAG looks at previous rows, LEAD looks at future rows. Perfect for comparing current values with adjacent records.
+Pseudo-code:
+1. For each row, look at the previous/next row in the specified order
+2. Return the value from that row's specified column
+3. If no previous/next row exists, return NULL
+4. Use PARTITION BY to reset the window for each group
+
+5. Calculate running sum using window functions
+Answer:
+sqlSELECT 
+    order_id,
+    order_date,
+    amount,
+    SUM(amount) OVER (ORDER BY order_date) as running_total,
+    SUM(amount) OVER (
+        ORDER BY order_date 
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) as explicit_running_total
+FROM orders
+ORDER BY order_date;
+Running sum by customer:
+sqlSELECT 
+    customer_id,
+    order_date,
+    amount,
+    SUM(amount) OVER (
+        PARTITION BY customer_id 
+        ORDER BY order_date
+    ) as customer_running_total
+FROM orders
+ORDER BY customer_id, order_date;
+Explanation: SUM() OVER with ORDER BY creates cumulative totals. PARTITION BY creates separate running totals for each group.
+
+6. Find percentage of total using window functions
+Answer:
+sqlSELECT 
+    department_id,
+    employee_id,
+    salary,
+    SUM(salary) OVER () as total_company_payroll,
+    ROUND(
+        (salary * 100.0) / SUM(salary) OVER (), 2
+    ) as percentage_of_total_payroll,
+    SUM(salary) OVER (PARTITION BY department_id) as dept_total_payroll,
+    ROUND(
+        (salary * 100.0) / SUM(salary) OVER (PARTITION BY department_id), 2
+    ) as percentage_of_dept_payroll
+FROM employees
+ORDER BY department_id, salary DESC;
+Sales performance example:
+sqlSELECT 
+    salesperson_id,
+    sales_amount,
+    SUM(sales_amount) OVER () as total_sales,
+    ROUND(
+        (sales_amount * 100.0) / SUM(sales_amount) OVER (), 2
+    ) as percentage_of_total_sales,
+    ROUND(
+        100.0 * sales_amount / SUM(sales_amount) OVER (), 2
+    ) as contribution_percentage
+FROM sales_data
+ORDER BY sales_amount DESC;
+Explanation: Window functions with empty OVER() calculate totals across all rows. Use for percentage calculations and relative comparisons.
+
+7. Write a query to find the difference between current and previous row values
+Answer:
+sqlSELECT 
+    date_recorded,
+    stock_price,
+    LAG(stock_price, 1) OVER (ORDER BY date_recorded) as previous_price,
+    stock_price - LAG(stock_price, 1) OVER (ORDER BY date_recorded) as price_change,
+    CASE 
+        WHEN stock_price > LAG(stock_price, 1) OVER (ORDER BY date_recorded) 
+        THEN 'UP'
+        WHEN stock_price < LAG(stock_price, 1) OVER (ORDER BY date_recorded) 
+        THEN 'DOWN'
+        ELSE 'SAME'
+    END as trend_direction
+FROM stock_prices
+ORDER BY date_recorded;
+Monthly sales comparison:
+sqlSELECT 
+    YEAR(sale_date) as year,
+    MONTH(sale_date) as month,
+    SUM(amount) as monthly_sales,
+    LAG(SUM(amount), 1) OVER (ORDER BY YEAR(sale_date), MONTH(sale_date)) as prev_month_sales,
+    SUM(amount) - LAG(SUM(amount), 1) OVER (ORDER BY YEAR(sale_date), MONTH(sale_date)) as month_over_month_change,
+    ROUND(
+        ((SUM(amount) - LAG(SUM(amount), 1) OVER (ORDER BY YEAR(sale_date), MONTH(sale_date))) * 100.0) / 
+        LAG(SUM(amount), 1) OVER (ORDER BY YEAR(sale_date), MONTH(sale_date)), 2
+    ) as percent_change
+FROM sales
+GROUP BY YEAR(sale_date), MONTH(sale_date)
+ORDER BY year, month;
+Explanation: LAG function enables easy comparison with previous values. Useful for trend analysis and change calculations.
+
+8. Use FIRST_VALUE and LAST_VALUE functions
+Answer:
+sqlSELECT 
+    employee_id,
+    department_id,
+    salary,
+    hire_date,
+    FIRST_VALUE(salary) OVER (
+        PARTITION BY department_id 
+        ORDER BY hire_date
+    ) as first_hire_salary,
+    LAST_VALUE(salary) OVER (
+        PARTITION BY department_id 
+        ORDER BY hire_date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) as last_hire_salary,
+    FIRST_VALUE(name) OVER (
+        PARTITION BY department_id 
+        ORDER BY salary DESC
+    ) as highest_paid_in_dept
+FROM employees
+ORDER BY department_id, hire_date;
+Quarterly performance tracking:
+sqlSELECT 
+    quarter,
+    revenue,
+    FIRST_VALUE(revenue) OVER (ORDER BY quarter) as first_quarter_revenue,
+    LAST_VALUE(revenue) OVER (
+        ORDER BY quarter 
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) as last_quarter_revenue,
+    revenue - FIRST_VALUE(revenue) OVER (ORDER BY quarter) as growth_from_start
+FROM quarterly_results
+ORDER BY quarter;
+Explanation: FIRST_VALUE gets the first value in the window, LAST_VALUE gets the last. Note: LAST_VALUE often needs explicit frame specification to work as expected.
+Pseudo-code:
+1. Define the window (PARTITION BY and ORDER BY)
+2. FIRST_VALUE returns the first value in that ordered window
+3. LAST_VALUE returns the last value in that ordered window
+4. Use ROWS BETWEEN for explicit frame definition with LAST_VALUE
+
+9. Calculate moving averages using window functions
+Answer:
+sql-- 3-period moving average
+SELECT 
+    date_recorded,
+    sales_amount,
+    AVG(sales_amount) OVER (
+        ORDER BY date_recorded 
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) as moving_avg_3_period,
+    AVG(sales_amount) OVER (
+        ORDER BY date_recorded 
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) as moving_avg_7_period
+FROM daily_sales
+ORDER BY date_recorded;
+Centered moving average:
+sqlSELECT 
+    date_recorded,
+    stock_price,
+    AVG(stock_price) OVER (
+        ORDER BY date_recorded 
+        ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING
+    ) as centered_3_day_avg,
+    AVG(stock_price) OVER (
+        ORDER BY date_recorded 
+        ROWS BETWEEN 4 PRECEDING AND 4 FOLLOWING
+    ) as centered_9_day_avg
+FROM stock_prices
+ORDER BY date_recorded;
+Explanation: Moving averages smooth out short-term fluctuations. ROWS BETWEEN defines the window size for the calculation.
+
+10. Write a query to find the median using window functions
+Answer:
+sql-- Method 1: Using PERCENTILE_CONT (most databases)
+SELECT 
+    department_id,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) as median_salary
+FROM employees
+GROUP BY department_id;
+
+-- Method 2: Using ROW_NUMBER for manual median calculation
+WITH MedianCalc AS (
+    SELECT 
+        department_id,
+        salary,
+        ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary) as row_num,
+        COUNT(*) OVER (PARTITION BY department_id) as total_count
+    FROM employees
+)
+SELECT 
+    department_id,
+    AVG(salary) as median_salary
+FROM MedianCalc
+WHERE row_num IN ((total_count + 1) / 2, (total_count + 2) / 2)
+GROUP BY department_id;
+
+-- Method 3: Using NTILE for quartiles and median
+SELECT 
+    employee_id,
+    salary,
+    NTILE(2) OVER (ORDER BY salary) as salary_half,
+    NTILE(4) OVER (ORDER BY salary) as salary_quartile,
+    CASE 
+        WHEN NTILE(2) OVER (ORDER BY salary) = 1 THEN 'Below Median'
+        ELSE 'Above Median'
+    END as median_position
+FROM employees
+ORDER BY salary;
+Explanation: Median is the middle value. PERCENTILE_CONT is the standard approach, but manual calculation with ROW_NUMBER works when percentile functions aren't available.
+
+Complex Scenarios (Questions 11-20)
+11. ACTUAL MICROSOFT QUESTION: "Write a query to randomly sample a row from a table with 100 million rows"
+Answer:
+sql-- Method 1: Using TABLESAMPLE (SQL Server - most efficient for large tables)
+SELECT * 
+FROM large_table 
+TABLESAMPLE (1 ROWS);
+
+-- Method 2: Using RANDOM() with ORDER BY (PostgreSQL)
+SELECT * 
+FROM large_table 
+ORDER BY RANDOM() 
+LIMIT 1;
+
+-- Method 3: Using NEWID() (SQL Server)
+SELECT TOP 1 * 
+FROM large_table 
+ORDER BY NEWID();
+
+-- Method 4: Efficient method using estimated row count
+WITH RandomSample AS (
+    SELECT 
+        *,
+        ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) as rn
+    FROM large_table
+    WHERE ABS(CHECKSUM(NEWID())) % 1000 = 1  -- Sample ~0.1%
+)
+SELECT TOP 1 * 
+FROM RandomSample 
+ORDER BY NEWID();
+
+-- Method 5: Most efficient for very large tables - using system sampling
+SELECT *
+FROM large_table
+WHERE ABS(CAST((BINARY_CHECKSUM(*) * RAND()) as int)) % 100000 = 1
+ORDER BY NEWID()
+LIMIT 1;
+Explanation: For 100M rows, ORDER BY RANDOM() is too slow. TABLESAMPLE is most efficient. The modulo method pre-filters to a smaller sample, then randomizes.
+Pseudo-code:
+1. For very large tables, avoid full table scans
+2. Use TABLESAMPLE if available (fastest)
+3. Use hash-based sampling to reduce dataset first
+4. Then apply final randomization
+5. Consider index-based sampling for repeated operations
+
+12. Design a query for finding the greatest common denominator of a list of integers
+Answer:
+sql-- Recursive CTE approach for GCD calculation
+WITH RECURSIVE GCDCalc AS (
+    -- Base case: start with first two numbers
+    SELECT 
+        num1,
+        num2,
+        CASE 
+            WHEN num2 = 0 THEN num1
+            ELSE num2
+        END as current_gcd,
+        CASE 
+            WHEN num2 = 0 THEN num1
+            ELSE num1 % num2
+        END as remainder
+    FROM (
+        SELECT 
+            numbers[1] as num1,
+            numbers[2] as num2
+        FROM (
+            SELECT ARRAY[12, 18, 24, 30] as numbers  -- Example array
+        ) t
+    ) base
+    
+    UNION ALL
+    
+    -- Recursive case: apply Euclidean algorithm
+    SELECT 
+        current_gcd as num1,
+        remainder as num2,
+        CASE 
+            WHEN remainder = 0 THEN current_gcd
+            ELSE remainder
+        END as current_gcd,
+        CASE 
+            WHEN remainder = 0 THEN 0
+            ELSE current_gcd % remainder
+        END as remainder
+    FROM GCDCalc
+    WHERE remainder != 0
+),
+-- Function to find GCD of multiple numbers
+MultipleGCD AS (
+    SELECT 
+        value,
+        LAG(value) OVER (ORDER BY rn) as prev_value,
+        rn
+    FROM (
+        SELECT 
+            unnest(ARRAY[12, 18, 24, 30]) as value,
+            row_number() OVER () as rn
+    ) t
+)
+-- Simplified version for demonstration
+SELECT 
+    'GCD calculation' as operation,
+    12 as num1,
+    18 as num2,
+    -- Using built-in GCD function if available
+    gcd(12, 18) as result
+-- Note: Actual implementation would iterate through all numbers
+Alternative approach using stored procedure:
+sql-- SQL Server implementation
+DECLARE @numbers TABLE (value INT);
+INSERT INTO @numbers VALUES (12), (18), (24), (30);
+
+DECLARE @gcd INT = (SELECT MIN(value) FROM @numbers);
+DECLARE @current_num INT;
+
+DECLARE num_cursor CURSOR FOR 
+SELECT value FROM @numbers ORDER BY value;
+
+OPEN num_cursor;
+FETCH NEXT FROM num_cursor INTO @current_num;
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    -- Apply Euclidean algorithm
+    DECLARE @a INT = @gcd, @b INT = @current_num;
+    
+    WHILE @b != 0
+    BEGIN
+        DECLARE @temp INT = @b;
+        SET @b = @a % @b;
+        SET @a = @temp;
+    END
+    
+    SET @gcd = @a;
+    FETCH NEXT FROM num_cursor INTO @current_num;
+END
+
+CLOSE num_cursor;
+DEALLOCATE num_cursor;
+
+SELECT @gcd as greatest_common_denominator;
+Explanation: GCD calculation uses the Euclidean algorithm recursively. For multiple numbers, calculate GCD of pairs iteratively.
+
+13. Write a query to pivot data from rows to columns
+Answer:
+sql-- Sample data: Sales by month and product
+-- Original data structure:
+-- | month | product | sales |
+-- | Jan   | A       | 100   |
+-- | Jan   | B       | 150   |
+-- | Feb   | A       | 120   |
+
+-- Method 1: Using PIVOT (SQL Server)
+SELECT 
+    month,
+    ISNULL([Product_A], 0) as Product_A_Sales,
+    ISNULL([Product_B], 0) as Product_B_Sales,
+    ISNULL([Product_C], 0) as Product_C_Sales
+FROM (
+    SELECT month, product, sales
+    FROM sales_data
+) as source_data
+PIVOT (
+    SUM(sales)
+    FOR product IN ([Product_A], [Product_B], [Product_C])
+) as pivot_table;
+
+-- Method 2: Using CASE statements (works in all databases)
+SELECT 
+    month,
+    SUM(CASE WHEN product = 'Product_A' THEN sales ELSE 0 END) as Product_A_Sales,
+    SUM(CASE WHEN product = 'Product_B' THEN sales ELSE 0 END) as Product_B_Sales,
+    SUM(CASE WHEN product = 'Product_C' THEN sales ELSE 0 END) as Product_C_Sales,
+    SUM(sales) as Total_Sales
+FROM sales_data
+GROUP BY month
+ORDER BY month;
+
+-- Method 3: Dynamic pivot for unknown columns
+DECLARE @columns NVARCHAR(MAX) = '';
+DECLARE @sql NVARCHAR(MAX) = '';
+
+SELECT @columns = COALESCE(@columns + ',', '') + QUOTENAME(product)
+FROM (SELECT DISTINCT product FROM sales_data) as products;
+
+SET @sql = '
+SELECT month, ' + @columns + '
+FROM (
+    SELECT month, product, sales
+    FROM sales_data
+) as source_data
+PIVOT (
+    SUM(sales)
+    FOR product IN (' + @columns + ')
+) as pivot_table';
+
+EXEC sp_executesql @sql;
+Explanation: Pivoting transforms row data into columns. CASE statements are universal, PIVOT is database-specific but cleaner for many columns.
+
+14. How do you handle slowly changing dimensions?
+Answer:
+sql-- Type 1 SCD: Overwrite (no history)
+UPDATE customer_dim 
+SET 
+    address = 'New Address',
+    phone = 'New Phone',
+    last_updated = CURRENT_TIMESTAMP
+WHERE customer_id = 123;
+
+-- Type 2 SCD: Add new record (preserve history)
+-- First, expire current record
+UPDATE customer_dim 
+SET 
+    end_date = CURRENT_DATE,
+    is_current = FALSE
+WHERE customer_id = 123 AND is_current = TRUE;
+
+-- Then insert new record
+INSERT INTO customer_dim (
+    customer_id, 
+    name, 
+    address, 
+    phone,
+    start_date, 
+    end_date, 
+    is_current
+)
+VALUES (
+    123, 
+    'John Doe', 
+    'New Address', 
+    'New Phone',
+    CURRENT_DATE, 
+    '9999-12-31', 
+    TRUE
+);
+
+-- Type 3 SCD: Add columns for previous values
+ALTER TABLE customer_dim 
+ADD COLUMN previous_address VARCHAR(200),
+ADD COLUMN previous_phone VARCHAR(20);
+
+UPDATE customer_dim 
+SET 
+    previous_address = address,
+    previous_phone = phone,
+    address = 'New Address',
+    phone = 'New Phone'
+WHERE customer_id = 123;
+
+-- Query for Type 2 SCD with history
+SELECT 
+    customer_id,
+    name,
+    address,
+    start_date,
+    end_date,
+    CASE 
+        WHEN end_date = '9999-12-31' THEN 'Current'
+        ELSE 'Historical'
+    END as record_status
+FROM customer_dim
+WHERE customer_id = 123
+ORDER BY start_date;
+SCD Implementation with Merge:
+sqlMERGE customer_dim as target
+USING customer_staging as source
+ON target.customer_id = source.customer_id 
+   AND target.is_current = TRUE
+
+WHEN MATCHED AND (
+    target.address != source.address OR 
+    target.phone != source.phone
+) THEN
+    UPDATE SET 
+        end_date = CURRENT_DATE,
+        is_current = FALSE
+
+WHEN NOT MATCHED THEN
+    INSERT (customer_id, name, address, phone, start_date, end_date, is_current)
+    VALUES (source.customer_id, source.name, source.address, source.phone, 
+            CURRENT_DATE, '9999-12-31', TRUE);
+
+-- Insert new current records for changed customers
+INSERT INTO customer_dim (customer_id, name, address, phone, start_date, end_date, is_current)
+SELECT s.customer_id, s.name, s.address, s.phone, CURRENT_DATE, '9999-12-31', TRUE
+FROM customer_staging s
+INNER JOIN customer_dim d ON s.customer_id = d.customer_id
+WHERE d.end_date = CURRENT_DATE AND d.is_current = FALSE;
+Explanation: SCD strategies handle changing dimensional data differently - Type 1 overwrites, Type 2 preserves history, Type 3 stores limited history in additional columns.
+
+15. Write a query for incremental data loading
+Answer:
+sql-- Method 1: Using timestamp-based incremental loading
+-- Store last load timestamp
+CREATE TABLE etl_control (
+    table_name VARCHAR(100),
+    last_load_timestamp TIMESTAMP,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Get new/changed records since last load
+DECLARE @last_load_timestamp TIMESTAMP;
+SELECT @last_load_timestamp = last_load_timestamp 
+FROM etl_control 
+WHERE table_name = 'orders';
+
+-- Load incremental data
+INSERT INTO target_orders (order_id, customer_id, order_date, amount, created_timestamp)
+SELECT order_id, customer_id, order_date, amount, created_timestamp
+FROM source_orders
+WHERE created_timestamp > @last_load_timestamp
+   OR modified_timestamp > @last_load_timestamp;
+
+-- Update control table
+UPDATE etl_control 
+SET last_load_timestamp = CURRENT_TIMESTAMP
+WHERE table_name = 'orders';
+
+-- Method 2: Change Data Capture (CDC) approach
+-- Enable CDC on source table (SQL Server)
+EXEC sys.sp_cdc_enable_table
+    @source_schema = 'dbo',
+    @source_name = 'orders',
+    @role_name = NULL;
+
+-- Query CDC data
+SELECT 
+    __$operation,  -- 1=Delete, 2=Insert, 3=Update (before), 4=Update (after)
+    __$start_lsn,
+    order_id,
+    customer_id,
+    order_date,
+    amount
+FROM cdc.dbo_orders_CT
+WHERE __$start_lsn > @last_processed_lsn;
+
+-- Method 3: Hash-based change detection
+WITH source_with_hash AS (
+    SELECT 
+        *,
+        HASHBYTES('SHA2_256', 
+            CONCAT(customer_id, '|', order_date, '|', amount, '|', status)
+        ) as row_hash
+    FROM source_orders
+),
+target_with_hash AS (
+    SELECT 
+        *,
+        HASHBYTES('SHA2_256', 
+            CONCAT(customer_id, '|', order_date, '|', amount, '|', status)
+        ) as row_hash
+    FROM target_orders
+)
+-- Insert new records
+INSERT INTO target_orders
+SELECT order_id, customer_id, order_date, amount, status
+FROM source_with_hash s
+LEFT JOIN target_with_hash t ON s.order_id = t.order_id
+WHERE t.order_id IS NULL;
+
+-- Update changed records
+UPDATE t
+SET 
+    customer_id = s.customer_id,
+    order_date = s.order_date,
+    amount = s.amount,
+    status = s.status,
+    modified_timestamp = CURRENT_TIMESTAMP
+FROM target_orders t
+INNER JOIN source_with_hash s ON t.order_id = s.order_id
+WHERE s.row_hash != t.row_hash;
+Delta Lake approach (modern data lakes):
+sql-- Using Delta Lake MERGE for incremental loading
+MERGE INTO target_table as target
+USING (
+    SELECT * FROM source_table 
+    WHERE _change_type IN ('insert', 'update_postimage')
+) as source
+ON target.primary_key = source.primary_key
+
+WHEN MATCHED THEN 
+    UPDATE SET *
+
+WHEN NOT MATCHED THEN 
+    INSERT *;
+Explanation: Incremental loading strategies depend on available change tracking mechanisms - timestamps, CDC, hashing, or built-in delta features.
+
+16. Handle duplicate detection in large datasets
+Answer:
+sql-- Method 1: Using window functions for exact duplicates
+WITH DuplicateAnalysis AS (
+    SELECT 
+        *,
+        ROW_NUMBER() OVER (
+            PARTITION BY customer_id, order_date, amount 
+            ORDER BY created_timestamp DESC
+        ) as row_num,
+        COUNT(*) OVER (
+            PARTITION BY customer_id, order_date, amount
+        ) as duplicate_count
+    FROM orders
+)
+SELECT 
+    'Exact Duplicates' as duplicate_type,
+    customer_id,
+    order_date,
+    amount,
+    duplicate_count,
+    CASE WHEN row_num = 1 THEN 'Keep' ELSE 'Remove' END as action
+FROM DuplicateAnalysis
+WHERE duplicate_count > 1
+ORDER BY customer_id, order_date, duplicate_count DESC;
+
+-- Method 2: Fuzzy duplicate detection using similarity
+WITH FuzzyDuplicates AS (
+    SELECT 
+        a.order_id as order_id_1,
+        b.order_id as order_id_2,
+        a.customer_name as name_1,
+        b.customer_name as name_2,
+        a.amount as amount_1,
+        b.amount as amount_2,
+        -- Calculate similarity scores
+        CASE 
+            WHEN SOUNDEX(a.customer_name) = SOUNDEX(b.customer_name) THEN 1 
+            ELSE 0 
+        END as name_soundex_match,
+        CASE 
+            WHEN ABS(a.amount - b.amount) <= 0.01 THEN 1 
+            ELSE 0 
+        END as amount_exact_match,
+        CASE 
+            WHEN ABS(DATEDIFF(day, a.order_date, b.order_date)) <= 1 THEN 1 
+            ELSE 0 
+        END as date_close_match
+    FROM orders a
+    INNER JOIN orders b ON a.order_id < b.order_id  -- Avoid self-joins and duplicates
+    WHERE ABS(DATEDIFF(day, a.order_date, b.order_date)) <= 7  -- Pre-filter for performance
+)
+SELECT *,
+    (name_soundex_match + amount_exact_match + date_close_match) as similarity_score
+FROM FuzzyDuplicates
+WHERE (name_soundex_match + amount_exact_match + date_close_match) >= 2  -- Threshold
+ORDER BY similarity_score DESC;
+
+-- Method 3: Efficient duplicate removal for large datasets
+-- Step 1: Create staging table with hash
+CREATE TABLE orders_dedup_staging AS
+SELECT 
+    *,
+    MD5(CONCAT(customer_id, '|', order_date, '|', amount)) as record_hash,
+    ROW_NUMBER() OVER (
+        PARTITION BY MD5(CONCAT(customer_id, '|', order_date, '|', amount))
+        ORDER BY created_timestamp DESC
+    ) as duplicate_rank
+FROM orders;
+
+-- Step 2: Create index for performance
+CREATE INDEX idx_record_hash ON orders_dedup_staging(record_hash, duplicate_rank);
+
+-- Step 3: Insert only unique records
+INSERT INTO orders_clean
+SELECT order_id, customer_id, order_date, amount, created_timestamp
+FROM orders_dedup_staging
+WHERE duplicate_rank = 1;
+
+-- Method 4: Real-time duplicate prevention
+CREATE OR REPLACE FUNCTION prevent_duplicates()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM orders 
+        WHERE customer_id = NEW.customer_id 
+        AND order_date = NEW.order_date 
+        AND amount = NEW.amount
+        AND ABS(EXTRACT(EPOCH FROM (created_timestamp - NEW.created_timestamp))) < 300  -- 5 minutes
+    ) THEN
+        RAISE EXCEPTION 'Potential duplicate order detected';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER duplicate_prevention_trigger
+    BEFORE INSERT ON orders
+    FOR EACH ROW
+    EXECUTE FUNCTION prevent_duplicates();
+Explanation: Duplicate detection combines exact matching with fuzzy logic. For large datasets, use hashing and indexing for performance. Consider real-time prevention vs. batch cleanup.
+Pseudo-code:
+1. Define duplicate criteria (exact vs. fuzzy matching)
+2. Use window functions to rank duplicates
+3. Apply similarity algorithms for fuzzy matching
+4. Create efficient indexes for large dataset processing
+5. Implement prevention mechanisms for future data
+
+17. Write a query for data quality checks
+Answer:
+sql-- Comprehensive data quality assessment
+WITH DataQualityChecks AS (
+    -- Completeness checks
+    SELECT 
+        'Completeness' as check_category,
+        'Missing Customer ID' as check_name,
+        COUNT(*) as failed_records,
+        ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2) as failure_rate
+    FROM orders 
+    WHERE customer_id IS NULL
+    
+    UNION ALL
+    
+    SELECT 
+        'Completeness',
+        'Missing Order Date',
+        COUNT(*),
+        ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2)
+    FROM orders 
+    WHERE order_date IS NULL
+    
+    UNION ALL
+    
+    -- Validity checks
+    SELECT 
+        'Validity',
+        'Invalid Email Format',
+        COUNT(*),
+        ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM customers), 2)
+    FROM customers 
+    WHERE email IS NOT NULL 
+    AND email NOT LIKE '%_@_%.__%'
+    
+    UNION ALL
+    
+    SELECT 
+        'Validity',
+        'Negative Order Amount',
+        COUNT(*),
+        ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2)
+    FROM orders 
+    WHERE amount < 0
+    
+    UNION ALL
+    
+    SELECT 
+        'Validity',
+        'Future Order Dates',
+        COUNT(*),
+        ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2)
+    FROM orders 
+    WHERE order_date > CURRENT_DATE
+    
+    UNION ALL
+    
+    -- Consistency checks
+    SELECT 
+        'Consistency',
+        'Orders without Customer',
+        COUNT(*),
+        ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2)
+    FROM orders o
+    LEFT JOIN customers c ON o.customer_id = c.customer_id
+    WHERE c.customer_id IS NULL
+    
+    UNION ALL
+    
+    -- Uniqueness checks
+    SELECT 
+        'Uniqueness',
+        'Duplicate Customer Emails',
+        COUNT(*) - COUNT(DISTINCT email),
+        ROUND((COUNT(*) - COUNT(DISTINCT email)) * 100.0 / COUNT(*), 2)
+    FROM customers
+    WHERE email IS NOT NULL
+    
+    UNION ALL
+    
+    -- Accuracy checks (business rules)
+    SELECT 
+        'Accuracy',
+        'Orders exceeding credit limit',
+        COUNT(*),
+        ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2)
+    FROM orders o
+    INNER JOIN customers c ON o.customer_id = c.customer_id
+    WHERE o.amount > c.credit_limit * 1.1  -- 10% tolerance
+)
+SELECT *
+FROM DataQualityChecks
+WHERE failed_records > 0
+ORDER BY check_category, failure_rate DESC;
+
+-- Data profiling query
+SELECT 
+    'orders' as table_name,
+    COUNT(*) as total_records,
+    COUNT(DISTINCT customer_id) as unique_customers,
+    MIN(order_date) as earliest_order,
+    MAX(order_date) as latest_order,
+    AVG(amount) as avg_order_amount,
+    STDDEV(amount) as amount_std_dev,
+    MIN(amount) as min_amount,
+    MAX(amount) as max_amount,
+    -- Quartile analysis
+    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY amount) as q1_amount,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount) as median_amount,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY amount) as q3_amount,
+    -- Outlier detection (IQR method)
+    COUNT(CASE 
+        WHEN amount > PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY amount) + 
+                     1.5 * (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY amount) - 
+                            PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY amount))
+        THEN 1 
+    END) as outliers_high,
+    COUNT(CASE 
+        WHEN amount < PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY amount) - 
+                     1.5 * (PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY amount) - 
+                            PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY amount))
+        THEN 1 
+    END) as outliers_low
+FROM orders;
+
+-- Data freshness check
+SELECT 
+    table_name,
+    MAX(created_timestamp) as last_update,
+    EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - MAX(created_timestamp)))/3600 as hours_since_update,
+    CASE 
+        WHEN MAX(created_timestamp) < CURRENT_TIMESTAMP - INTERVAL '24 hours' 
+        THEN 'STALE' 
+        ELSE 'FRESH' 
+    END as freshness_status
+FROM (
+    SELECT 'orders' as table_name, created_timestamp FROM orders
+    UNION ALL
+    SELECT 'customers' as table_name, created_timestamp FROM customers
+    UNION ALL
+    SELECT 'products' as table_name, created_timestamp FROM products
+) all_tables
+GROUP BY table_name;
+Explanation: Data quality checks cover completeness, validity, consistency, uniqueness, and accuracy. Automated profiling identifies patterns and anomalies.
+
+18. Implement soft deletes in SQL
+Answer:
+sql-- Add soft delete columns to existing table
+ALTER TABLE customers 
+ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE,
+ADD COLUMN deleted_at TIMESTAMP NULL,
+ADD COLUMN deleted_by VARCHAR(100) NULL;
+
+-- Create index for performance
+CREATE INDEX idx_customers_soft_delete ON customers(is_deleted, deleted_at);
+
+-- Soft delete operation
+UPDATE customers 
+SET 
+    is_deleted = TRUE,
+    deleted_at = CURRENT_TIMESTAMP,
+    deleted_by = 'user123'  -- or CURRENT_USER
+WHERE customer_id = 456;
+
+-- Create view for active records only
+CREATE VIEW customers_active AS
+SELECT *
+FROM customers
+WHERE is_deleted = FALSE OR is_deleted IS NULL;
+
+-- Restore soft deleted record
+UPDATE customers 
+SET 
+    is_deleted = FALSE,
+    deleted_at = NULL,
+    deleted_by = NULL
+WHERE customer_id = 456;
+
+-- Query with soft delete awareness
+SELECT c.customer_id, c.name, o.order_id, o.amount
+FROM customers c
+INNER JOIN orders o ON c.customer_id = o.customer_id
+WHERE (c.is_deleted = FALSE OR c.is_deleted IS NULL)
+  AND (o.is_deleted = FALSE OR o.is_deleted IS NULL);
+
+-- Audit trail for soft deletions  
+CREATE TABLE deletion_audit (
+    audit_id SERIAL PRIMARY KEY,
+    table_name VARCHAR(100),
+    record_id INT,
+    deleted_by VARCHAR(100),
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deletion_reason TEXT
+);
+
+-- Stored procedure for controlled soft deletion
+CREATE OR REPLACE PROCEDURE soft_delete_customer(
+    p_customer_id INT,
+    p_deleted_by VARCHAR(100),
+    p_reason TEXT DEFAULT 'No reason provided'
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if customer exists and is not already deleted
+    IF NOT EXISTS (
+        SELECT 1 FROM customers 
+        WHERE customer_id = p_customer_id AND (is_deleted = FALSE OR is_deleted IS NULL)
+    ) THEN
+        RAISE EXCEPTION 'Customer not found or already deleted';
+    END IF;
+    
+    -- Perform soft delete
+    UPDATE customers 
+    SET 
+        is_deleted = TRUE,
+        deleted_at = CURRENT_TIMESTAMP,
+        deleted_by = p_deleted_by
+    WHERE customer_id = p_customer_id;
+    
+    -- Log the deletion
+    INSERT INTO deletion_audit (table_name, record_id, deleted_by, deletion_reason)
+    VALUES ('customers', p_customer_id, p_deleted_by, p_reason);
+    
+    -- Optionally soft delete related orders
+    UPDATE orders 
+    SET 
+        is_deleted = TRUE,
+        deleted_at = CURRENT_TIMESTAMP,
+        deleted_by = p_deleted_by
+    WHERE customer_id = p_customer_id AND (is_deleted = FALSE OR is_deleted IS NULL);
+    
+    COMMIT;
+END;
+$$;
+
+-- Usage
+CALL soft_delete_customer(456, 'admin_user', 'Customer requested account deletion');
+
+-- Cleanup old soft deleted records (hard delete after retention period)
+DELETE FROM customers 
+WHERE is_deleted = TRUE 
+  AND deleted_at < CURRENT_DATE - INTERVAL '7 years';  -- Adjust retention period
+Explanation: Soft deletes preserve data while marking it as deleted. Include audit trails and cleanup procedures for compliance and performance.
+
+19. Write a query for hierarchical data
+Answer:
+sql-- Sample hierarchical table structure
+CREATE TABLE employees (
+    employee_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    manager_id INT,
+    department VARCHAR(50),
+    level_in_hierarchy INT,
+    FOREIGN KEY (manager_id) REFERENCES employees(employee_id)
+);
+
+-- Recursive CTE for organizational hierarchy
+WITH RECURSIVE EmployeeHierarchy AS (
+    -- Anchor: Top-level managers (no manager_id)
+    SELECT 
+        employee_id,
+        name,
+        manager_id,
+        department,
+        1 as level,
+        CAST(name AS VARCHAR(1000)) as hierarchy_path,
+        CAST(employee_id AS VARCHAR(1000)) as id_path
+    FROM employees
+    WHERE manager_id IS NULL
+    
+    UNION ALL
+    
+    -- Recursive: Add direct reports
+    SELECT 
+        e.employee_id,
+        e.name,
+        e.manager_id,
+        e.department,
+        eh.level + 1,
+        CAST(eh.hierarchy_path || ' -> ' || e.name AS VARCHAR(1000)),
+        CAST(eh.id_path || ',' || e.employee_id AS VARCHAR(1000))
+    FROM employees e
+    INNER JOIN EmployeeHierarchy eh ON e.manager_id = eh.employee_id
+)
+SELECT 
+    level,
+    REPEAT('  ', level - 1) || name as indented_name,
+    hierarchy_path,
+    department,
+    employee_id,
+    manager_id
+FROM EmployeeHierarchy
+ORDER BY id_path;
+
+-- Find all subordinates of a specific manager
+WITH RECURSIVE Subordinates AS (
+    -- Start with the specific manager
+    SELECT employee_id, name, manager_id, 0 as levels_down
+    FROM employees
+    WHERE employee_id = 5  -- Specific manager ID
+    
+    UNION ALL
+    
+    -- Add all subordinates recursively
+    SELECT 
+        e.employee_id, 
+        e.name, 
+        e.manager_id,
+        s.levels_down + 1
+    FROM employees e
+    INNER JOIN Subordinates s ON e.manager_id = s.employee_id
+)
+SELECT 
+    name,
+    levels_down,
+    CASE 
+        WHEN levels_down = 0 THEN 'Manager'
+        WHEN levels_down = 1 THEN 'Direct Report'
+        ELSE 'Indirect Report (Level ' || levels_down || ')'
+    END as relationship
+FROM Subordinates
+ORDER BY levels_down, name;
+
+-- Calculate span of control (number of direct reports)
+SELECT 
+    m.employee_id as manager_id,
+    m.name as manager_name,
+    COUNT(e.employee_id) as direct_reports,
+    AVG(COUNT(e.employee_id)) OVER() as avg_span_of_control
+FROM employees m
+LEFT JOIN employees e ON m.employee_id = e.manager_id
+GROUP BY m.employee_id, m.name
+HAVING COUNT(e.employee_id) > 0
+ORDER BY direct_reports DESC;
+
+-- Find the path to CEO for any employee
+WITH RECURSIVE PathToCEO AS (
+    -- Start with specific employee
+    SELECT 
+        employee_id,
+        name,
+        manager_id,
+        1 as level_to_ceo,
+        CAST(name AS VARCHAR(1000)) as path_to_ceo
+    FROM employees
+    WHERE employee_id = 123  -- Specific employee
+    
+    UNION ALL
+    
+    -- Follow the management chain up
+    SELECT 
+        m.employee_id,
+        m.name,
+        m.manager_id,
+        p.level_to_ceo + 1,
+        CAST(m.name || ' <- ' || p.path_to_ceo AS VARCHAR(1000))
+    FROM employees m
+    INNER JOIN PathToCEO p ON m.employee_id = p.manager_id
+)
+SELECT 
+    path_to_ceo,
+    level_to_ceo
+FROM PathToCEO
+WHERE manager_id IS NULL  -- CEO level
+ORDER BY level_to_ceo DESC;
+
+-- Adjacency list to nested set model conversion
+WITH RECURSIVE NestedSet AS (
+    SELECT 
+        employee_id,
+        name,
+        manager_id,
+        1 as lft,
+        2 as rgt,
+        1 as level
+    FROM employees
+    WHERE manager_id IS NULL
+    
+    UNION ALL
+    
+    SELECT 
+        e.employee_id,
+        e.name,
+        e.manager_id,
+        ns.rgt as lft,
+        ns.rgt + 1 as rgt,
+        ns.level + 1
+    FROM employees e
+    INNER JOIN NestedSet ns ON e.manager_id = ns.employee_id
+)
+SELECT * FROM NestedSet;
+Explanation: Hierarchical data requires recursive CTEs or specialized techniques. Different patterns serve different query needs - ancestry, descendants, paths, and tree traversal.
+
+20. Handle time series data aggregation
+Answer:
+sql-- Time series aggregation with different intervals
+-- Sample time series data: sensor readings
+CREATE TABLE sensor_data (
+    sensor_id INT,
+    reading_timestamp TIMESTAMP,
+    temperature DECIMAL(5,2),
+    humidity DECIMAL(5,2),
+    pressure DECIMAL(7,2)
+);
+
+-- Hourly aggregation
+SELECT 
+    sensor_id,
+    DATE_TRUNC('hour', reading_timestamp) as hour_bucket,
+    COUNT(*) as reading_count,
+    AVG(temperature) as avg_temperature,
+    MIN(temperature) as min_temperature,
+    MAX(temperature) as max_temperature,
+    STDDEV(temperature) as temperature_stddev,
+    AVG(humidity) as avg_humidity,
+    AVG(pressure) as avg_pressure
+FROM sensor_data
+WHERE reading_timestamp >= CURRENT_DATE - INTERVAL '7 days'
+GROUP BY sensor_id, DATE_TRUNC('hour', reading_timestamp)
+ORDER BY sensor_id, hour_bucket;
+
+-- Daily aggregation with moving averages
+WITH DailyAggregates AS (
+    SELECT 
+        sensor_id,
+        DATE_TRUNC('day', reading_timestamp) as day_bucket,
+        AVG(temperature) as daily_avg_temp,
+        MAX(temperature) as daily_max_temp,
+        MIN(temperature) as daily_min_temp
+    FROM sensor_data
+    GROUP BY sensor_id, DATE_TRUNC('day', reading_timestamp)
+)
+SELECT 
+    sensor_id,
+    day_bucket,
+    daily_avg_temp,
+    daily_max_temp,
+    daily_min_temp,
+    -- 7-day moving average
+    AVG(daily_avg_temp) OVER (
+        PARTITION BY sensor_id 
+        ORDER BY day_bucket 
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) as moving_avg_7day,
+    -- Temperature trend (compared to previous day)
+    daily_avg_temp - LAG(daily_avg_temp, 1) OVER (
+        PARTITION BY sensor_id 
+        ORDER BY day_bucket
+    ) as temp_change_from_previous_day
+FROM DailyAggregates
+ORDER BY sensor_id, day_bucket;
+
+-- Gap filling for missing time intervals
+WITH TimeSeries AS (
+    -- Generate complete time series (every hour for 7 days)
+    SELECT 
+        s.sensor_id,
+        generate_series(
+            DATE_TRUNC('hour', CURRENT_TIMESTAMP - INTERVAL '7 days'),
+            DATE_TRUNC('hour', CURRENT_TIMESTAMP),
+            INTERVAL '1 hour'
+        ) as time_bucket
+    FROM (SELECT DISTINCT sensor_id FROM sensor_data) s
+),
+AggregatedData AS (
+    SELECT 
+        sensor_id,
+        DATE_TRUNC('hour', reading_timestamp) as time_bucket,
+        AVG(temperature) as avg_temperature,
+        COUNT(*) as reading_count
+    FROM sensor_data
+    WHERE reading_timestamp >= CURRENT_TIMESTAMP - INTERVAL '7 days'
+    GROUP BY sensor_id, DATE_TRUNC('hour', reading_timestamp)
+)
+SELECT 
+    ts.sensor_id,
+    ts.time_bucket,
+    COALESCE(ad.avg_temperature, 
+             LAG(ad.avg_temperature) IGNORE NULLS OVER (
+                 PARTITION BY ts.sensor_id 
+                 ORDER BY ts.time_bucket
+             )) as temperature,  -- Forward fill missing values
+    COALESCE(ad.reading_count, 0) as reading_count,
+    CASE WHEN ad.avg_temperature IS NULL THEN 'Interpolated' ELSE 'Actual' END as data_quality
+FROM TimeSeries ts
+LEFT JOIN AggregatedData ad ON ts.sensor_id = ad.sensor_id AND ts.time_bucket = ad.time_bucket
+ORDER BY ts.sensor_id, ts.time_bucket;
+
+-- Anomaly detection in time series
+WITH BaselineStats AS (
+    SELECT 
+        sensor_id,
+        AVG(temperature) as mean_temp,
+        STDDEV(temperature) as stddev_temp
+    FROM sensor_data
+    WHERE reading_timestamp >= CURRENT_DATE - INTERVAL '30 days'
+    GROUP BY sensor_id
+),
+AnomalyDetection AS (
+    SELECT 
+        sd.sensor_id,
+        sd.reading_timestamp,
+        sd.temperature,
+        bs.mean_temp,
+        bs.stddev_temp,
+        ABS(sd.temperature - bs.mean_temp) / bs.stddev_temp as z_score,
+        CASE 
+            WHEN ABS(sd.temperature - bs.mean_temp) / bs.stddev_temp > 3 THEN 'Extreme Anomaly'
+            WHEN ABS(sd.temperature - bs.mean_temp) / bs.stddev_temp > 2 THEN 'Moderate Anomaly'
+            ELSE 'Normal'
+        END as anomaly_level
+    FROM sensor_data sd
+    INNER JOIN BaselineStats bs ON sd.sensor_id = bs.sensor_id
+    WHERE sd.reading_timestamp >= CURRENT_DATE - INTERVAL '1 day'
+)
+SELECT *
+FROM AnomalyDetection
+WHERE anomaly_level != 'Normal'
+ORDER BY z_score DESC;
+
+-- Time-weighted averages for irregular intervals
+WITH TimeWeightedCalc AS (
+    SELECT 
+        sensor_id,
+        reading_timestamp,
+        temperature,
+        LEAD(reading_timestamp) OVER (
+            PARTITION BY sensor_id 
+            ORDER BY reading_timestamp
+        ) as next_timestamp,
+        EXTRACT(EPOCH FROM (
+            COALESCE(
+                LEAD(reading_timestamp) OVER (
+                    PARTITION BY sensor_id 
+                    ORDER BY reading_timestamp
+                ),
+                reading_timestamp + INTERVAL '1 hour'  -- Default interval for last reading
+            ) - reading_timestamp
+        )) as duration_seconds
+    FROM sensor_data
+    WHERE reading_timestamp >= CURRENT_DATE - INTERVAL '1 day'
+)
+SELECT 
+    sensor_id,
+    SUM(temperature * duration_seconds) / SUM(duration_seconds) as time_weighted_avg_temperature,
+    SUM(duration_seconds) / 3600 as total_hours_covered
+FROM TimeWeightedCalc
+GROUP BY sensor_id;
+Explanation: Time series aggregation requires handling irregular intervals, missing data, and temporal patterns. Use window functions for moving calculations and gap-filling techniques for missing periods.
+Pseudo-code for time series processing:
+1. Define time buckets (hourly, daily, etc.)
+2. Aggregate raw data into buckets
+3. Handle missing intervals with interpolation
+4. Calculate moving averages and trends
+5. Detect anomalies using statistical methods
+6. Apply time-weighting for irregular data

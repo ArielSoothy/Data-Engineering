@@ -1,0 +1,53 @@
+Create a Microsoft Data Engineer Interview Preparation React application with the following specifications:
+
+PROJECT SETUP:
+- Initialize React app with Vite and TypeScript
+- Install dependencies: Tailwind CSS, React Router, Monaco Editor, Lucide React icons
+- Create modular file structure where each topic loads from separate JSON files
+
+MAIN STRUCTURE:
+Create a tabbed interface with the following tabs:
+1. Dashboard (Progress + Timeline)
+2. SQL Basics (40 core questions)
+3. SQL Advanced (complex scenarios)  
+4. Python Basics (data manipulation)
+5. Python Advanced (algorithms + optimization)
+6. Problem Decomposition (system design)
+7. Azure Services (quick reference)
+8. Mock Interview (simulation mode)
+
+MODULAR ARCHITECTURE:
+- Each tab should have its own component file
+- Question data stored in separate JSON files in /data folder:
+  * sql-basics.json
+  * sql-advanced.json  
+  * python-basics.json
+  * python-advanced.json
+  * decomposition-scenarios.json
+  * azure-services.json
+
+COMPONENT FEATURES PER TAB:
+- Question display with difficulty level
+- Answer/explanation reveal
+- Pseudo-code breakdown section
+- Progress tracking checkboxes
+- Time estimation per question
+- "AI-Augmented Approach" notes
+
+INTEGRATED TIME PLAN:
+Dashboard should show daily study schedule:
+- Friday Evening: SQL Basics (Questions 1-15)
+- Saturday: SQL Advanced + Python Basics  
+- Sunday: Python Advanced + Problem Decomposition
+- Monday: Azure Services + Mock Interviews
+- Tuesday Morning: Review + Confidence Building
+
+SPECIAL REQUIREMENTS:
+- Dark mode optimized for long study sessions
+- Local storage for progress tracking
+- Timer functionality for practice sessions
+- Interactive code editor using Monaco Editor
+- Mobile responsive design
+- Export progress as PDF feature
+
+Start by creating the basic project structure, main App component with tab navigation, and the Dashboard component with the integrated timeline. We'll build this step by step, tab by tab.
