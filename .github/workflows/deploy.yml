@@ -36,6 +36,14 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+      - name: Debug build output
+        run: |
+          echo "=== Build Output Contents ==="
+          ls -la dist/
+          echo "=== Index.html Content ==="
+          cat dist/index.html
+          echo "=== Asset Directory ==="
+          ls -la dist/assets/
       - name: Create .nojekyll file
         run: touch dist/.nojekyll
       - name: Upload artifact
