@@ -9,6 +9,21 @@ export default defineConfig({
     // Explicitly expose the VITE_CLAUDE_API_KEY env variable
     'import.meta.env.VITE_CLAUDE_API_KEY': JSON.stringify(process.env.VITE_CLAUDE_API_KEY),
   },
-  // Let's try different base path configuration
+  // Use empty base path, which is more compatible with GitHub Pages
   base: '',
+  build: {
+    // Generate sourcemaps for easier debugging
+    sourcemap: true,
+    // Add rollup options for better compatibility
+    rollupOptions: {
+      output: {
+        // Ensure assets have consistent names
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        // Make sure client-side routing works
+        manualChunks: undefined
+      }
+    }
+  }
 })
