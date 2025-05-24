@@ -1,0 +1,2278 @@
+PYTHON BASICS - COMPLETE ANSWERS & EXPLANATIONS (15 Essential Questions)
+Data Structures & Fundamentals (Questions 1-5)
+1. What's the difference between a list and tuple in Python?
+Answer:
+
+List: Mutable (can be changed), uses square brackets []
+Tuple: Immutable (cannot be changed), uses parentheses ()
+
+python# List (mutable)
+my_list = [1, 2, 3, 4]
+my_list.append(5)        # Works - adds element
+my_list[0] = 10          # Works - changes element
+print(my_list)           # [10, 2, 3, 4, 5]
+
+# Tuple (immutable)
+my_tuple = (1, 2, 3, 4)
+# my_tuple.append(5)     # ERROR - no append method
+# my_tuple[0] = 10       # ERROR - cannot change elements
+print(my_tuple[0])       # 1 - can read elements
+
+# Use cases
+coordinates = (10.5, 20.3)  # Tuple for fixed data
+shopping_list = ['milk', 'bread', 'eggs']  # List for changing data
+
+# Performance difference
+import sys
+list_size = sys.getsizeof([1, 2, 3, 4, 5])    # ~104 bytes
+tuple_size = sys.getsizeof((1, 2, 3, 4, 5))   # ~80 bytes
+Explanation: Lists are for changing collections, tuples for fixed data. Tuples are faster and use less memory but can't be modified after creation.
+Pseudo-code:
+1. Choose list when you need to add/remove/change elements
+2. Choose tuple when data is fixed (coordinates, RGB values, etc.)
+3. Tuples can be dictionary keys, lists cannot
+4. Tuples are faster for iteration and element access
+
+2. What's the difference between a dictionary and a set?
+Answer:
+
+Dictionary: Key-value pairs, ordered (Python 3.7+), mutable
+Set: Unique values only, unordered, mutable
+
+python# Dictionary - key-value mapping
+employee = {
+    'name': 'John Doe',
+    'age': 30,
+    'department': 'Engineering',
+    'salary': 75000
+}
+print(employee['name'])        # 'John Doe'
+employee['age'] = 31          # Update value
+employee['bonus'] = 5000      # Add new key-value pair
+
+# Set - unique collection
+skills = {'Python', 'SQL', 'AWS', 'Python'}  # Duplicate 'Python' ignored
+print(skills)                  # {'Python', 'SQL', 'AWS'}
+skills.add('Docker')          # Add new element
+skills.remove('AWS')          # Remove element
+
+# Common use cases for sets
+list_with_duplicates = [1, 2, 2, 3, 3, 3, 4]
+unique_values = set(list_with_duplicates)  # {1, 2, 3, 4}
+
+# Set operations
+python_developers = {'Alice', 'Bob', 'Carol'}
+sql_developers = {'Bob', 'Carol', 'Dave'}
+
+both_skills = python_developers & sql_developers    # {'Bob', 'Carol'}
+all_developers = python_developers | sql_developers # {'Alice', 'Bob', 'Carol', 'Dave'}
+python_only = python_developers - sql_developers   # {'Alice'}
+Explanation: Dictionaries map keys to values, sets store unique items. Use dictionaries for lookups, sets for uniqueness and mathematical operations.
+
+3. How do you handle exceptions in Python?
+Answer:
+python# Basic exception handling
+def divide_numbers(a, b):
+    try:
+        result = a / b
+        return result
+    except ZeroDivisionError:
+        print("Error: Cannot divide by zero")
+        return None
+    except TypeError:
+        print("Error: Both arguments must be numbers")
+        return None
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None
+    finally:
+        print("Division operation completed")
+
+# Multiple exception types
+def process_data(data):
+    try:
+        # Convert to integer
+        number = int(data)
+        # Perform calculation
+        result = 100 / number
+        return result
+    except (ValueError, TypeError):
+        print("Invalid input: cannot convert to integer")
+    except ZeroDivisionError:
+        print("Cannot divide by zero")
+    except Exception as e:
+        print(f"Unexpected error: {type(e).__name__}: {e}")
+    finally:
+        print("Processing completed")
+
+# Re-raising exceptions
+def validate_age(age):
+    try:
+        age = int(age)
+        if age < 0:
+            raise ValueError("Age cannot be negative")
+        if age > 150:
+            raise ValueError("Age seems unrealistic")
+        return age
+    except ValueError as e:
+        print(f"Validation error: {e}")
+        raise  # Re-raise the exception
+
+# Custom exceptions for data engineering
+class DataValidationError(Exception):
+    """Custom exception for data validation issues"""
+    pass
+
+class DataProcessingError(Exception):
+    """Custom exception for data processing issues"""
+    def __init__(self, message, error_code=None):
+        super().__init__(message)
+        self.error_code = error_code
+
+def validate_csv_row(row):
+    try:
+        if len(row) != 5:
+            raise DataValidationError(f"Expected 5 columns, got {len(row)}")
+        
+        # Validate specific columns
+        customer_id = int(row[0])
+        amount = float(row[3])
+        
+        if amount < 0:
+            raise DataValidationError("Amount cannot be negative")
+            
+    except (ValueError, IndexError) as e:
+        raise DataProcessingError(f"Row processing failed: {e}", error_code="DATA_FORMAT_ERROR")
+
+# Usage example
+try:
+    validate_csv_row(['123', 'John', 'Doe', '150.50', '2023-01-01'])
+    print("Row validation passed")
+except (DataValidationError, DataProcessingError) as e:
+    print(f"Validation failed: {e}")
+Explanation: Exception handling prevents crashes and provides graceful error management. Use specific exception types and custom exceptions for better error tracking in data pipelines.
+
+4. What are list comprehensions? Give an example
+Answer:
+python# Basic list comprehension syntax: [expression for item in iterable if condition]
+
+# Traditional approach
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+squares = []
+for num in numbers:
+    if num % 2 == 0:
+        squares.append(num ** 2)
+print(squares)  # [4, 16, 36, 64, 100]
+
+# List comprehension (more Pythonic)
+squares = [num ** 2 for num in numbers if num % 2 == 0]
+print(squares)  # [4, 16, 36, 64, 100]
+
+# Data engineering examples
+# 1. Clean and filter data
+raw_data = ['  Alice  ', '', '  Bob', 'Charlie  ', None, '  Dave  ']
+clean_names = [name.strip() for name in raw_data if name and name.strip()]
+print(clean_names)  # ['Alice', 'Bob', 'Charlie', 'Dave']
+
+# 2. Extract specific fields from dictionaries
+employees = [
+    {'name': 'Alice', 'salary': 70000, 'dept': 'Engineering'},
+    {'name': 'Bob', 'salary': 80000, 'dept': 'Sales'},
+    {'name': 'Carol', 'salary': 75000, 'dept': 'Engineering'}
+]
+
+# Get names of engineering employees with salary > 70k
+eng_high_earners = [emp['name'] for emp in employees 
+                   if emp['dept'] == 'Engineering' and emp['salary'] > 70000]
+print(eng_high_earners)  # ['Carol']
+
+# 3. Transform data types
+string_numbers = ['1', '2', '3', '4', '5']
+integers = [int(num) for num in string_numbers]
+print(integers)  # [1, 2, 3, 4, 5]
+
+# 4. Nested list comprehension
+matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+flattened = [num for row in matrix for num in row]
+print(flattened)  # [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+# 5. Dictionary comprehension
+word_lengths = {word: len(word) for word in ['python', 'data', 'engineering']}
+print(word_lengths)  # {'python': 6, 'data': 4, 'engineering': 11}
+
+# 6. Set comprehension
+unique_lengths = {len(word) for word in ['python', 'data', 'science', 'code']}
+print(unique_lengths)  # {4, 6, 7}
+Explanation: List comprehensions provide concise, readable syntax for creating lists. They're faster than traditional loops and very common in data processing tasks.
+When to use:
+
+Simple transformations and filtering
+Readable one-line operations
+Better performance than loops
+
+When not to use:
+
+Complex logic (use regular loops)
+Multiple statements needed
+Debugging required (harder to debug comprehensions)
+
+
+5. Explain the difference between deep copy and shallow copy
+Answer:
+pythonimport copy
+
+# Original list with nested objects
+original = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+# Shallow copy - copies references to nested objects
+shallow = copy.copy(original)
+# or shallow = original.copy()
+# or shallow = list(original)
+
+# Deep copy - creates completely independent copy
+deep = copy.deepcopy(original)
+
+print("Original:", original)
+print("Shallow:", shallow)
+print("Deep:", deep)
+
+# Modify nested object
+original[0][0] = 999
+
+print("\nAfter modifying original[0][0] = 999:")
+print("Original:", original)  # [[999, 2, 3], [4, 5, 6], [7, 8, 9]]
+print("Shallow:", shallow)   # [[999, 2, 3], [4, 5, 6], [7, 8, 9]] - AFFECTED!
+print("Deep:", deep)         # [[1, 2, 3], [4, 5, 6], [7, 8, 9]] - NOT affected
+
+# Real-world data engineering example
+import pandas as pd
+
+# Original dataset
+data = {
+    'customers': [
+        {'id': 1, 'name': 'Alice', 'orders': [100, 200]},
+        {'id': 2, 'name': 'Bob', 'orders': [150]}
+    ]
+}
+
+# Shallow copy issues
+data_shallow = copy.copy(data)
+data_shallow['customers'][0]['orders'].append(300)  # Modifies original!
+
+print("Original data affected by shallow copy:")
+print(data['customers'][0]['orders'])  # [100, 200, 300]
+
+# Deep copy solution
+data_original = {
+    'customers': [
+        {'id': 1, 'name': 'Alice', 'orders': [100, 200]},
+        {'id': 2, 'name': 'Bob', 'orders': [150]}
+    ]
+}
+
+data_deep = copy.deepcopy(data_original)
+data_deep['customers'][0]['orders'].append(400)  # Doesn't affect original
+
+print("Original data protected with deep copy:")
+print(data_original['customers'][0]['orders'])  # [100, 200]
+print(data_deep['customers'][0]['orders'])      # [100, 200, 400]
+
+# Performance considerations
+import time
+
+large_nested_list = [[i] * 1000 for i in range(1000)]
+
+# Shallow copy is faster
+start = time.time()
+shallow_large = copy.copy(large_nested_list)
+shallow_time = time.time() - start
+
+# Deep copy is slower but safer
+start = time.time()
+deep_large = copy.deepcopy(large_nested_list)
+deep_time = time.time() - start
+
+print(f"Shallow copy time: {shallow_time:.4f} seconds")
+print(f"Deep copy time: {deep_time:.4f} seconds")
+Explanation: Shallow copy creates a new object but references the same nested objects. Deep copy creates completely independent objects. Choose based on whether you need to modify nested data.
+Pseudo-code:
+1. Shallow copy: New container, same contents (references)
+2. Deep copy: New container, new contents (independent objects)
+3. Use shallow copy for simple objects or when you won't modify nested data
+4. Use deep copy when you need complete independence
+5. Consider performance impact of deep copying large structures
+
+Data Processing with Pandas (Questions 6-10)
+6. How do you read a CSV file in Python?
+Answer:
+pythonimport pandas as pd
+import csv
+
+# Method 1: Using pandas (most common for data engineering)
+# Basic CSV reading
+df = pd.read_csv('employees.csv')
+print(df.head())
+
+# Advanced pandas CSV reading with options
+df = pd.read_csv(
+    'employees.csv',
+    sep=',',                    # Delimiter
+    header=0,                   # Row with column names
+    index_col='employee_id',    # Set index column
+    usecols=['name', 'salary', 'department'],  # Select specific columns
+    dtype={'salary': float, 'department': str},  # Specify data types
+    na_values=['', 'NULL', 'N/A'],  # Custom null values
+    parse_dates=['hire_date'],  # Parse date columns
+    encoding='utf-8',           # File encoding
+    nrows=1000,                # Read only first 1000 rows
+    skiprows=1,                # Skip first row
+    comment='#'                # Ignore lines starting with #
+)
+
+# Handle missing values during read
+df = pd.read_csv(
+    'data.csv',
+    na_values=['', 'NULL', 'N/A', 'None'],
+    keep_default_na=True
+)
+
+# Method 2: Using built-in csv module (for row-by-row processing)
+def process_csv_with_csv_module(filename):
+    processed_data = []
+    
+    with open(filename, 'r', encoding='utf-8') as file:
+        csv_reader = csv.DictReader(file)
+        
+        for row in csv_reader:
+            # Process each row
+            try:
+                processed_row = {
+                    'employee_id': int(row['employee_id']),
+                    'name': row['name'].strip(),
+                    'salary': float(row['salary']) if row['salary'] else 0,
+                    'department': row['department']
+                }
+                processed_data.append(processed_row)
+            except (ValueError, KeyError) as e:
+                print(f"Error processing row {csv_reader.line_num}: {e}")
+                continue
+    
+    return processed_data
+
+# Method 3: Error handling for file operations
+def safe_read_csv(filename):
+    try:
+        df = pd.read_csv(filename)
+        print(f"Successfully read {len(df)} rows from {filename}")
+        return df
+    except FileNotFoundError:
+        print(f"Error: File {filename} not found")
+        return None
+    except pd.errors.EmptyDataError:
+        print(f"Error: {filename} is empty")
+        return None
+    except pd.errors.ParserError as e:
+        print(f"Error parsing {filename}: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error reading {filename}: {e}")
+        return None
+
+# Method 4: Reading large CSV files in chunks
+def process_large_csv(filename, chunk_size=10000):
+    chunk_results = []
+    
+    try:
+        for chunk in pd.read_csv(filename, chunksize=chunk_size):
+            # Process each chunk
+            chunk_processed = chunk.groupby('department')['salary'].mean()
+            chunk_results.append(chunk_processed)
+            
+        # Combine results from all chunks
+        final_result = pd.concat(chunk_results).groupby(level=0).mean()
+        return final_result
+        
+    except Exception as e:
+        print(f"Error processing large CSV: {e}")
+        return None
+
+# Method 5: Data validation after reading
+def read_and_validate_csv(filename):
+    df = pd.read_csv(filename)
+    
+    # Validation checks
+    print("Data validation results:")
+    print(f"Total rows: {len(df)}")
+    print(f"Total columns: {len(df.columns)}")
+    print(f"Missing values per column:\n{df.isnull().sum()}")
+    print(f"Data types:\n{df.dtypes}")
+    
+    # Check for duplicates
+    duplicates = df.duplicated().sum()
+    print(f"Duplicate rows: {duplicates}")
+    
+    # Basic statistics
+    print("\nNumeric column statistics:")
+    print(df.describe())
+    
+    return df
+
+# Usage examples
+# Basic usage
+data = safe_read_csv('employees.csv')
+
+# Large file processing
+large_data_summary = process_large_csv('large_dataset.csv', chunk_size=5000)
+
+# With validation
+validated_data = read_and_validate_csv('data.csv')
+Explanation: pandas.read_csv() is the standard for data engineering. Use parameters to handle different formats, data types, and encoding issues. Always include error handling for production code.
+
+7. What's the difference between pandas DataFrame and Series?
+Answer:
+pythonimport pandas as pd
+import numpy as np
+
+# Series - 1-dimensional labeled array
+series_example = pd.Series([10, 20, 30, 40], index=['A', 'B', 'C', 'D'], name='values')
+print("Series:")
+print(series_example)
+print(f"Series type: {type(series_example)}")
+print(f"Series shape: {series_example.shape}")  # (4,)
+
+# DataFrame - 2-dimensional labeled data structure
+df_example = pd.DataFrame({
+    'name': ['Alice', 'Bob', 'Carol', 'Dave'],
+    'age': [25, 30, 35, 40],
+    'salary': [50000, 60000, 70000, 80000],
+    'department': ['IT', 'HR', 'IT', 'Finance']
+})
+print("\nDataFrame:")
+print(df_example)
+print(f"DataFrame type: {type(df_example)}")
+print(f"DataFrame shape: {df_example.shape}")  # (4, 4)
+
+# Accessing Series from DataFrame
+name_series = df_example['name']  # Returns a Series
+print(f"\nSeries from DataFrame column: {type(name_series)}")
+print(name_series)
+
+# Series operations
+ages = pd.Series([25, 30, 35, 40], name='age')
+print(f"\nSeries mean: {ages.mean()}")
+print(f"Series max: {ages.max()}")
+print(f"Series describe:\n{ages.describe()}")
+
+# DataFrame operations
+print(f"\nDataFrame column means:\n{df_example.select_dtypes(include=[np.number]).mean()}")
+print(f"\nDataFrame info:")
+df_example.info()
+
+# Converting between Series and DataFrame
+# Series to DataFrame
+series_to_df = ages.to_frame()  # Creates DataFrame with one column
+print(f"\nSeries converted to DataFrame:\n{series_to_df}")
+
+# DataFrame column to Series
+df_column_to_series = df_example['salary']
+print(f"\nDataFrame column as Series:\n{df_column_to_series}")
+
+# Multiple Series to DataFrame
+name_series = pd.Series(['Alice', 'Bob', 'Carol'], name='name')
+age_series = pd.Series([25, 30, 35], name='age')
+salary_series = pd.Series([50000, 60000, 70000], name='salary')
+
+combined_df = pd.concat([name_series, age_series, salary_series], axis=1)
+print(f"\nCombined Series to DataFrame:\n{combined_df}")
+
+# Key differences demonstration
+print("\n=== KEY DIFFERENCES ===")
+
+# 1. Dimensionality
+print(f"Series dimensions: {ages.ndim}")      # 1
+print(f"DataFrame dimensions: {df_example.ndim}")  # 2
+
+# 2. Index access
+print(f"Series index access: {ages[0]}")     # Direct value
+print(f"DataFrame index access:\n{df_example.iloc[0]}")  # Returns Series (row)
+
+# 3. Iteration
+print("\nSeries iteration (values):")
+for value in ages:
+    print(value, end=' ')
+
+print("\n\nDataFrame iteration (column names):")
+for column in df_example:
+    print(column, end=' ')
+
+print("\n\nDataFrame iterrows() - (index, Series):")
+for index, row in df_example.iterrows():
+    print(f"Row {index}: {row['name']} - {row['salary']}")
+    if index >= 1:  # Limit output
+        break
+
+# 4. Mathematical operations
+print(f"\nSeries arithmetic: {ages + 5}")
+print(f"\nDataFrame arithmetic on numeric columns:")
+numeric_df = df_example.select_dtypes(include=[np.number])
+print(numeric_df * 1.1)  # 10% increase
+
+# 5. Aggregation differences
+print(f"\nSeries aggregation (single value): {ages.sum()}")
+print(f"\nDataFrame aggregation (Series result):\n{df_example.select_dtypes(include=[np.number]).sum()}")
+
+# Real-world usage patterns
+def process_employee_data(df):
+    """Example of working with both DataFrame and Series"""
+    
+    # DataFrame operations
+    high_earners = df[df['salary'] > 60000]  # Returns DataFrame
+    dept_stats = df.groupby('department')['salary'].agg(['mean', 'count'])  # Returns DataFrame
+    
+    # Series operations
+    total_payroll = df['salary'].sum()  # Returns scalar
+    avg_age = df['age'].mean()  # Returns scalar
+    salary_series = df['salary']  # Returns Series
+    
+    # Combining operations
+    salary_above_avg = salary_series > salary_series.mean()  # Returns Series of booleans
+    above_avg_employees = df[salary_above_avg]  # Returns DataFrame
+    
+    return {
+        'high_earners': high_earners,
+        'department_stats': dept_stats,
+        'total_payroll': total_payroll,
+        'average_age': avg_age,
+        'above_average_earners': above_avg_employees
+    }
+
+# Usage
+results = process_employee_data(df_example)
+print(f"\nTotal payroll: ${results['total_payroll']:,}")
+print(f"Average age: {results['average_age']:.1f}")
+Explanation: Series is 1D (like a column), DataFrame is 2D (like a table). DataFrame columns are Series. Use Series for single-column operations, DataFrame for multi-column analysis.
+Key Points:
+
+Series = single column of data with index
+DataFrame = multiple columns (each column is a Series)
+DataFrame operations often return Series
+Series operations often return scalars
+
+
+8. How do you handle missing values in pandas?
+Answer:
+pythonimport pandas as pd
+import numpy as np
+
+# Create sample data with missing values
+data = {
+    'employee_id': [1, 2, 3, 4, 5, 6],
+    'name': ['Alice', 'Bob', None, 'Dave', 'Eve', 'Frank'],
+    'age': [25, np.nan, 35, 40, np.nan, 45],
+    'salary': [50000, 60000, np.nan, 80000, 75000, np.nan],
+    'department': ['IT', 'HR', 'IT', None, 'Finance', 'IT'],
+    'start_date': ['2020-01-01', '2019-05-15', None, '2018-03-10', '2021-07-20', '2020-11-30']
+}
+df = pd.DataFrame(data)
+
+print("Original DataFrame with missing values:")
+print(df)
+print(f"\nMissing values per column:\n{df.isnull().sum()}")
+print(f"\nTotal missing values: {df.isnull().sum().sum()}")
+
+# 1. DETECTING MISSING VALUES
+print("\n=== DETECTING MISSING VALUES ===")
+
+# Check for any missing values
+print(f"Has any missing values: {df.isnull().any().any()}")
+
+# Check missing values by column
+print(f"Columns with missing values:\n{df.isnull().any()}")
+
+# Get percentage of missing values
+missing_percent = (df.isnull().sum() / len(df)) * 100
+print(f"Missing value percentages:\n{missing_percent}")
+
+# Find rows with any missing values
+rows_with_missing = df[df.isnull().any(axis=1)]
+print(f"\nRows with missing values:\n{rows_with_missing}")
+
+# 2. REMOVING MISSING VALUES
+print("\n=== REMOVING MISSING VALUES ===")
+
+# Drop rows with any missing values
+df_drop_rows = df.dropna()
+print(f"After dropping rows with missing values: {len(df_drop_rows)} rows remaining")
+
+# Drop rows with missing values in specific columns
+df_drop_specific = df.dropna(subset=['name', 'salary'])
+print(f"After dropping rows with missing name or salary: {len(df_drop_specific)} rows remaining")
+
+# Drop columns with missing values
+df_drop_cols = df.dropna(axis=1)
+print(f"After dropping columns with missing values: {df_drop_cols.shape[1]} columns remaining")
+
+# Drop rows/columns with high percentage of missing values
+threshold = 0.5  # Keep only if at least 50% of values are non-null
+df_threshold = df.dropna(thresh=int(threshold * len(df)))
+print(f"After applying threshold: {len(df_threshold)} rows remaining")
+
+# 3. FILLING MISSING VALUES
+print("\n=== FILLING MISSING VALUES ===")
+
+# Fill with specific values
+df_filled = df.copy()
+
+# Fill numeric columns with mean/median
+df_filled['age'].fillna(df_filled['age'].mean(), inplace=True)
+df_filled['salary'].fillna(df_filled['salary'].median(), inplace=True)
+
+# Fill categorical columns with mode or specific value
+df_filled['name'].fillna('Unknown', inplace=True)
+df_filled['department'].fillna(df_filled['department'].mode()[0], inplace=True)
+
+print("After filling missing values:")
+print(df_filled)
+
+# 4. ADVANCED FILLING STRATEGIES
+print("\n=== ADVANCED FILLING STRATEGIES ===")
+
+# Forward fill (use previous value)
+df_ffill = df.copy()
+df_ffill['department'].fillna(method='ffill', inplace=True)
+
+# Backward fill (use next value)
+df_bfill = df.copy()
+df_bfill['department'].fillna(method='bfill', inplace=True)
+
+# Interpolation for numeric data
+df_interpolate = df.copy()
+df_interpolate['age'] = df_interpolate['age'].interpolate()
+df_interpolate['salary'] = df_interpolate['salary'].interpolate()
+
+print("After interpolation:")
+print(df_interpolate[['age', 'salary']])
+
+# Group-based filling
+df_group_fill = df.copy()
+# Fill missing salaries with department average
+df_group_fill['salary'] = df_group_fill.groupby('department')['salary'].transform(
+    lambda x: x.fillna(x.mean())
+)
+
+# 5. CUSTOM FILLING LOGIC
+def smart_fill_missing(df):
+    """Custom function to intelligently fill missing values"""
+    df_clean = df.copy()
+    
+    # Fill age based on department averages
+    for dept in df_clean['department'].dropna().unique():
+        dept_mask = df_clean['department'] == dept
+        dept_avg_age = df_clean[dept_mask]['age'].mean()
+        
+        if not pd.isna(dept_avg_age):
+            df_clean.loc[dept_mask, 'age'] = df_clean.loc[dept_mask, 'age'].fillna(dept_avg_age)
+    
+    # Fill remaining ages with overall average
+    df_clean['age'].fillna(df_clean['age'].mean(), inplace=True)
+    
+    # Fill salary based on age correlation
+    # Simple linear relationship: salary = 1000 * age + 30000
+    age_salary_mask = df_clean['salary'].isnull()
+    estimated_salary = df_clean.loc[age_salary_mask, 'age'] * 1000 + 30000
+    df_clean.loc[age_salary_mask, 'salary'] = estimated_salary
+    
+    # Fill categorical values
+    df_clean['name'].fillna('Unknown Employee', inplace=True)
+    df_clean['department'].fillna('Unassigned', inplace=True)
+    df_clean['start_date'].fillna('1900-01-01', inplace=True)
+    
+    return df_clean
+
+# Apply custom filling
+df_smart_filled = smart_fill_missing(df)
+print("\nAfter smart filling:")
+print(df_smart_filled)
+
+# 6. VALIDATION AFTER HANDLING MISSING VALUES
+def validate_missing_handling(original_df, processed_df):
+    """Validate the results of missing value handling"""
+    
+    print("\n=== VALIDATION RESULTS ===")
+    print(f"Original shape: {original_df.shape}")
+    print(f"Processed shape: {processed_df.shape}")
+    
+    print(f"\nOriginal missing values: {original_df.isnull().sum().sum()}")
+    print(f"Processed missing values: {processed_df.isnull().sum().sum()}")
+    
+    # Check data quality
+    if processed_df.isnull().sum().sum() == 0:
+        print("✓ All missing values handled")
+    else:
+        print("⚠ Some missing values remain")
+        print(f"Remaining missing values:\n{processed_df.isnull().sum()}")
+    
+    # Check for data integrity issues
+    numeric_cols = processed_df.select_dtypes(include=[np.number]).columns
+    for col in numeric_cols:
+        if (processed_df[col] < 0).any():
+            print(f"⚠ Warning: Negative values in {col}")
+        
+        # Check for outliers (simple method)
+        Q1 = processed_df[col].quantile(0.25)
+        Q3 = processed_df[col].quantile(0.75)
+        IQR = Q3 - Q1
+        outliers = processed_df[(processed_df[col] < Q1 - 1.5*IQR) | 
+                               (processed_df[col] > Q3 + 1.5*IQR)]
+        if len(outliers) > 0:
+            print(f"⚠ Warning: {len(outliers)} potential outliers in {col}")
+
+# Validate the smart filled data
+validate_missing_handling(df, df_smart_filled)
+
+# 7. REAL-WORLD BEST PRACTICES
+def handle_missing_values_production(df, strategy='smart'):
+    """Production-ready missing value handler"""
+    
+    # Log original state
+    original_shape = df.shape
+    missing_summary = df.isnull().sum()
+    
+    print(f"Processing {original_shape[0]} rows, {original_shape[1]} columns")
+    print(f"Missing values found in: {missing_summary[missing_summary > 0].index.tolist()}")
+    
+    if strategy == 'drop':
+        # Conservative approach - drop rows with critical missing values
+        critical_cols = ['employee_id', 'name']  # Define critical columns
+        df_clean = df.dropna(subset=critical_cols)
+        
+    elif strategy == 'fill':
+        df_clean = df.copy()
+        
+        # Numeric columns: fill with median (robust to outliers)
+        numeric_cols = df_clean.select_dtypes(include=[np.number]).columns
+        for col in numeric_cols:
+            df_clean[col].fillna(df_clean[col].median(), inplace=True)
+        
+        # Categorical columns: fill with mode or 'Unknown'
+        categorical_cols = df_clean.select_dtypes(include=['object']).columns
+        for col in categorical_cols:
+            mode_value = df_clean[col].mode()
+            fill_value = mode_value[0] if len(mode_value) > 0 else 'Unknown'
+            df_clean[col].fillna(fill_value, inplace=True)
+    
+    elif strategy == 'smart':
+        df_clean = smart_fill_missing(df)
+    
+    # Final validation
+    final_missing = df_clean.isnull().sum().sum()
+    print(f"Final result: {df_clean.shape}, {final_missing} missing values")
+    
+    return df_clean
+
+# Example usage
+production_result = handle_missing_values_production(df, strategy='smart')
+Explanation: Missing value handling depends on data context and business requirements. Always validate results and document your approach. Consider the impact of different strategies on downstream analysis.
+Best Practices:
+
+Understand the missingness pattern - is it random or systematic?
+Don't blindly drop data - you might lose important information
+Document your assumptions when filling values
+Validate results after handling missing values
+Consider domain knowledge for appropriate fill strategies
+
+
+9. What's the difference between merge() and join()?
+Answer:
+pythonimport pandas as pd
+
+# Create sample DataFrames for demonstration
+employees = pd.DataFrame({
+    'emp_id': [1, 2, 3, 4, 5],
+    'name': ['Alice', 'Bob', 'Carol', 'Dave', 'Eve'],
+    'dept_id': [10, 20, 10, 30, 20]
+})
+
+departments = pd.DataFrame({
+    'dept_id': [10, 20, 30, 40],
+    'dept_name': ['Engineering', 'Sales', 'Marketing', 'HR'],
+    'budget': [500000, 300000, 200000, 150000]
+})
+
+salaries = pd.DataFrame({
+    'emp_id': [1, 2, 3, 6],  # Note: emp_id 6 doesn't exist in employees
+    'salary': [75000, 80000, 70000, 85000]
+})
+
+print("Employees DataFrame:")
+print(employees)
+print("\nDepartments DataFrame:")
+print(departments)
+print("\nSalaries DataFrame:")
+print(salaries)
+
+# 1. MERGE() - More flexible, can join on any columns
+print("\n=== USING MERGE() ===")
+
+# Inner merge (default) - only matching records
+inner_merge = pd.merge(employees, departments, on='dept_id', how='inner')
+print("\nInner merge (employees + departments):")
+print(inner_merge)
+
+# Left merge - all records from left DataFrame
+left_merge = pd.merge(employees, departments, on='dept_id', how='left')
+print("\nLeft merge (all employees + matching departments):")
+print(left_merge)
+
+# Right merge - all records from right DataFrame
+right_merge = pd.merge(employees, departments, on='dept_id', how='right')
+print("\nRight merge (all departments + matching employees):")
+print(right_merge)
+
+# Outer merge - all records from both DataFrames
+outer_merge = pd.merge(employees, departments, on='dept_id', how='outer')
+print("\nOuter merge (all employees and departments):")
+print(outer_merge)
+
+# Merge on different column names
+merge_diff_cols = pd.merge(employees, salaries, on='emp_id', how='left')
+print("\nMerge with different column names:")
+print(merge_diff_cols)
+
+# Merge with suffixes for overlapping column names
+employees_extended = employees.copy()
+employees_extended['status'] = ['Active', 'Active', 'Active', 'Inactive', 'Active']
+
+departments_extended = departments.copy()
+departments_extended['status'] = ['Operating', 'Operating', 'Operating', 'New']
+
+merge_with_suffixes = pd.merge(
+    employees_extended, 
+    departments_extended, 
+    on='dept_id', 
+    how='left',
+    suffixes=('_emp', '_dept')
+)
+print("\nMerge with suffixes for overlapping columns:")
+print(merge_with_suffixes)
+
+# 2. JOIN() - Index-based, primarily for joining on index
+print("\n=== USING JOIN() ===")
+
+# Set index for join operations
+employees_indexed = employees.set_index('emp_id')
+salaries_indexed = salaries.set_index('emp_id')
+
+print("\nEmployees with index:")
+print(employees_indexed)
+print("\nSalaries with index:")
+print(salaries_indexed)
+
+# Inner join (default)
+inner_join = employees_indexed.join(salaries_indexed, how='inner')
+print("\nInner join (employees + salaries):")
+print(inner_join)
+
+# Left join
+left_join = employees_indexed.join(salaries_indexed, how='left')
+print("\nLeft join (all employees + matching salaries):")
+print(left_join)
+
+# Right join
+right_join = employees_indexed.join(salaries_indexed, how='right')
+print("\nRight join (all salaries + matching employees):")
+print(right_join)
+
+# Outer join
+outer_join = employees_indexed.join(salaries_indexed, how='outer')
+print("\nOuter join (all employees and salaries):")
+print(outer_join)
+
+# 3. KEY DIFFERENCES DEMONSTRATION
+print("\n=== KEY DIFFERENCES ===")
+
+# Difference 1: Column vs Index joining
+print("1. MERGE can join on any columns, JOIN primarily uses index")
+
+# Using merge on non-index columns (flexible)
+merge_result = pd.merge(employees, departments, on='dept_id')
+print("Merge on column 'dept_id':")
+print(merge_result.head(2))
+
+# Using join requires setting index first
+dept_indexed = departments.set_index('dept_id')
+emp_indexed = employees.set_index('dept_id')
+join_result = emp_indexed.join(dept_indexed)
+print("\nJoin on index 'dept_id':")
+print(join_result.head(2))
+
+# Difference 2: Multiple DataFrame joining
+print("\n2. Joining multiple DataFrames")
+
+# Merge multiple DataFrames (requires chaining)
+multi_merge = pd.merge(employees, departments, on='dept_id')
+multi_merge = pd.merge(multi_merge, salaries, on='emp_id', how='left')
+print("Multiple merge operations:")
+print(multi_merge)
+
+# Join multiple DataFrames (can be done in one operation)
+emp_idx = employees.set_index('emp_id')
+sal_idx = salaries.set_index('emp_id')
+
+# Create department lookup for employees
+emp_with_dept = pd.merge(employees, departments, on='dept_id').set_index('emp_id')
+
+multi_join = emp_idx.join([sal_idx], how='left')
+print("\nJoin operation:")
+print(multi_join)
+
+# 4. PERFORMANCE COMPARISON
+print("\n=== PERFORMANCE CONSIDERATIONS ===")
+
+import time
+
+# Create larger datasets for performance testing
+large_employees = pd.DataFrame({
+    'emp_id': range(10000),
+    'name': [f'Employee_{i}' for i in range(10000)],
+    'dept_id': [i % 100 for i in range(10000)]
+})
+
+large_salaries = pd.DataFrame({
+    'emp_id': range(5000, 15000),  # Some overlap
+    'salary': [50000 + (i % 50000) for i in range(10000)]
+})
+
+# Time merge operation
+start_time = time.time()
+merge_large = pd.merge(large_employees, large_salaries, on='emp_id', how='left')
+merge_time = time.time() - start_time
+
+# Time join operation (with index setting)
+start_time = time.time()
+emp_large_idx = large_employees.set_index('emp_id')
+sal_large_idx = large_salaries.set_index('emp_id')
+join_large = emp_large_idx.join(sal_large_idx, how='left')
+join_time = time.time() - start_time
+
+print(f"Merge time: {merge_time:.4f} seconds")
+print(f"Join time: {join_time:.4f} seconds")
+
+# 5. REAL-WORLD USAGE PATTERNS
+def analyze_employee_data(employees_df, departments_df, salaries_df):
+    """Real-world example of using merge vs join effectively"""
+    
+    # Use merge for complex joins on multiple conditions
+    # Join employees with departments
+    emp_dept = pd.merge(
+        employees_df, 
+        departments_df, 
+        on='dept_id', 
+        how='left',
+        validate='many_to_one'  # Validate join relationship
+    )
+    
+    # Use join for simple index-based operations
+    # Set up indexed DataFrames for repeated operations
+    emp_indexed = emp_dept.set_index('emp_id')
+    sal_indexed = salaries_df.set_index('emp_id')
+    
+    # Join salary information (faster for index-based joins)
+    complete_data = emp_indexed.join(sal_indexed, how='left')
+    
+    # Calculate department statistics
+    dept_stats = complete_data.groupby('dept_name').agg({
+        'salary': ['count', 'mean', 'sum'],
+        'budget': 'first'
+    }).round(2)
+    
+    # Calculate budget utilization
+    dept_summary = dept_stats.copy()
+    dept_summary.columns = ['emp_count', 'avg_salary', 'total_salary', 'budget']
+    dept_summary['utilization_pct'] = (
+        dept_summary['total_salary'] / dept_summary['budget'] * 100
+    ).round(2)
+    
+    return complete_data, dept_summary
+
+# Apply the analysis
+complete_data, dept_summary = analyze_employee_data(employees, departments, salaries)
+
+print("\n=== ANALYSIS RESULTS ===")
+print("Complete employee data:")
+print(complete_data)
+print("\nDepartment summary:")
+print(dept_summary)
+
+# 6. BEST PRACTICES SUMMARY
+print("\n=== BEST PRACTICES ===")
+print("""
+WHEN TO USE MERGE():
+- Joining on non-index columns
+- Complex join conditions
+- Need different column names for join keys
+- Joining DataFrames with different structures
+- Need to validate join relationships
+
+WHEN TO USE JOIN():
+- Joining on index (faster)
+- Simple index-based operations
+- Joining multiple DataFrames at once
+- Working with time series data (common to have date index)
+- When performance is critical for index operations
+
+PERFORMANCE TIPS:
+- Set index once and reuse for multiple joins
+- Use merge() validate parameter to catch data issues
+- Consider memory usage with large DataFrames
+- Use appropriate join types (inner vs left/right/outer)
+""")
+Explanation: merge() is more flexible and can join on any columns, while join() is optimized for index-based joins. Choose merge() for complex joins, join() for simple index operations.
+Key Differences:
+
+merge(): Column-based joining, more flexible, SQL-like
+join(): Index-based joining, faster for indexed operations
+merge(): Better for ad-hoc analysis
+join(): Better for repeated operations on indexed data
+
+
+10. How do you group data in pandas?
+Answer:
+pythonimport pandas as pd
+import numpy as np
+
+# Create sample dataset
+sales_data = pd.DataFrame({
+    'date': pd.date_range('2023-01-01', periods=100, freq='D'),
+    'salesperson': np.random.choice(['Alice', 'Bob', 'Carol', 'Dave'], 100),
+    'region': np.random.choice(['North', 'South', 'East', 'West'], 100),
+    'product': np.random.choice(['Laptop', 'Phone', 'Tablet'], 100),
+    'quantity': np.random.randint(1, 10, 100),
+    'unit_price': np.random.choice([500, 800, 1200, 300], 100),
+    'customer_type': np.random.choice(['New', 'Existing'], 100)
+})
+
+# Calculate total sales
+sales_data['total_sales'] = sales_data['quantity'] * sales_data['unit_price']
+
+print("Sample sales data:")
+print(sales_data.head())
+
+# 1. BASIC GROUPBY OPERATIONS
+print("\n=== BASIC GROUPBY OPERATIONS ===")
+
+# Group by single column
+by_region = sales_data.groupby('region')['total_sales'].sum()
+print("Total sales by region:")
+print(by_region)
+
+# Group by multiple columns
+by_region_product = sales_data.groupby(['region', 'product'])['total_sales'].sum()
+print("\nTotal sales by region and product:")
+print(by_region_product)
+
+# Multiple aggregation functions
+region_stats = sales_data.groupby('region')['total_sales'].agg(['sum', 'mean', 'count', 'std'])
+print("\nRegion statistics:")
+print(region_stats.round(2))
+
+# 2. ADVANCED AGGREGATION
+print("\n=== ADVANCED AGGREGATION ===")
+
+# Different aggregations for different columns
+advanced_agg = sales_data.groupby('region').agg({
+    'total_sales': ['sum', 'mean'],
+    'quantity': ['sum', 'mean'],
+    'unit_price': ['mean', 'min', 'max'],
+    'salesperson': 'nunique'  # Number of unique salespersons
+})
+
+print("Advanced aggregation by region:")
+print(advanced_agg.round(2))
+
+# Custom aggregation functions
+def sales_range(series):
+    return series.max() - series.min()
+
+def top_salesperson(group):
+    return group.loc[group['total_sales'].idxmax(), 'salesperson']
+
+custom_agg = sales_data.groupby('region').agg({
+    'total_sales': ['sum', 'mean', sales_range],
+    'salesperson': top_salesperson
+})
+
+print("\nCustom aggregation functions:")
+print(custom_agg)
+
+# 3. GROUPBY WITH APPLY
+print("\n=== GROUPBY WITH APPLY ===")
+
+# Apply custom function to each group
+def analyze_group(group):
+    return pd.Series({
+        'total_sales': group['total_sales'].sum(),
+        'avg_deal_size': group['total_sales'].mean(),
+        'top_product': group.loc[group['total_sales'].idxmax(), 'product'],
+        'sales_days': group['date'].nunique(),
+        'conversion_rate': len(group[group['customer_type'] == 'New']) / len(group)
+    })
+
+group_analysis = sales_data.groupby('region').apply(analyze_group)
+print("Group analysis using apply:")
+print(group_analysis.round(3))
+
+# Transform - apply function and return same shape
+sales_data['region_avg_sales'] = sales_data.groupby('region')['total_sales'].transform('mean')
+sales_data['sales_vs_region_avg'] = sales_data['total_sales'] - sales_data['region_avg_sales']
+
+print("\nTransform example (first 10 rows):")
+print(sales_data[['region', 'total_sales', 'region_avg_sales', 'sales_vs_region_avg']].head(10))
+
+# 4. FILTERING GROUPS
+print("\n=== FILTERING GROUPS ===")
+
+# Filter groups based on group properties
+high_volume_regions = sales_data.groupby('region').filter(lambda x: x['total_sales'].sum() > 50000)
+print(f"High volume regions data shape: {high_volume_regions.shape}")
+print("High volume regions:")
+print(high_volume_regions.groupby('region')['total_sales'].sum())
+
+# Filter and analyze
+def is_consistent_region(group):
+    # Region is consistent if std deviation is less than 30% of mean
+    return group['total_sales'].std() / group['total_sales'].mean() < 0.3
+
+consistent_regions = sales_data.groupby('region').filter(is_consistent_region)
+print(f"\nConsistent regions (low variance): {consistent_regions['region'].unique()}")
+
+# 5. TIME-BASED GROUPING
+print("\n=== TIME-BASED GROUPING ===")
+
+# Group by time periods
+sales_data['month'] = sales_data['date'].dt.to_period('M')
+sales_data['week'] = sales_data['date'].dt.to_period('W')
+
+monthly_sales = sales_data.groupby('month')['total_sales'].sum()
+print("Monthly sales:")
+print(monthly_sales.head())
+
+# Multiple time dimensions
+time_region_sales = sales_data.groupby(['month', 'region'])['total_sales'].sum()
+print("\nMonthly sales by region (first 10):")
+print(time_region_sales.head(10))
+
+# Resample for time series (alternative approach)
+sales_daily = sales_data.groupby('date')['total_sales'].sum()
+sales_weekly = sales_daily.resample('W').sum()
+print("\nWeekly sales (resampled):")
+print(sales_weekly.head())
+
+# 6. GROUPBY WITH MULTIPLE OPERATIONS
+print("\n=== COMPLEX GROUPBY SCENARIOS ===")
+
+# Ranking within groups
+sales_data['rank_in_region'] = sales_data.groupby('region')['total_sales'].rank(ascending=False)
+
+# Top N per group
+top_sales_per_region = sales_data.loc[
+    sales_data.groupby('region')['total_sales'].nlargest(2).index
+]
+print("Top 2 sales per region:")
+print(top_sales_per_region[['region', 'salesperson', 'total_sales', 'product']].sort_values(['region', 'total_sales'], ascending=[True, False]))
+
+# Cumulative statistics within groups
+sales_data['cumulative_sales_by_person'] = sales_data.groupby('salesperson')['total_sales'].cumsum()
+sales_data['running_avg_by_person'] = sales_data.groupby('salesperson')['total_sales'].expanding().mean()
+
+print("\nCumulative statistics (first 10 rows):")
+print(sales_data[['salesperson', 'total_sales', 'cumulative_sales_by_person', 'running_avg_by_person']].head(10).round(2))
+
+# 7. PIVOT TABLES (Alternative to GroupBy)
+print("\n=== PIVOT TABLES ===")
+
+# Pivot table - similar to groupby but different format
+pivot_sales = pd.pivot_table(
+    sales_data,
+    values='total_sales',
+    index='region',
+    columns='product',
+    aggfunc=['sum', 'mean'],
+    fill_value=0,
+    margins=True  # Add totals
+)
+
+print("Pivot table - Sales by region and product:")
+print(pivot_sales)
+
+# Cross-tabulation
+crosstab = pd.crosstab(
+    sales_data['region'],
+    sales_data['customer_type'],
+    values=sales_data['total_sales'],
+    aggfunc='sum',
+    margins=True
+)
+print("\nCross-tabulation - Sales by region and customer type:")
+print(crosstab)
+
+# 8. PERFORMANCE OPTIMIZATION
+print("\n=== PERFORMANCE OPTIMIZATION ===")
+
+# For large datasets, consider these optimizations:
+
+# 1. Use categorical data types for grouping columns
+sales_data['region_cat'] = sales_data['region'].astype('category')
+sales_data['product_cat'] = sales_data['product'].astype('category')
+
+# 2. Sort before grouping (can improve performance)
+sales_sorted = sales_data.sort_values(['region', 'product'])
+
+# 3. Use observed=True for categorical groupby to ignore unused categories
+categorical_groupby = sales_data.groupby('region_cat', observed=True)['total_sales'].sum()
+
+print("Optimized groupby with categorical data:")
+print(categorical_groupby)
+
+# 9. REAL-WORLD EXAMPLE: SALES DASHBOARD
+def create_sales_dashboard(df):
+    """Create a comprehensive sales dashboard using groupby operations"""
+    
+    dashboard = {}
+    
+    # Overall metrics
+    dashboard['total_sales'] = df['total_sales'].sum()
+    dashboard['total_transactions'] = len(df)
+    dashboard['avg_transaction_size'] = df['total_sales'].mean()
+    
+    # Regional performance
+    dashboard['regional_performance'] = df.groupby('region').agg({
+        'total_sales': ['sum', 'mean', 'count'],
+        'quantity': 'sum',
+        'salesperson': 'nunique'
+    }).round(2)
+    
+    # Product performance
+    dashboard['product_performance'] = df.groupby('product').agg({
+        'total_sales': 'sum',
+        'quantity': 'sum',
+        'unit_price': 'mean'
+    }).round(2)
+    
+    # Salesperson performance
+    dashboard['salesperson_performance'] = df.groupby('salesperson').agg({
+        'total_sales': ['sum', 'count'],
+        'region': lambda x: x.nunique()  # Number of regions covered
+    }).round(2)
+    
+    # Time trends
+    df_monthly = df.copy()
+    df_monthly['month'] = df_monthly['date'].dt.to_period('M')
+    dashboard['monthly_trends'] = df_monthly.groupby('month')['total_sales'].sum()
+    
+    # Customer segmentation
+    dashboard['customer_analysis'] = df.groupby('customer_type').agg({
+        'total_sales': ['sum', 'mean', 'count'],
+        'quantity': 'sum'
+    }).round(2)
+    
+    return dashboard
+
+# Generate dashboard
+dashboard = create_sales_dashboard(sales_data)
+
+print("\n=== SALES DASHBOARD ===")
+print(f"Total Sales: ${dashboard['total_sales']:,.2f}")
+print(f"Total Transactions: {dashboard['total_transactions']:,}")
+print(f"Average Transaction: ${dashboard['avg_transaction_size']:.2f}")
+
+print("\nRegional Performance:")
+print(dashboard['regional_performance'])
+
+print("\nTop Products by Sales:")
+top_products = dashboard['product_performance'].sort_values('total_sales', ascending=False)
+print(top_products)
+
+print("\nSalesperson Performance:")
+print(dashboard['salesperson_performance'])
+Explanation: GroupBy is fundamental for data analysis in pandas. Use it for aggregation, transformation, and filtering operations. Combine with pivot tables for different data perspectives.
+Key GroupBy Concepts:
+
+Split: Divide data into groups
+Apply: Apply function to each group
+Combine: Combine results back together
+Transform: Return same shape as original
+Filter: Select groups based on conditions
+Aggregate: Reduce groups to summary statistics
+
+
+File Operations & APIs (Questions 11-15)
+11. How do you work with JSON data in Python?
+Answer:
+pythonimport json
+import pandas as pd
+import requests
+from datetime import datetime
+
+# 1. BASIC JSON OPERATIONS
+print("=== BASIC JSON OPERATIONS ===")
+
+# Sample JSON data
+employee_data = {
+    "employee_id": 12345,
+    "name": "Alice Johnson",
+    "department": "Engineering",
+    "salary": 75000,
+    "skills": ["Python", "SQL", "AWS"],
+    "active": True,
+    "hire_date": "2022-01-15",
+    "projects": [
+        {"name": "Data Pipeline", "status": "completed"},
+        {"name": "ML Model", "status": "in_progress"}
+    ],
+    "manager": {
+        "name": "Bob Smith",
+        "employee_id": 11111
+    }
+}
+
+# Convert Python object to JSON string
+json_string = json.dumps(employee_data, indent=2)
+print("JSON String:")
+print(json_string)
+
+# Convert JSON string back to Python object
+parsed_data = json.loads(json_string)
+print(f"\nParsed data type: {type(parsed_data)}")
+print(f"Employee name: {parsed_data['name']}")
+
+# 2. READING/WRITING JSON FILES
+print("\n=== FILE OPERATIONS ===")
+
+# Write JSON to file
+with open('employee.json', 'w') as f:
+    json.dump(employee_data, f, indent=2, ensure_ascii=False)
+
+# Read JSON from file
+with open('employee.json', 'r') as f:
+    loaded_data = json.load(f)
+    print(f"Loaded employee: {loaded_data['name']}")
+
+# Handle file errors
+def safe_read_json(filename):
+    try:
+        with open(filename, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"File {filename} not found")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Invalid JSON in {filename}: {e}")
+        return None
+    except Exception as e:
+        print(f"Error reading {filename}: {e}")
+        return None
+
+# 3. WORKING WITH NESTED JSON DATA
+print("\n=== NESTED JSON PROCESSING ===")
+
+# Complex nested JSON (API response example)
+api_response = {
+    "status": "success",
+    "data": {
+        "employees": [
+            {
+                "id": 1,
+                "name": "Alice",
+                "department": {"id": 10, "name": "Engineering"},
+                "contact": {"email": "alice@company.com", "phone": "555-0001"},
+                "projects": [
+                    {"id": 101, "name": "Project A", "hours": 120},
+                    {"id": 102, "name": "Project B", "hours": 80}
+                ]
+            },
+            {
+                "id": 2,
+                "name": "Bob",
+                "department": {"id": 20, "name": "Sales"},
+                "contact": {"email": "bob@company.com", "phone": "555-0002"},
+                "projects": [
+                    {"id": 103, "name": "Project C", "hours": 160}
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "total_count": 2,
+        "timestamp": "2023-12-01T10:30:00Z"
+    }
+}
+
+# Extract data from nested structure
+def extract_employee_info(api_data):
+    employees = []
+    
+    if api_data.get("status") == "success":
+        for emp in api_data["data"]["employees"]:
+            # Flatten nested structure
+            employee_info = {
+                "id": emp["id"],
+                "name": emp["name"],
+                "department_id": emp["department"]["id"],
+                "department_name": emp["department"]["name"],
+                "email": emp["contact"]["email"],
+                "phone": emp["contact"]["phone"],
+                "total_project_hours": sum(proj["hours"] for proj in emp["projects"]),
+                "project_count": len(emp["projects"])
+            }
+            employees.append(employee_info)
+    
+    return employees
+
+flattened_employees = extract_employee_info(api_response)
+print("Flattened employee data:")
+for emp in flattened_employees:
+    print(f"  {emp['name']}: {emp['total_project_hours']} hours, {emp['project_count']} projects")
+
+# 4. JSON TO PANDAS DATAFRAME
+print("\n=== JSON TO DATAFRAME CONVERSION ===")
+
+# Method 1: Direct conversion (for simple structures)
+df_simple = pd.DataFrame(flattened_employees)
+print("Simple DataFrame from JSON:")
+print(df_simple)
+
+# Method 2: pandas.json_normalize for nested JSON
+df_normalized = pd.json_normalize(
+    api_response["data"]["employees"],
+    sep="_"  # Separator for nested column names
+)
+print("\nNormalized DataFrame:")
+print(df_normalized.columns.tolist())
+
+# Method 3: Custom normalization for complex nested data
+def json_to_dataframe(json_data):
+    """Convert complex nested JSON to DataFrame"""
+    
+    # Extract employees data
+    employees = json_data["data"]["employees"]
+    
+    # Create base employee DataFrame
+    base_df = pd.json_normalize(employees)
+    
+    # Handle projects separately (one-to-many relationship)
+    projects_data = []
+    for emp in employees:
+        for project in emp["projects"]:
+            project_row = {
+                "employee_id": emp["id"],
+                "employee_name": emp["name"],
+                "project_id": project["id"],
+                "project_name": project["name"],
+                "project_hours": project["hours"]
+            }
+            projects_data.append(project_row)
+    
+    projects_df = pd.DataFrame(projects_data)
+    
+    return base_df, projects_df
+
+employees_df, projects_df = json_to_dataframe(api_response)
+print("\nEmployees DataFrame:")
+print(employees_df[['id', 'name', 'department.name', 'contact.email']])
+print("\nProjects DataFrame:")
+print(projects_df)
+
+# 5. API INTEGRATION WITH JSON
+print("\n=== API INTEGRATION ===")
+
+def fetch_and_process_api_data(url, headers=None):
+    """Fetch JSON data from API and process it"""
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()  # Raise exception for bad status codes
+        
+        # Parse JSON response
+        json_data = response.json()
+        
+        # Process the data
+        if isinstance(json_data, list):
+            # Handle list of objects
+            df = pd.DataFrame(json_data)
+        elif isinstance(json_data, dict):
+            # Handle single object or nested structure
+            if 'data' in json_data:
+                df = pd.json_normalize(json_data['data'])
+            else:
+                df = pd.json_normalize([json_data])
+        
+        return df
+        
+    except requests.exceptions.RequestException as e:
+        print(f"API request failed: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Invalid JSON response: {e}")
+        return None
+    except Exception as e:
+        print(f"Error processing API data: {e}")
+        return None
+
+# Example usage (mock API)
+# api_df = fetch_and_process_api_data("https://jsonplaceholder.typicode.com/users")
+
+# 6. JSON DATA VALIDATION
+print("\n=== JSON DATA VALIDATION ===")
+
+def validate_employee_json(data):
+    """Validate employee JSON data structure"""
+    
+    required_fields = ['employee_id', 'name', 'department', 'active']
+    validation_errors = []
+    
+    # Check required fields
+    for field in required_fields:
+        if field not in data:
+            validation_errors.append(f"Missing required field: {field}")
+    
+    # Type validation
+    if 'employee_id' in data and not isinstance(data['employee_id'], int):
+        validation_errors.append("employee_id must be an integer")
+    
+    if 'salary' in data and not isinstance(data['salary'], (int, float)):
+        validation_errors.append("salary must be a number")
+    
+    if 'skills' in data and not isinstance(data['skills'], list):
+        validation_errors.append("skills must be a list")
+    
+    # Business rule validation
+    if 'salary' in data and data['salary'] < 0:
+        validation_errors.append("salary cannot be negative")
+    
+    return validation_errors
+
+# Test validation
+valid_employee = {
+    "employee_id": 12345,
+    "name": "Alice",
+    "department": "Engineering",
+    "salary": 75000,
+    "active": True
+}
+
+invalid_employee = {
+    "employee_id": "not_a_number",
+    "department": "Engineering",
+    "salary": -1000
+}
+
+print("Validation results for valid employee:")
+errors = validate_employee_json(valid_employee)
+print("Valid!" if not errors else f"Errors: {errors}")
+
+print("\nValidation results for invalid employee:")
+errors = validate_employee_json(invalid_employee)
+print("Valid!" if not errors else f"Errors: {errors}")
+
+# 7. CUSTOM JSON SERIALIZATION
+print("\n=== CUSTOM JSON SERIALIZATION ===")
+
+class CustomJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder for special data types"""
+    
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        elif isinstance(obj, set):
+            return list(obj)
+        elif hasattr(obj, '__dict__'):
+            # For custom objects
+            return obj.__dict__
+        return super().default(obj)
+
+# Example with datetime and custom objects
+class Employee:
+    def __init__(self, name, hire_date):
+        self.name = name
+        self.hire_date = hire_date
+        self.skills = {"Python", "SQL"}  # Set data type
+
+employee = Employee("Alice", datetime.now())
+
+# Standard json.dumps would fail with datetime and set
+custom_json = json.dumps(employee, cls=CustomJSONEncoder, indent=2)
+print("Custom JSON serialization:")
+print(custom_json)
+
+# 8. PERFORMANCE CONSIDERATIONS FOR LARGE JSON
+print("\n=== PERFORMANCE OPTIMIZATION ===")
+
+def process_large_json_file(filename, chunk_size=1000):
+    """Process large JSON files efficiently"""
+    
+    # For very large JSON files, consider streaming
+    import ijson  # Would need: pip install ijson
+    
+    # This is pseudo-code as ijson needs to be installed
+    """
+    with open(filename, 'rb') as file:
+        # Stream parse JSON objects
+        objects = ijson.items(file, 'data.employees.item')
+        
+        batch = []
+        for obj in objects:
+            batch.append(obj)
+            
+            if len(batch) >= chunk_size:
+                # Process batch
+                df_batch = pd.DataFrame(batch)
+                # ... process df_batch ...
+                batch = []
+        
+        # Process remaining items
+        if batch:
+            df_batch = pd.DataFrame(batch)
+            # ... process df_batch ...
+    """
+    pass
+
+# Memory-efficient JSON processing
+def memory_efficient_json_processing(json_data):
+    """Process JSON data with memory efficiency in mind"""
+    
+    # Use generators for large datasets
+    def employee_generator(data):
+        for emp in data.get("data", {}).get("employees", []):
+            yield {
+                "id": emp["id"],
+                "name": emp["name"],
+                "dept": emp["department"]["name"]
+            }
+    
+    # Process in chunks
+    employees = list(employee_generator(api_response))
+    df = pd.DataFrame(employees)
+    
+    return df
+
+efficient_df = memory_efficient_json_processing(api_response)
+print("Memory-efficient processing result:")
+print(efficient_df)
+
+# 9. REAL-WORLD JSON PROCESSING PIPELINE
+def json_etl_pipeline(json_source):
+    """Complete ETL pipeline for JSON data"""
+    
+    pipeline_result = {
+        "status": "success",
+        "records_processed": 0,
+        "errors": [],
+        "data": None
+    }
+    
+    try:
+        # Extract
+        if isinstance(json_source, str):
+            # Assume it's a filename
+            with open(json_source, 'r') as f:
+                raw_data = json.load(f)
+        else:
+            # Assume it's already parsed JSON
+            raw_data = json_source
+        
+        # Transform
+        if raw_data.get("status") == "success":
+            employees = []
+            
+            for emp_data in raw_data["data"]["employees"]:
+                # Data cleaning and transformation
+                clean_emp = {
+                    "id": emp_data["id"],
+                    "name": emp_data["name"].strip().title(),
+                    "department": emp_data["department"]["name"],
+                    "email": emp_data["contact"]["email"].lower(),
+                    "total_hours": sum(p["hours"] for p in emp_data["projects"]),
+                    "is_active": True,  # Default value
+                    "processed_date": datetime.now().isoformat()
+                }
+                employees.append(clean_emp)
+            
+            # Load (convert to DataFrame)
+            df = pd.DataFrame(employees)
+            
+            pipeline_result.update({
+                "records_processed": len(df),
+                "data": df
+            })
+            
+        else:
+            pipeline_result["status"] = "failed"
+            pipeline_result["errors"].append("API response status not success")
+    
+    except Exception as e:
+        pipeline_result["status"] = "failed"
+        pipeline_result["errors"].append(str(e))
+    
+    return pipeline_result
+
+# Run the pipeline
+pipeline_result = json_etl_pipeline(api_response)
+print("\n=== ETL PIPELINE RESULTS ===")
+print(f"Status: {pipeline_result['status']}")
+print(f"Records processed: {pipeline_result['records_processed']}")
+if pipeline_result['errors']:
+    print(f"Errors: {pipeline_result['errors']}")
+if pipeline_result['data'] is not None:
+    print("Processed data:")
+    print(pipeline_result['data'])
+Explanation: JSON is crucial for modern data engineering. Master reading, writing, validation, and conversion to DataFrame. Handle nested structures and API responses effectively.
+Key JSON Operations:
+
+json.loads(): String to Python object
+json.dumps(): Python object to string
+json.load(): File to Python object
+json.dump(): Python object to file
+pd.json_normalize(): Nested JSON to flat DataFrame
+Custom encoders: Handle special data types
+
+
+12. How do you make HTTP requests in Python?
+Answer:
+pythonimport requests
+import json
+import time
+from datetime import datetime
+import pandas as pd
+
+# 1. BASIC HTTP REQUESTS
+print("=== BASIC HTTP REQUESTS ===")
+
+# GET request
+def basic_get_request():
+    try:
+        response = requests.get('https://jsonplaceholder.typicode.com/posts/1')
+        
+        # Check if request was successful
+        if response.status_code == 200:
+            data = response.json()
+            print(f"GET Success: {data['title']}")
+            return data
+        else:
+            print(f"GET failed with status code: {response.status_code}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        print(f"GET request error: {e}")
+        return None
+
+# POST request
+def basic_post_request():
+    url = 'https://jsonplaceholder.typicode.com/posts'
+    
+    payload = {
+        'title': 'New Post',
+        'body': 'This is a test post',
+        'userId': 1
+    }
+    
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        
+        if response.status_code == 201:  # Created
+            data = response.json()
+            print(f"POST Success: Created post with ID {data['id']}")
+            return data
+        else:
+            print(f"POST failed with status code: {response.status_code}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        print(f"POST request error: {e}")
+        return None
+
+# Run basic examples
+get_result = basic_get_request()
+post_result = basic_post_request()
+
+# 2. ADVANCED REQUEST OPTIONS
+print("\n=== ADVANCED REQUEST OPTIONS ===")
+
+def advanced_requests_example():
+    """Demonstrate advanced request features"""
+    
+    # Request with custom headers, parameters, and timeout
+    headers = {
+        'User-Agent': 'MyApp/1.0',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer fake-token-for-demo'
+    }
+    
+    params = {
+        'page': 1,
+        'limit': 10,
+        'sort': 'date',
+        'filter': 'active'
+    }
+    
+    try:
+        response = requests.get(
+            'https://jsonplaceholder.typicode.com/posts',
+            headers=headers,
+            params=params,
+            timeout=10,  # 10 second timeout
+            verify=True,  # SSL verification
+            allow_redirects=True
+        )
+        
+        print(f"Request URL: {response.url}")
+        print(f"Status Code: {response.status_code}")
+        print(f"Response Headers: {dict(response.headers)}")
+        print(f"Response Time: {response.elapsed.total_seconds():.2f} seconds")
+        
+        return response.json()[:3]  # Return first 3 items
+        
+    except requests.exceptions.Timeout:
+        print("Request timed out")
+        return None
+    except requests.exceptions.ConnectionError:
+        print("Connection error")
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f"Request error: {e}")
+        return None
+
+advanced_result = advanced_requests_example()
+if advanced_result:
+    print(f"Retrieved {len(advanced_result)} posts")
+
+# 3. SESSION MANAGEMENT
+print("\n=== SESSION MANAGEMENT ===")
+
+def session_example():
+    """Use sessions for connection pooling and persistent settings"""
+    
+    session = requests.Session()
+    
+    # Set default headers for all requests in this session
+    session.headers.update({
+        'User-Agent': 'DataEngineering/1.0',
+        'Accept': 'application/json'
+    })
+    
+    # Set default timeout
+    session.timeout = 10
+    
+    results = []
+    
+    try:
+        # Multiple requests using the same session (connection pooling)
+        for post_id in range(1, 4):
+            url = f'https://jsonplaceholder.typicode.com/posts/{post_id}'
+            response = session.get(url)
+            
+            if response.status_code == 200:
+                data = response.json()
+                results.append({
+                    'id': data['id'],
+                    'title': data['title'][:50] + '...' if len(data['title']) > 50 else data['title']
+                })
+            
+            time.sleep(0.1)  # Be nice to the API
+    
+    finally:
+        session.close()  # Always close session
+    
+    return results
+
+session_results = session_example()
+print("Session results:")
+for result in session_results:
+    print(f"  Post {result['id']}: {result['title']}")
+
+# 4. ERROR HANDLING AND RETRIES
+print("\n=== ERROR HANDLING AND RETRIES ===")
+
+def robust_api_request(url, max_retries=3, backoff_factor=1):
+    """Make API request with retry logic and comprehensive error handling"""
+    
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(
+                url,
+                timeout=10,
+                headers={'User-Agent': 'RobustClient/1.0'}
+            )
+            
+            # Check for HTTP errors
+            response.raise_for_status()
+            
+            # Successful request
+            return {
+                'success': True,
+                'data': response.json(),
+                'status_code': response.status_code,
+                'attempt': attempt + 1
+            }
+            
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP Error on attempt {attempt + 1}: {e}")
+            if response.status_code in [500, 502, 503, 504]:
+                # Server errors - retry
+                if attempt < max_retries - 1:
+                    wait_time = backoff_factor * (2 ** attempt)
+                    print(f"Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                    continue
+            # Client errors (4xx) - don't retry
+            break
+            
+        except requests.exceptions.Timeout:
+            print(f"Timeout on attempt {attempt + 1}")
+            if attempt < max_retries - 1:
+                wait_time = backoff_factor * (2 ** attempt)
+                time.sleep(wait_time)
+                continue
+            
+        except requests.exceptions.ConnectionError:
+            print(f"Connection error on attempt {attempt + 1}")
+            if attempt < max_retries - 1:
+                wait_time = backoff_factor * (2 ** attempt)
+                time.sleep(wait_time)
+                continue
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Request error on attempt {attempt + 1}: {e}")
+            break
+    
+    # All attempts failed
+    return {
+        'success': False,
+        'error': 'Max retries exceeded',
+        'attempts': max_retries
+    }
+
+# Test robust request
+robust_result = robust_api_request('https://jsonplaceholder.typicode.com/posts/1')
+print(f"Robust request result: Success={robust_result['success']}, Attempts={robust_result.get('attempt', 'N/A')}")
+
+# 5. API RATE LIMITING
+print("\n=== RATE LIMITING ===")
+
+class RateLimitedSession:
+    def __init__(self, requests_per_second=2):
+        self.session = requests.Session()
+        self.min_interval = 1.0 / requests_per_second
+        self.last_request_time = 0
+    
+    def get(self, *args, **kwargs):
+        # Enforce rate limit
+        time_since_last = time.time() - self.last_request_time
+        if time_since_last < self.min_interval:
+            time.sleep(self.min_interval - time_since_last)
+        
+        self.last_request_time = time.time()
+        return self.session.get(*args, **kwargs)
+    
+    def close(self):
+        self.session.close()
+
+def rate_limited_example():
+    """Example using rate-limited session"""
+    
+    rate_limited = RateLimitedSession(requests_per_second=2)
+    results = []
+    
+    try:
+        start_time = time.time()
+        
+        for i in range(1, 5):
+            url = f'https://jsonplaceholder.typicode.com/posts/{i}'
+            response = rate_limited.get(url)
+            
+            if response.status_code == 200:
+                data = response.json()
+                results.append(data['title'][:30])
+        
+        elapsed = time.time() - start_time
+        print(f"Rate-limited requests completed in {elapsed:.2f} seconds")
+        
+    finally:
+        rate_limited.close()
+    
+    return results
+
+rate_limited_results = rate_limited_example()
+print(f"Rate-limited results: {len(rate_limited_results)} items")
+
+# 6. DATA PIPELINE INTEGRATION
+print("\n=== DATA PIPELINE INTEGRATION ===")
+
+def api_to_dataframe_pipeline(base_url, endpoints):
+    """Extract data from multiple API endpoints and create DataFrame"""
+    
+    all_data = []
+    session = requests.Session()
+    session.headers.update({'User-Agent': 'DataPipeline/1.0'})
+    
+    try:
+        for endpoint in endpoints:
+            url = f"{base_url}/{endpoint}"
+            
+            try:
+                response = session.get(url, timeout=10)
+                response.raise_for_status()
+                
+                data = response.json()
+                
+                # Add metadata
+                if isinstance(data, list):
+                    for item in data:
+                        item['source_endpoint'] = endpoint
+                        item['extracted_at'] = datetime.now().isoformat()
+                    all_data.extend(data)
+                else:
+                    data['source_endpoint'] = endpoint
+                    data['extracted_at'] = datetime.now().isoformat()
+                    all_data.append(data)
+                
+                print(f"Successfully extracted data from {endpoint}")
+                time.sleep(0.5)  # Rate limiting
+                
+            except Exception as e:
+                print(f"Failed to extract from {endpoint}: {e}")
+                continue
+    
+    finally:
+        session.close()
+    
+    # Convert to DataFrame
+    if all_data:
+        df = pd.DataFrame(all_data)
+        return df
+    else:
+        return pd.DataFrame()
+
+# Example pipeline
+endpoints = ['posts/1', 'posts/2', 'posts/3']
+pipeline_df = api_to_dataframe_pipeline('https://jsonplaceholder.typicode.com', endpoints)
+
+if not pipeline_df.empty:
+    print(f"Pipeline created DataFrame with {len(pipeline_df)} rows and {len(pipeline_df.columns)} columns")
+    print("Columns:", pipeline_df.columns.tolist())
+
+# 7. AUTHENTICATION EXAMPLES
+print("\n=== AUTHENTICATION EXAMPLES ===")
+
+def basic_auth_example():
+    """Example with basic authentication"""
+    
+    # Note: This is a demo - don't use real credentials
+    try:
+        response = requests.get(
+            'https://httpbin.org/basic-auth/user/pass',
+            auth=('user', 'pass'),  # Basic auth
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            print("Basic auth successful")
+            return response.json()
+        else:
+            print(f"Basic auth failed: {response.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"Basic auth error: {e}")
+        return None
+
+def bearer_token_example():
+    """Example with Bearer token authentication"""
+    
+    headers = {
+        'Authorization': 'Bearer fake-token-for-demo',
+        'Content-Type': 'application/json'
+    }
+    
+    try:
+        response = requests.get(
+            'https://httpbin.org/bearer',  # This endpoint expects a bearer token
+            headers=headers,
+            timeout=10
+        )
+        
+        print(f"Bearer token request status: {response.status_code}")
+        return response.status_code == 200
+        
+    except Exception as e:
+        print(f"Bearer token error: {e}")
+        return False
+
+# Test authentication (Note: these may fail as they're demo endpoints)
+# basic_result = basic_auth_example()
+# bearer_result = bearer_token_example()
+
+# 8. REAL-WORLD API CLIENT CLASS
+class APIClient:
+    """Production-ready API client with comprehensive features"""
+    
+    def __init__(self, base_url, api_key=None, rate_limit=5):
+        self.base_url = base_url.rstrip('/')
+        self.session = requests.Session()
+        self.rate_limit = rate_limit
+        self.min_interval = 1.0 / rate_limit if rate_limit else 0
+        self.last_request_time = 0
+        
+        # Set default headers
+        self.session.headers.update({
+            'User-Agent': 'APIClient/1.0',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        })
+        
+        if api_key:
+            self.session.headers.update({
+                'Authorization': f'Bearer {api_key}'
+            })
+    
+    def _rate_limit(self):
+        """Enforce rate limiting"""
+        if self.min_interval > 0:
+            time_since_last = time.time() - self.last_request_time
+            if time_since_last < self.min_interval:
+                time.sleep(self.min_interval - time_since_last)
+        self.last_request_time = time.time()
+    
+    def _make_request(self, method, endpoint, **kwargs):
+        """Make HTTP request with error handling"""
+        self._rate_limit()
+        
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        
+        try:
+            response = self.session.request(method, url, timeout=30, **kwargs)
+            response.raise_for_status()
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            raise
+    
+    def get(self, endpoint, params=None):
+        """GET request"""
+        response = self._make_request('GET', endpoint, params=params)
+        return response.json()
+    
+    def post(self, endpoint, data=None):
+        """POST request"""
+        response = self._make_request('POST', endpoint, json=data)
+        return response.json()
+    
+    def put(self, endpoint, data=None):
+        """PUT request"""
+        response = self._make_request('PUT', endpoint, json=data)
+        return response.json()
+    
+    def delete(self, endpoint):
+        """DELETE request"""
+        response = self._make_request('DELETE', endpoint)
+        return response.status_code == 204
+    
+    def get_paginated(self, endpoint, page_param='page', limit_param='limit', limit=100):
+        """Get all pages from a paginated endpoint"""
+        all_data = []
+        page = 1
+        
+        while True:
+            params = {page_param: page, limit_param: limit}
+            
+            try:
+                data = self.get(endpoint, params=params)
+                
+                if isinstance(data, list):
+                    if not data:  # Empty list means no more data
+                        break
+                    all_data.extend(data)
+                elif isinstance(data, dict) and 'items' in data:
+                    items = data['items']
+                    if not items:
+                        break
+                    all_data.extend(items)
+                    
+                    # Check if there are more pages
+                    if data.get('has_next', True) == False:
+                        break
+                else:
+                    # Single item or unknown structure
+                    all_data.append(data)
+                    break
+                
+                page += 1
+                
+            except Exception as e:
+                print(f"Error fetching page {page}: {e}")
+                break
+        
+        return all_data
+    
+    def close(self):
+        """Close the session"""
+        self.session.close()
+
+# Example usage of APIClient
+def api_client_example():
+    """Demonstrate APIClient usage"""
+    
+    client = APIClient('https://jsonplaceholder.typicode.com', rate_limit=2)
+    
+    try:
+        # Get single post
+        post = client.get('posts/1')
+        print(f"Retrieved post: {post['title'][:50]}...")
+        
+        # Get multiple posts (simulating pagination)
+        posts = client.get('posts', params={'_limit': 5})
+        print(f"Retrieved {len(posts)} posts")
+        
+        # Create new post
+        new_post = {
+            'title': 'My New Post',
+            'body': 'This is the content',
+            'userId': 1
+        }
+        created = client.post('posts', data=new_post)
+        print(f"Created post with ID: {created['id']}")
+        
+    except Exception as e:
+        print(f"API client error: {e}")
+    finally:
+        client.close()
+
+# Run the example
+api_client_example()
+
+print("\n=== HTTP REQUESTS SUMMARY ===")
+print("""
+KEY CONCEPTS:
+- Use requests library for HTTP operations
+- Always handle exceptions and status codes
+- Use sessions for multiple requests to same API
+- Implement retry logic for robustness
+- Respect rate limits
+- Use proper authentication methods
+- Structure API clients as classes for reusability
+""")
+Explanation: HTTP requests are essential for API integration in data pipelines. Master the requests library, handle errors gracefully, and implement proper rate limiting and authentication.
+Best Practices:
+
+Always handle exceptions and check status codes
+Use sessions for multiple requests to same API
+Implement retry logic with exponential backoff
+Respect rate limits to avoid being blocked
+Use proper authentication (API keys, tokens)
+Structure reusable API client classes
+Log requests for debugging and monitoring
+

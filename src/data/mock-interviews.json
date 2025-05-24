@@ -1,0 +1,124 @@
+{
+  "mockInterviews": [
+    {
+      "id": 1,
+      "title": "SQL Fundamentals Mock Interview",
+      "duration": 25,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Can you explain the difference between a primary key and a foreign key?",
+          "expectedAnswer": "A primary key uniquely identifies each record in a table and must contain unique, non-null values. A foreign key is a field in one table that refers to the primary key in another table, establishing a relationship between the tables.",
+          "difficulty": "Easy",
+          "category": "SQL Basics",
+          "followUpQuestions": [
+            "Can a table have multiple primary keys?",
+            "What happens if we try to delete a record that's referenced by a foreign key?"
+          ]
+        },
+        {
+          "id": 2,
+          "question": "How would you optimize a slow-performing SQL query?",
+          "expectedAnswer": "I would: 1) Check the execution plan to identify bottlenecks, 2) Ensure proper indexing on columns used in WHERE, JOIN, and ORDER BY clauses, 3) Rewrite subqueries as joins where possible, 4) Consider table partitioning for large tables, 5) Review and normalize the database schema if needed, 6) Use appropriate JOIN types and optimize JOIN conditions.",
+          "difficulty": "Medium",
+          "category": "SQL Advanced",
+          "followUpQuestions": [
+            "How would you choose which columns to index?",
+            "What's the trade-off with having too many indexes?"
+          ]
+        },
+        {
+          "id": 3,
+          "question": "Design a database schema for a simple order management system.",
+          "expectedAnswer": "I would create tables for: 1) Customers (customer_id PK, name, contact info), 2) Products (product_id PK, name, description, price), 3) Orders (order_id PK, customer_id FK, order_date, status), 4) OrderItems (order_id FK, product_id FK, quantity, unit_price). This handles the basic relationships while maintaining normalization.",
+          "difficulty": "Medium",
+          "category": "Data Modeling",
+          "followUpQuestions": [
+            "How would you handle product inventory?",
+            "What indexing strategy would you implement for this schema?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Python Data Processing Mock Interview",
+      "duration": 30,
+      "questions": [
+        {
+          "id": 1,
+          "question": "How would you handle a large CSV file that doesn't fit into memory?",
+          "expectedAnswer": "I would use Python's built-in csv module with file iterators or pandas' read_csv with the 'chunksize' parameter to process the file in chunks. Each chunk would be processed independently and results accumulated or written to an output file incrementally. This allows processing arbitrarily large files with constant memory usage.",
+          "difficulty": "Medium",
+          "category": "Python Basics",
+          "followUpQuestions": [
+            "What chunk size would you choose and why?",
+            "How would you parallelize this processing?"
+          ]
+        },
+        {
+          "id": 2,
+          "question": "Explain how you would perform a data quality assessment on a new dataset.",
+          "expectedAnswer": "I would: 1) Check for missing values and decide on imputation strategy, 2) Identify outliers using statistical methods or visualization, 3) Validate data types and ranges, 4) Check for duplicate records, 5) Verify referential integrity across related datasets, 6) Perform distribution analysis to understand data patterns, 7) Validate against business rules and expected values.",
+          "difficulty": "Medium",
+          "category": "Data Processing",
+          "followUpQuestions": [
+            "How would you automate this process for daily data loads?",
+            "What metrics would you track to monitor data quality over time?"
+          ]
+        },
+        {
+          "id": 3,
+          "question": "Write a function to detect and handle outliers in a numerical dataset.",
+          "expectedAnswer": "I would implement the IQR method: calculate Q1 (25th percentile) and Q3 (75th percentile), then define outliers as values < Q1 - 1.5*IQR or > Q3 + 1.5*IQR. Depending on requirements, outliers could be removed, capped at boundaries, or replaced with median/mean values.",
+          "difficulty": "Medium",
+          "category": "Python Advanced",
+          "followUpQuestions": [
+            "What other methods could you use to detect outliers?",
+            "How would this approach need to change for different types of distributions?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Azure Services & Architecture Mock Interview",
+      "duration": 30,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Compare Azure Data Factory and Azure Databricks. When would you choose one over the other?",
+          "expectedAnswer": "Azure Data Factory is an ETL service for creating data pipelines with a code-free experience, best for orchestration and simple transformations. Azure Databricks is a Spark-based analytics platform ideal for complex transformations, ML, and interactive data analysis. I'd use ADF for orchestration and simple ETL workflows, and Databricks for complex transformations, machine learning, or when Spark's distributed computing is needed.",
+          "difficulty": "Medium",
+          "category": "Azure Services",
+          "followUpQuestions": [
+            "How would you integrate these two services?",
+            "What are the cost considerations for each?"
+          ]
+        },
+        {
+          "id": 2,
+          "question": "Design a data architecture for a retail company that needs real-time inventory management across 500 stores.",
+          "expectedAnswer": "I would design: 1) Store systems using Azure IoT Hub or Event Hubs to capture inventory changes, 2) Azure Stream Analytics for real-time processing, 3) Azure Cosmos DB with multi-region writes for the operational data store, 4) Azure Synapse Analytics for historical analysis, 5) Power BI for dashboards. This architecture provides real-time inventory visibility while supporting historical analysis.",
+          "difficulty": "Hard",
+          "category": "System Design",
+          "followUpQuestions": [
+            "How would you handle offline scenarios at the stores?",
+            "How would you scale this solution to handle seasonal traffic spikes?"
+          ]
+        },
+        {
+          "id": 3,
+          "question": "Explain the concept of data partitioning in Azure Synapse Analytics and best practices for choosing a partition key.",
+          "expectedAnswer": "Data partitioning in Synapse Analytics horizontally divides tables into smaller segments to improve query performance and manage data lifecycles. Best practices for choosing a partition key include: 1) Select a column with low-to-medium cardinality, 2) Pick columns frequently used in WHERE clauses, especially date columns, 3) Ensure even data distribution across partitions, 4) Limit the number of partitions to avoid overhead (typically <1000), 5) Align with the table's distribution key for optimal joins.",
+          "difficulty": "Medium",
+          "category": "Azure Services",
+          "followUpQuestions": [
+            "How does partitioning differ from distribution in Synapse?",
+            "How would you implement partition switching for data lifecycle management?"
+          ]
+        }
+      ]
+    }
+  ]
+}

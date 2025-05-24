@@ -1,0 +1,364 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is the difference between WHERE and HAVING clauses?",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "WHERE filters rows before they are grouped, while HAVING filters groups after they are formed. WHERE is applied to individual rows, whereas HAVING is applied to groups created by GROUP BY.",
+      "pseudoCode": "SELECT column_name, COUNT(*)\nFROM table_name\nWHERE condition_for_rows\nGROUP BY column_name\nHAVING condition_for_groups",
+      "aiApproach": "When optimizing queries, consider the order of operations: WHERE filters happen first, so putting more conditions in WHERE rather than HAVING typically improves performance as it reduces the number of rows before aggregation."
+    },
+    {
+      "id": 2,
+      "question": "Explain the difference between UNION and UNION ALL.",
+      "difficulty": "Easy",
+      "timeEstimate": 3,
+      "answer": "UNION combines the results of two or more SELECT statements and removes duplicate rows. UNION ALL combines results without removing duplicates, making it faster as it skips the distinct operation.",
+      "pseudoCode": "-- UNION (removes duplicates)\nSELECT column1 FROM table1\nUNION\nSELECT column1 FROM table2\n\n-- UNION ALL (keeps duplicates)\nSELECT column1 FROM table1\nUNION ALL\nSELECT column1 FROM table2",
+      "aiApproach": "For performance optimization, use UNION ALL when you know there are no duplicates or when duplicates are acceptable, as it avoids the costly distinct operation."
+    },
+    {
+      "id": 3,
+      "question": "What is a CTE (Common Table Expression) and how is it used?",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "A CTE is a temporary result set that can be referenced within a SELECT, INSERT, UPDATE, or DELETE statement. It's defined using the WITH clause and exists only for the duration of the query execution.",
+      "pseudoCode": "WITH CTE_Name AS (\n  SELECT column1, column2\n  FROM table_name\n  WHERE condition\n)\nSELECT * FROM CTE_Name",
+      "aiApproach": "CTEs improve query readability by breaking complex queries into simpler, named blocks. They're especially useful for recursive queries or when you need to reference the same subquery multiple times."
+    },
+    {
+      "id": 4,
+      "question": "Explain the concept of a SQL JOIN and list the types of JOINs.",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "A JOIN combines rows from two or more tables based on a related column. Main types include: INNER JOIN (returns matching rows), LEFT JOIN (returns all rows from left table and matching from right), RIGHT JOIN (returns all rows from right table and matching from left), FULL JOIN (returns all rows when there's a match in either table).",
+      "pseudoCode": "SELECT a.column1, b.column2\nFROM table1 a\nINNER JOIN table2 b\n  ON a.common_field = b.common_field",
+      "aiApproach": "Visualize JOINs using Venn diagrams: INNER JOIN is the intersection, LEFT JOIN is the left circle plus intersection, RIGHT JOIN is the right circle plus intersection, and FULL JOIN is the union of both circles."
+    },
+    {
+      "id": 5,
+      "question": "What is the difference between a clustered and non-clustered index?",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "A clustered index determines the physical order of data in a table (only one per table). A non-clustered index creates a separate structure with pointers to the physical rows, without changing their order (multiple can exist per table).",
+      "pseudoCode": "-- Create clustered index\nCREATE CLUSTERED INDEX IX_Customers_ID\nON Customers(CustomerID)\n\n-- Create non-clustered index\nCREATE NONCLUSTERED INDEX IX_Customers_Name\nON Customers(CustomerName)",
+      "aiApproach": "Think of a clustered index like a phone book sorted by last name, and non-clustered indices like additional reference pages that point to the main entries."
+    },
+    {
+      "id": 6,
+      "question": "Write a query to find the second highest salary from an employee table",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "There are multiple approaches to find the second highest salary. You can use a subquery to find the maximum salary that is less than the maximum overall salary, or use window functions like ROW_NUMBER() or DENSE_RANK() to rank salaries and select the second one.",
+      "pseudoCode": "-- Using subquery\nSELECT MAX(salary) as second_highest_salary\nFROM employees\nWHERE salary < (SELECT MAX(salary) FROM employees);\n\n-- Using ROW_NUMBER()\nWITH RankedSalaries AS (\n  SELECT salary, ROW_NUMBER() OVER (ORDER BY salary DESC) as rn\n  FROM employees\n)\nSELECT salary as second_highest_salary\nFROM RankedSalaries\nWHERE rn = 2;",
+      "aiApproach": "When solving ranking problems, consider which approach handles edge cases better. The subquery approach handles NULL values well but won't return anything if there's only one distinct salary. Window functions provide more flexibility for complex ranking scenarios."
+    },
+    {
+      "id": 7,
+      "question": "What's the difference between INNER JOIN, LEFT JOIN, RIGHT JOIN, and FULL OUTER JOIN?",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "INNER JOIN returns only matching records from both tables. LEFT JOIN returns all records from the left table and matching records from the right table. RIGHT JOIN returns all records from the right table and matching records from the left table. FULL OUTER JOIN returns all records from both tables, with NULLs where there's no match.",
+      "pseudoCode": "-- INNER JOIN\nSELECT e.name, d.department_name\nFROM employees e\nINNER JOIN departments d ON e.dept_id = d.dept_id;\n\n-- LEFT JOIN\nSELECT e.name, d.department_name\nFROM employees e\nLEFT JOIN departments d ON e.dept_id = d.dept_id;",
+      "aiApproach": "Choose the join type based on what data you need - INNER for only matches, LEFT/RIGHT for keeping all rows from one side, FULL OUTER for everything. Visualize joins using Venn diagrams to understand which records are included in the result."
+    },
+    {
+      "id": 8,
+      "question": "Write a query using INNER JOIN to get employee names and their department names",
+      "difficulty": "Easy",
+      "timeEstimate": 4,
+      "answer": "An INNER JOIN connects two tables on a common field, returning only rows where the join condition is met in both tables. This query retrieves employee names along with their corresponding department names.",
+      "pseudoCode": "SELECT e.first_name, e.last_name, d.department_name\nFROM employees e\nINNER JOIN departments d ON e.department_id = d.department_id;",
+      "aiApproach": "When joining tables, think about the cardinality of the relationship. For one-to-many relationships like employee-to-department, each employee matches exactly one department record, but multiple employees can belong to the same department. Adding a WHERE clause after the join would further filter the results."
+    },
+    {
+      "id": 9,
+      "question": "Write a query to find duplicate records in a table",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "To find duplicate records, group by the column(s) that should be unique and use HAVING to filter groups with more than one occurrence. You can also join the table with itself on the duplicate columns to see the actual duplicate rows.",
+      "pseudoCode": "-- Find duplicate email addresses\nSELECT email, COUNT(*) as duplicate_count\nFROM employees\nGROUP BY email\nHAVING COUNT(*) > 1;\n\n-- To see the actual duplicate rows\nSELECT e1.*\nFROM employees e1\nINNER JOIN (\n  SELECT email\n  FROM employees\n  GROUP BY email\n  HAVING COUNT(*) > 1\n) e2 ON e1.email = e2.email;",
+      "aiApproach": "When dealing with data quality issues like duplicates, first identify which fields should be unique. For composite uniqueness constraints, include all relevant columns in the GROUP BY clause. The GROUP BY approach is typically more efficient than self-joins for large tables."
+    },
+    {
+      "id": 10,
+      "question": "How do you remove duplicates from a table?",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "You can remove duplicates using window functions like ROW_NUMBER() to identify duplicate rows, or by creating a new table with DISTINCT values. When using ROW_NUMBER(), you assign sequential numbers to groups of duplicates and keep only the first occurrence.",
+      "pseudoCode": "-- Method 1: Using ROW_NUMBER()\nWITH DuplicatesCTE AS (\n  SELECT *, ROW_NUMBER() OVER (\n    PARTITION BY email \n    ORDER BY employee_id\n  ) as row_num\n  FROM employees\n)\nDELETE FROM DuplicatesCTE WHERE row_num > 1;\n\n-- Method 2: Using DISTINCT in new table\nCREATE TABLE employees_clean AS\nSELECT DISTINCT * FROM employees;",
+      "aiApproach": "When removing duplicates, consider which record to keep within each duplicate group. You might want to keep the oldest record (MIN date), newest record (MAX date), or the one with the lowest/highest ID. The ORDER BY clause within the OVER() function controls which record gets row_num = 1 and is preserved."
+    },
+    {
+      "id": 11,
+      "question": "Write a query to find employees who have the same salary",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "To find employees with the same salary, you can either use a self-join approach matching on salary but excluding the same employee, or find salaries that appear more than once and then select employees with those salaries.",
+      "pseudoCode": "-- Self-join approach\nSELECT e1.name, e1.salary\nFROM employees e1\nINNER JOIN employees e2 ON e1.salary = e2.salary \nAND e1.employee_id != e2.employee_id;\n\n-- Alternative approach\nSELECT name, salary\nFROM employees\nWHERE salary IN (\n  SELECT salary\n  FROM employees\n  GROUP BY salary\n  HAVING COUNT(*) > 1\n);",
+      "aiApproach": "Self-joins are powerful for finding relationships between rows in the same table. The key is to join the table with itself using different aliases and ensure you're not matching a row with itself (using the inequality condition on IDs). For better performance on large tables, the second approach with IN might be more efficient."
+    },
+    {
+      "id": 12,
+      "question": "What is a self-join? Give an example",
+      "difficulty": "Medium",
+      "timeEstimate": 5,
+      "answer": "A self-join is when a table is joined with itself, typically used for hierarchical data or comparing rows within the same table. A common example is finding employees and their managers in an organization chart.",
+      "pseudoCode": "-- Find employees and their managers\nSELECT e1.name as employee_name, e2.name as manager_name\nFROM employees e1\nLEFT JOIN employees e2 ON e1.manager_id = e2.employee_id;",
+      "aiApproach": "Self-joins are particularly useful for hierarchical relationships within the same entity type, such as employee-manager relationships, category-subcategory structures, or geographic hierarchies. The table aliases are crucial to distinguish between the different roles the same table plays in the query."
+    },
+    {
+      "id": 13,
+      "question": "Write a query to find the Nth highest salary",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "To find the Nth highest salary, you can use window functions like DENSE_RANK() or ROW_NUMBER(), or use the LIMIT/OFFSET method in some database systems. DENSE_RANK() handles ties better, assigning the same rank to identical values.",
+      "pseudoCode": "-- For 3rd highest salary using DENSE_RANK()\nWITH RankedSalaries AS (\n  SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) as rank\n  FROM employees\n)\nSELECT DISTINCT salary\nFROM RankedSalaries\nWHERE rank = 3;\n\n-- Alternative using LIMIT/OFFSET\nSELECT DISTINCT salary\nFROM employees\nORDER BY salary DESC\nLIMIT 1 OFFSET 2; -- For 3rd highest (0-indexed)",
+      "aiApproach": "When choosing between window functions for ranking, remember: ROW_NUMBER() assigns unique sequential numbers (even for ties), RANK() leaves gaps after ties, and DENSE_RANK() doesn't leave gaps. The LIMIT/OFFSET approach is simpler but less flexible for handling ties and works differently across database systems."
+    },
+    {
+      "id": 14,
+      "question": "Write a query to find the average salary by department",
+      "difficulty": "Easy",
+      "timeEstimate": 4,
+      "answer": "To find the average salary by department, use the GROUP BY clause to partition data by department and the AVG() function to calculate the average salary for each group.",
+      "pseudoCode": "-- Basic query with department_id\nSELECT department_id, AVG(salary) as average_salary\nFROM employees\nGROUP BY department_id;\n\n-- With department names\nSELECT d.department_name, AVG(e.salary) as average_salary\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nGROUP BY d.department_name;",
+      "aiApproach": "GROUP BY partitions the data into groups, then aggregate functions like AVG() operate on each group separately. When analyzing salary data, consider adding ROUND() to control decimal places and include COUNT() to show the number of employees in each department for context."
+    },
+    {
+      "id": 15,
+      "question": "How do you find the count of employees in each department?",
+      "difficulty": "Easy",
+      "timeEstimate": 3,
+      "answer": "To count employees in each department, use GROUP BY with COUNT(). For a comprehensive report including departments with zero employees, use a LEFT JOIN from the departments table to the employees table.",
+      "pseudoCode": "-- Basic count by department_id\nSELECT department_id, COUNT(*) as employee_count\nFROM employees\nGROUP BY department_id;\n\n-- Including departments with no employees\nSELECT d.department_name, COUNT(e.employee_id) as employee_count\nFROM departments d\nLEFT JOIN employees e ON d.department_id = e.department_id\nGROUP BY d.department_name;",
+      "aiApproach": "Notice the use of COUNT(e.employee_id) instead of COUNT(*) in the LEFT JOIN query. This is important because COUNT(*) would count NULL rows created by the LEFT JOIN, while COUNT(column) only counts non-NULL values, giving us the correct employee count of zero for departments with no employees."
+    },
+    {
+      "id": 16,
+      "question": "Write a query to find departments with more than 5 employees",
+      "difficulty": "Easy",
+      "timeEstimate": 4,
+      "answer": "To find departments with more than 5 employees, use GROUP BY to group employees by department and HAVING to filter the groups that meet the count condition.",
+      "pseudoCode": "SELECT department_id, COUNT(*) as employee_count\nFROM employees\nGROUP BY department_id\nHAVING COUNT(*) > 5;",
+      "aiApproach": "HAVING is used to filter grouped results, allowing you to apply conditions to aggregate functions like COUNT(). Unlike WHERE (which filters before grouping), HAVING filters after the GROUP BY operation is complete. This makes it the appropriate choice for conditions based on aggregated values."
+    },
+    {
+      "id": 17,
+      "question": "What's the difference between COUNT(*) and COUNT(column_name)?",
+      "difficulty": "Easy",
+      "timeEstimate": 3,
+      "answer": "COUNT(*) counts all rows including NULLs, while COUNT(column_name) counts only non-NULL values in the specified column.",
+      "pseudoCode": "-- Example table with NULLs\nSELECT \n  COUNT(*) as total_rows,\n  COUNT(email) as non_null_emails,\n  COUNT(phone) as non_null_phones\nFROM employees;",
+      "aiApproach": "Use COUNT(*) when you need a total row count regardless of NULL values. Use COUNT(column) when you specifically want to count valid/non-missing values in a particular column. This distinction is particularly important when working with LEFT or RIGHT JOINs or tables with optional fields."
+    },
+    {
+      "id": 18,
+      "question": "Write a query using GROUP BY and HAVING",
+      "difficulty": "Medium",
+      "timeEstimate": 5,
+      "answer": "This query finds departments with specific characteristics: employees hired since 2020, with an average salary above $60,000, and at least 3 employees.",
+      "pseudoCode": "SELECT department_id, AVG(salary) as avg_salary, COUNT(*) as emp_count\nFROM employees\nWHERE hire_date >= '2020-01-01'\nGROUP BY department_id\nHAVING AVG(salary) > 60000 AND COUNT(*) >= 3;",
+      "aiApproach": "The order of operations matters: WHERE filters individual rows first, then GROUP BY creates groups, and finally HAVING filters those groups. This sequence optimizes performance by reducing the dataset early in the process. Multiple conditions in the HAVING clause allow for sophisticated filtering of grouped data."
+    },
+    {
+      "id": 19,
+      "question": "How do you calculate running totals in SQL?",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "Running totals are calculated using window functions with the SUM() function and an OVER clause that defines a window from the beginning of the partition up to the current row.",
+      "pseudoCode": "SELECT \n  employee_id,\n  salary,\n  SUM(salary) OVER (ORDER BY employee_id) as running_total\nFROM employees\nORDER BY employee_id;",
+      "aiApproach": "Window functions are powerful for analytical queries because they perform calculations across rows without collapsing them into a single output row like GROUP BY does. The default for SUM() OVER with just ORDER BY is already a running total, but you can be more explicit with ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. You can also add PARTITION BY to restart the running total for each group."
+    },
+    {
+      "id": 20,
+      "question": "Write a query to find the top 3 highest paid employees in each department",
+      "difficulty": "Hard",
+      "timeEstimate": 8,
+      "answer": "Use window functions with PARTITION BY to create separate rankings for each department, then filter for the top 3 in each group.",
+      "pseudoCode": "WITH RankedEmployees AS (\n  SELECT \n    employee_id,\n    name,\n    department_id,\n    salary,\n    ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) as rank\n  FROM employees\n)\nSELECT employee_id, name, department_id, salary\nFROM RankedEmployees\nWHERE rank <= 3;",
+      "aiApproach": "This pattern combining window functions with a CTE and filter is extremely versatile for top-N queries. You can change the ranking function based on your needs: ROW_NUMBER() for strict sequential ranking, RANK() or DENSE_RANK() for handling ties differently. For more complex criteria, you can use multiple columns in the ORDER BY clause within the window function."
+    },
+    {
+      "id": 21,
+      "question": "Explain aggregate functions (SUM, AVG, MAX, MIN, COUNT)",
+      "difficulty": "Easy",
+      "timeEstimate": 4,
+      "answer": "Aggregate functions perform calculations on a set of values and return a single value. SUM adds all values in a group, AVG calculates the mean, MAX finds the highest value, MIN finds the lowest value, and COUNT counts rows or non-NULL values.",
+      "pseudoCode": "SELECT \n  department_id,\n  SUM(salary) as total_payroll,\n  AVG(salary) as average_salary,\n  MAX(salary) as highest_salary,\n  MIN(salary) as lowest_salary,\n  COUNT(*) as employee_count\nFROM employees\nGROUP BY department_id;",
+      "aiApproach": "Aggregate functions operate on groups of rows, reducing multiple values to a single result per group. They're typically used with GROUP BY, but can also be used without it to produce a single row of results for the entire table. All aggregate functions except COUNT(*) automatically ignore NULL values."
+    },
+    {
+      "id": 22,
+      "question": "Write a query to find employees hired in the last 30 days",
+      "difficulty": "Easy",
+      "timeEstimate": 3,
+      "answer": "Use date arithmetic to compare the hire_date with a date 30 days ago from the current date. The exact syntax varies by database system.",
+      "pseudoCode": "-- Generic approach\nSELECT employee_id, name, hire_date\nFROM employees\nWHERE hire_date >= CURRENT_DATE - INTERVAL '30 days';\n\n-- SQL Server\nSELECT employee_id, name, hire_date\nFROM employees\nWHERE hire_date >= DATEADD(day, -30, GETDATE());\n\n-- PostgreSQL/MySQL\nSELECT employee_id, name, hire_date\nFROM employees\nWHERE hire_date >= NOW() - INTERVAL '30 days';",
+      "aiApproach": "Date arithmetic is database-specific, so be aware of syntax differences. For rolling time periods like 'last 30 days', using a relative calculation from the current date is better than hardcoding dates. This ensures the query remains valid over time without manual updates."
+    },
+    {
+      "id": 23,
+      "question": "How do you handle NULL values in aggregations?",
+      "difficulty": "Medium",
+      "timeEstimate": 5,
+      "answer": "Most aggregate functions (SUM, AVG, MAX, MIN) automatically ignore NULL values. COUNT(*) counts all rows including NULLs, while COUNT(column) counts only non-NULL values. Use COALESCE(), ISNULL(), or CASE statements to handle NULLs explicitly.",
+      "pseudoCode": "SELECT \n  AVG(salary) as avg_salary, -- Ignores NULLs\n  AVG(COALESCE(salary, 0)) as avg_with_zeros, -- Treats NULLs as 0\n  COUNT(*) as total_rows,\n  COUNT(salary) as non_null_salaries,\n  SUM(CASE WHEN salary IS NULL THEN 1 ELSE 0 END) as null_count\nFROM employees;",
+      "aiApproach": "How you handle NULLs depends on your business requirements. Ignoring NULLs (the default behavior) is appropriate when NULL means 'no data'. Treating NULLs as zeros or other default values is appropriate when NULL means 'zero' or some other specific value. Be explicit about your NULL handling to avoid unexpected results."
+    },
+    {
+      "id": 24,
+      "question": "What is a subquery? Write an example",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "A subquery is a query nested inside another query. It can return a single value (scalar), a single row with multiple columns (row), or multiple rows and columns (table). A common example is finding employees with above-average salaries.",
+      "pseudoCode": "-- Find employees earning above average salary\nSELECT name, salary\nFROM employees\nWHERE salary > (SELECT AVG(salary) FROM employees);",
+      "aiApproach": "Subqueries allow complex filtering and comparisons by using one query's result in another query's condition. They're especially useful when you need to compute a value for comparison or create a filtered set of data to join with. Consider performance implications for large datasets, as some subqueries can be rewritten as joins for better performance."
+    },
+    {
+      "id": 25,
+      "question": "What's the difference between correlated and non-correlated subqueries?",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "A non-correlated subquery executes once, independent of the outer query. A correlated subquery executes for each row of the outer query and references columns from the outer query.",
+      "pseudoCode": "-- Non-correlated subquery\nSELECT name, salary\nFROM employees\nWHERE salary > (SELECT AVG(salary) FROM employees);\n\n-- Correlated subquery  \nSELECT e1.name, e1.salary\nFROM employees e1\nWHERE e1.salary > (\n  SELECT AVG(e2.salary) \n  FROM employees e2 \n  WHERE e2.department_id = e1.department_id\n);",
+      "aiApproach": "Correlated subqueries are typically slower because they execute multiple times, but they're more flexible for row-by-row comparisons. Non-correlated subqueries are more efficient but less dynamic. The correlated example above finds employees earning above their department's average salary, which requires the subquery to access the outer query's department_id for each row."
+    },
+    {
+      "id": 26,
+      "question": "Write a query using EXISTS",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "The EXISTS operator checks for the existence of rows returned by a subquery. It's often used to find records that satisfy a condition in a related table.",
+      "pseudoCode": "-- Find employees who have made at least one sale\nSELECT e.employee_id, e.name\nFROM employees e\nWHERE EXISTS (\n  SELECT 1 \n  FROM sales s \n  WHERE s.employee_id = e.employee_id\n);\n\n-- Find departments with no employees\nSELECT d.department_name\nFROM departments d\nWHERE NOT EXISTS (\n  SELECT 1\n  FROM employees e\n  WHERE e.department_id = d.department_id\n);",
+      "aiApproach": "EXISTS returns TRUE if the subquery returns any rows and stops processing as soon as it finds a match. This makes it often more efficient than IN for correlated conditions, especially with large datasets. The use of SELECT 1 is a convention as the actual columns selected don't matter for EXISTS - it only checks if any rows are returned."
+    },
+    {
+      "id": 27,
+      "question": "What's the difference between IN and EXISTS?",
+      "difficulty": "Medium",
+      "timeEstimate": 5,
+      "answer": "IN compares with a list of values and can handle NULLs unexpectedly. EXISTS checks for the existence of rows and typically performs better with large datasets in correlated subqueries.",
+      "pseudoCode": "-- IN example\nSELECT name FROM employees\nWHERE department_id IN (\n  SELECT department_id \n  FROM departments \n  WHERE location = 'New York'\n);\n\n-- EXISTS example (often faster)\nSELECT name FROM employees e\nWHERE EXISTS (\n  SELECT 1 FROM departments d \n  WHERE d.department_id = e.department_id \n  AND d.location = 'New York'\n);",
+      "aiApproach": "EXISTS stops at the first match, making it more efficient for existence checks. IN must evaluate the entire subquery result set. EXISTS handles NULLs better in negation scenarios (NOT EXISTS vs NOT IN). For non-correlated conditions with small result sets, IN might be simpler and perform adequately."
+    },
+    {
+      "id": 28,
+      "question": "Write a recursive CTE example",
+      "difficulty": "Hard",
+      "timeEstimate": 10,
+      "answer": "Recursive CTEs process hierarchical or tree-structured data by starting with an anchor member and recursively adding related rows until no more matches are found.",
+      "pseudoCode": "-- Employee hierarchy (manager-subordinate relationships)\nWITH RECURSIVE EmployeeHierarchy AS (\n  -- Anchor: Top-level managers\n  SELECT employee_id, name, manager_id, 1 as level\n  FROM employees\n  WHERE manager_id IS NULL\n  \n  UNION ALL\n  \n  -- Recursive: Add subordinates\n  SELECT e.employee_id, e.name, e.manager_id, eh.level + 1\n  FROM employees e\n  JOIN EmployeeHierarchy eh ON e.manager_id = eh.employee_id\n)\nSELECT employee_id, name, level\nFROM EmployeeHierarchy\nORDER BY level, name;",
+      "aiApproach": "Recursive CTEs are ideal for traversing hierarchical data like organization charts, bill of materials, or category trees. The anchor member defines the starting point, while the recursive member joins back to the CTE to add the next level of the hierarchy. Always include a termination condition to prevent infinite recursion."
+    },
+    {
+      "id": 29,
+      "question": "How do you optimize subqueries?",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "Optimize subqueries by converting to JOINs when possible, using EXISTS instead of IN for correlated conditions, adding appropriate indexes, limiting subquery results with WHERE clauses, and using CTEs for repeated subqueries.",
+      "pseudoCode": "-- Slow subquery\nSELECT name FROM employees\nWHERE department_id IN (\n  SELECT department_id \n  FROM departments \n  WHERE budget > 1000000\n);\n\n-- Optimized JOIN\nSELECT DISTINCT e.name\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nWHERE d.budget > 1000000;",
+      "aiApproach": "JOINs often perform better than subqueries because database optimizers can choose better execution plans. However, some complex filtering logic is more clearly expressed with subqueries. Use EXPLAIN or execution plans to compare performance and determine the best approach for your specific query and data distribution."
+    },
+    {
+      "id": 30,
+      "question": "Write a query using multiple CTEs",
+      "difficulty": "Hard",
+      "timeEstimate": 9,
+      "answer": "Multiple CTEs can break complex logic into manageable steps, improving readability and maintainability of complex queries.",
+      "pseudoCode": "WITH HighPerformers AS (\n  SELECT employee_id, name, department_id, salary\n  FROM employees\n  WHERE performance_rating >= 4\n),\nDepartmentBudgets AS (\n  SELECT department_id, budget, location\n  FROM departments\n  WHERE budget > 500000\n),\nAnalysisResult AS (\n  SELECT \n    hp.name,\n    hp.salary,\n    db.budget,\n    db.location,\n    ROUND((hp.salary / db.budget) * 100, 2) as salary_budget_ratio\n  FROM HighPerformers hp\n  JOIN DepartmentBudgets db ON hp.department_id = db.department_id\n)\nSELECT \n  name,\n  salary,\n  location,\n  salary_budget_ratio\nFROM AnalysisResult\nWHERE salary_budget_ratio < 10\nORDER BY salary_budget_ratio DESC;",
+      "aiApproach": "Multiple CTEs create a sequence of logical building blocks, each with a meaningful name that documents its purpose. This modular approach makes complex queries easier to understand, maintain, and debug. It also allows the database optimizer to better process each CTE independently, potentially improving performance."
+    },
+    {
+      "id": 31,
+      "question": "What are indexes and how do they improve performance?",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "Indexes are database objects that improve query performance by creating sorted structures that enable faster data retrieval. They're similar to a book index, allowing the database to find data without scanning the entire table.",
+      "pseudoCode": "-- Create indexes\nCREATE INDEX idx_employee_department ON employees(department_id);\nCREATE INDEX idx_salary_date ON employees(salary, hire_date);",
+      "aiApproach": "Indexes speed up SELECT queries but slow down INSERT/UPDATE/DELETE operations. Consider indexing columns frequently used in WHERE clauses, JOIN conditions, and ORDER BY/GROUP BY operations. Use composite indexes for queries filtering on multiple columns. Monitor index usage and avoid over-indexing, as each index increases storage requirements and write operation overhead."
+    },
+    {
+      "id": 32,
+      "question": "Explain the difference between clustered and non-clustered indexes",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "A clustered index determines the physical order of data in a table (only one per table). A non-clustered index creates a separate structure with pointers to the data rows, without changing their physical order (multiple allowed per table).",
+      "pseudoCode": "-- Clustered index (automatically created with PRIMARY KEY)\nCREATE TABLE employees (\n  employee_id INT PRIMARY KEY, -- Clustered index\n  name VARCHAR(100)\n);\n\n-- Non-clustered index\nCREATE NONCLUSTERED INDEX idx_name ON employees(name);",
+      "aiApproach": "Think of a clustered index like a phone book (sorted by last name), while non-clustered indexes are like reference pages pointing to the main content. Clustered indexes are typically faster for range queries and accessing adjacent records. Non-clustered indexes excel in exact matches and when you need multiple different indexing strategies on the same table."
+    },
+    {
+      "id": 33,
+      "question": "What is query execution plan?",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "An execution plan shows how the database engine executes a query, including the order of operations, join methods used, indexes accessed, and estimated costs. It helps identify performance bottlenecks and optimization opportunities.",
+      "pseudoCode": "-- View execution plan\nEXPLAIN ANALYZE \nSELECT e.name, d.department_name\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nWHERE e.salary > 50000;\n\n-- SQL Server\nSET SHOWPLAN_ALL ON\nSELECT ...",
+      "aiApproach": "When analyzing execution plans, look for table scans (which read all rows and are generally slow) versus index seeks (which are typically faster). Pay attention to join types (nested loop, hash join, merge join), estimated versus actual rows processed, and cost percentages. These insights guide optimization efforts by showing where the database spends the most resources."
+    },
+    {
+      "id": 34,
+      "question": "How do you identify slow queries?",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "Identify slow queries using database performance monitoring tools, query logs, execution time profiling, and resource usage monitoring. Many database systems have built-in tools to track query performance.",
+      "pseudoCode": "-- Find slow queries (SQL Server)\nSELECT \n  sql_text.text,\n  stats.execution_count,\n  stats.total_elapsed_time / 1000000.0 AS total_elapsed_time_seconds,\n  stats.avg_elapsed_time / 1000000.0 AS avg_elapsed_time_seconds\nFROM sys.dm_exec_query_stats stats\nCROSS APPLY sys.dm_exec_sql_text(stats.sql_handle) sql_text\nORDER BY stats.avg_elapsed_time DESC;\n\n-- PostgreSQL slow query log\n-- Set in postgresql.conf: log_min_duration_statement = 1000",
+      "aiApproach": "Proactive monitoring helps identify performance issues before they impact users. Look for high CPU usage, long execution times, many table scans, and queries causing blocking or waiting. Set up alerts for queries exceeding normal execution time thresholds, and use automated tools to detect performance degradation patterns over time."
+    },
+    {
+      "id": 35,
+      "question": "What is normalization? Explain 1NF, 2NF, 3NF",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "Normalization is a database design technique that reduces data redundancy and improves data integrity through a series of rules called normal forms. 1NF requires atomic values and no repeating groups. 2NF requires 1NF plus no partial dependencies. 3NF requires 2NF plus no transitive dependencies.",
+      "pseudoCode": "-- Unnormalized table\nCREATE TABLE Orders (\n  order_id INT,\n  customer_name VARCHAR(100),\n  customer_address VARCHAR(200),\n  product1 VARCHAR(100),\n  product2 VARCHAR(100)\n);\n\n-- Normalized (3NF) tables\nCREATE TABLE Customers (\n  customer_id INT PRIMARY KEY,\n  customer_name VARCHAR(100),\n  customer_address VARCHAR(200)\n);\n\nCREATE TABLE Products (\n  product_id INT PRIMARY KEY,\n  product_name VARCHAR(100)\n);\n\nCREATE TABLE Orders (\n  order_id INT PRIMARY KEY,\n  customer_id INT,\n  FOREIGN KEY (customer_id) REFERENCES Customers(customer_id)\n);\n\nCREATE TABLE OrderItems (\n  order_id INT,\n  product_id INT,\n  quantity INT,\n  FOREIGN KEY (order_id) REFERENCES Orders(order_id),\n  FOREIGN KEY (product_id) REFERENCES Products(product_id)\n);",
+      "aiApproach": "Normalization prevents data anomalies (insert, update, delete) by organizing data efficiently. However, highly normalized databases may require more complex queries with multiple joins. For read-heavy workloads, consider strategic denormalization to balance performance and data integrity."
+    },
+    {
+      "id": 36,
+      "question": "What is denormalization and when would you use it?",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "Denormalization intentionally introduces redundancy to improve query performance. It's useful for read-heavy workloads, reporting/analytics systems, when performance is more critical than storage, and when complex joins are too slow.",
+      "pseudoCode": "-- Normalized tables require joins\nSELECT c.customer_name, SUM(oi.quantity * p.price)\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nJOIN order_items oi ON o.order_id = oi.order_id\nJOIN products p ON oi.product_id = p.product_id\nGROUP BY c.customer_name;\n\n-- Denormalized table (faster query)\nCREATE TABLE order_summary (\n  order_id INT,\n  customer_name VARCHAR(100),\n  product_name VARCHAR(100),\n  quantity INT,\n  price DECIMAL(10,2),\n  total_amount DECIMAL(10,2)\n);\n\nSELECT customer_name, SUM(total_amount)\nFROM order_summary\nGROUP BY customer_name;",
+      "aiApproach": "Denormalization trades storage space and update complexity for query performance. It's a common technique in data warehouses and reporting systems. Before denormalizing, analyze your workload's read/write ratio and identify the most critical queries that need optimization. Consider materialized views as an alternative that provides denormalization benefits with less maintenance overhead."
+    },
+    {
+      "id": 37,
+      "question": "How do you handle large datasets in SQL?",
+      "difficulty": "Hard",
+      "timeEstimate": 8,
+      "answer": "Handle large datasets using table partitioning, strategic indexing, pagination with LIMIT/OFFSET, batch processing, and archiving old data. These techniques improve query performance and manageability.",
+      "pseudoCode": "-- Partitioning example (PostgreSQL)\nCREATE TABLE sales (\n  sale_id INT,\n  sale_date DATE,\n  amount DECIMAL(10,2)\n) PARTITION BY RANGE (sale_date);\n\nCREATE TABLE sales_2023 PARTITION OF sales\nFOR VALUES FROM ('2023-01-01') TO ('2024-01-01');\n\n-- Pagination\nSELECT * FROM large_table\nORDER BY id\nLIMIT 1000 OFFSET 5000;\n\n-- Batch processing\nUPDATE large_table \nSET status = 'processed'\nWHERE id BETWEEN 1 AND 10000\nAND status = 'pending';",
+      "aiApproach": "For large datasets, focus on minimizing the amount of data processed. Use appropriate WHERE clauses to limit rows early, select only necessary columns, leverage partitioning for logical data segmentation, and implement caching strategies for frequently accessed data. Consider distributed database solutions for extremely large datasets that exceed single-server capabilities."
+    },
+    {
+      "id": 38,
+      "question": "What are partitions in databases?",
+      "difficulty": "Hard",
+      "timeEstimate": 7,
+      "answer": "Partitioning splits large tables into smaller, manageable pieces while maintaining logical unity. Types include range partitioning (based on value ranges), hash partitioning (based on hash function), list partitioning (based on specific values), and composite partitioning (combination of methods).",
+      "pseudoCode": "-- Range partitioning by date\nCREATE TABLE orders (\n  order_id INT,\n  order_date DATE,\n  customer_id INT,\n  amount DECIMAL(10,2)\n) \nPARTITION BY RANGE (YEAR(order_date)) (\n  PARTITION p2022 VALUES LESS THAN (2023),\n  PARTITION p2023 VALUES LESS THAN (2024),\n  PARTITION p2024 VALUES LESS THAN (2025)\n);\n\n-- Hash partitioning\nCREATE TABLE customers (\n  customer_id INT,\n  name VARCHAR(100)\n)\nPARTITION BY HASH(customer_id) PARTITIONS 4;",
+      "aiApproach": "Partitioning enables efficient querying of large tables by eliminating irrelevant data from searches. When a query includes the partitioning key, the database can perform partition pruning, scanning only relevant partitions instead of the entire table. This significantly improves performance for large tables. Design your partitioning strategy based on your most common query patterns."
+    },
+    {
+      "id": 39,
+      "question": "Explain the concept of database sharding",
+      "difficulty": "Hard",
+      "timeEstimate": 9,
+      "answer": "Sharding distributes data across multiple database instances (shards) to handle large scale. Strategies include horizontal sharding (split rows across shards), vertical sharding (split columns across shards), and directory-based sharding (lookup service for shard location).",
+      "pseudoCode": "-- Example: User data sharding by user_id\n-- Shard 1: user_id % 3 = 0\n-- Shard 2: user_id % 3 = 1  \n-- Shard 3: user_id % 3 = 2\n\n-- Application logic determines shard\nfunction getShardForUser(user_id) {\n  return user_id % 3;\n}\n\n-- Query specific shard\n-- For user_id = 12 (12 % 3 = 0, goes to Shard 1)\nSELECT * FROM users_shard_1 WHERE user_id = 12;",
+      "aiApproach": "Sharding enables horizontal scaling but adds application complexity. Consider it when a single database can no longer handle your workload. The key challenges include managing cross-shard queries (which are complex), rebalancing data across shards, handling transactions across multiple shards, and maintaining consistent schema changes. Select a sharding key that minimizes the need for cross-shard operations."
+    },
+    {
+      "id": 40,
+      "question": "How do you optimize a slow-running query?",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "Optimize slow queries through a systematic approach: analyze execution plans, check for missing indexes, optimize WHERE clauses, review JOIN conditions, and consider query rewriting for better performance.",
+      "pseudoCode": "-- Original slow query\nSELECT e.name, d.department_name, COUNT(p.project_id)\nFROM employees e\nLEFT JOIN departments d ON e.department_id = d.department_id\nLEFT JOIN projects p ON e.employee_id = p.assigned_employee_id\nWHERE e.hire_date > '2020-01-01'\nGROUP BY e.name, d.department_name;\n\n-- Optimization steps:\n\n-- 1. Add indexes\nCREATE INDEX idx_hire_date ON employees(hire_date);\nCREATE INDEX idx_dept_emp ON employees(department_id);\nCREATE INDEX idx_project_emp ON projects(assigned_employee_id);\n\n-- 2. Filter early\nWITH recent_employees AS (\n  SELECT employee_id, name, department_id\n  FROM employees\n  WHERE hire_date > '2020-01-01'\n)\nSELECT re.name, d.department_name, COUNT(p.project_id)\nFROM recent_employees re\nLEFT JOIN departments d ON re.department_id = d.department_id\nLEFT JOIN projects p ON re.employee_id = p.assigned_employee_id\nGROUP BY re.name, d.department_name;\n\n-- 3. Consider materialized views for repeated queries\nCREATE MATERIALIZED VIEW employee_project_summary AS\nSELECT e.name, d.department_name, COUNT(p.project_id) as project_count\nFROM employees e\nLEFT JOIN departments d ON e.department_id = d.department_id\nLEFT JOIN projects p ON e.employee_id = p.assigned_employee_id\nGROUP BY e.name, d.department_name;",
+      "aiApproach": "Query optimization requires systematic analysis and testing. Focus on the biggest performance gains first. Always check for proper indexes on columns used in WHERE clauses and JOIN conditions. Avoid SELECT * and instead select only necessary columns. Use appropriate JOIN types based on your data relationships. Filter data as early as possible in the query to reduce the working set. Consider query rewriting techniques like CTEs or temporary tables for complex logic. Keep database statistics up-to-date for better query planning."
+    }
+  ]
+}
