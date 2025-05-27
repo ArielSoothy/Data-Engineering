@@ -87,7 +87,7 @@ export const useQuestions = (category: string) => {
         setLoading(true);
         
         const { filePath } = getCategoryInfo(category);
-        const response = await fetch(`/data${filePath}`);
+        const response = await fetch(`./data${filePath}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.status}`);

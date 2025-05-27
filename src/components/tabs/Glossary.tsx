@@ -42,7 +42,7 @@ const Glossary = () => {
   useEffect(() => {
     const loadGlossaryData = async () => {
       try {
-        const response = await fetch('/data/data-engineering-glossary.json');
+        const response = await fetch('./data/data-engineering-glossary.json');
         const data = await response.json();
         setGlossaryData(data);
       } catch (error) {
