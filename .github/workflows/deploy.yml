@@ -36,6 +36,14 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+      - name: Setup SPA routing for GitHub Pages
+        run: |
+          # Copy index.html to 404.html for client-side routing
+          cp dist/index.html dist/404.html
+          # Copy CNAME if it exists
+          if [ -f "public/CNAME" ]; then
+            cp public/CNAME dist/
+          fi
       - name: Debug build output
         run: |
           echo "=== Build Output Contents ==="

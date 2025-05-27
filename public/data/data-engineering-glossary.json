@@ -1,0 +1,303 @@
+{
+  "junior": {
+    "title": "Junior Data Engineer Terms",
+    "description": "Essential terms every aspiring data engineer should know",
+    "terms": {
+      "ETL": {
+        "definition": "Extract, Transform, Load - the process of extracting data from sources, transforming it to fit business needs, and loading it into a data warehouse",
+        "example": "ETL pipeline that extracts customer data from MySQL, transforms it to remove duplicates, and loads it into Snowflake"
+      },
+      "Data Pipeline": {
+        "definition": "A series of data processing steps where output from one step becomes input for the next",
+        "example": "A pipeline that reads CSV files → validates data → transforms to JSON → stores in database"
+      },
+      "Database": {
+        "definition": "An organized collection of structured information stored electronically",
+        "example": "PostgreSQL database storing customer orders and product information"
+      },
+      "SQL": {
+        "definition": "Structured Query Language - used to communicate with and manipulate databases",
+        "example": "SELECT * FROM customers WHERE age > 25"
+      },
+      "Schema": {
+        "definition": "The structure that defines how data is organized in a database",
+        "example": "Table schema with columns: id (int), name (varchar), email (varchar)"
+      },
+      "API": {
+        "definition": "Application Programming Interface - a way for different software applications to communicate",
+        "example": "REST API endpoint /api/users that returns customer data in JSON format"
+      },
+      "JSON": {
+        "definition": "JavaScript Object Notation - a lightweight data interchange format",
+        "example": "{\"name\": \"John\", \"age\": 30, \"city\": \"Seattle\"}"
+      },
+      "CSV": {
+        "definition": "Comma-Separated Values - a simple file format for storing tabular data",
+        "example": "name,age,city\\nJohn,30,Seattle\\nJane,25,Portland"
+      },
+      "Data Quality": {
+        "definition": "The measure of data accuracy, completeness, and reliability",
+        "example": "Checking for null values, duplicate records, and valid email formats"
+      },
+      "CRUD": {
+        "definition": "Create, Read, Update, Delete - the four basic operations for managing data",
+        "example": "INSERT (Create), SELECT (Read), UPDATE, DELETE operations in SQL"
+      }
+    }
+  },
+  "mid": {
+    "title": "Mid-Level Data Engineer Terms",
+    "description": "Advanced concepts for growing data engineers",
+    "terms": {
+      "Data Warehouse": {
+        "definition": "A central repository that stores integrated data from multiple sources for analysis and reporting",
+        "example": "Snowflake data warehouse consolidating sales data from Salesforce, web analytics, and ERP systems"
+      },
+      "Data Lake": {
+        "definition": "A storage repository that holds vast amounts of raw data in its native format",
+        "example": "Azure Data Lake storing unstructured logs, images, videos, and structured data files"
+      },
+      "Apache Kafka": {
+        "definition": "A distributed streaming platform for building real-time data pipelines and streaming applications",
+        "example": "Kafka streaming customer clicks from website to analytics systems in real-time"
+      },
+      "Apache Airflow": {
+        "definition": "An open-source platform to develop, schedule, and monitor workflows",
+        "example": "Airflow DAG that runs daily ETL jobs with dependencies and error handling"
+      },
+      "Star Schema": {
+        "definition": "A database schema design with a central fact table connected to dimension tables",
+        "example": "Sales fact table (center) connected to Customer, Product, and Time dimension tables"
+      },
+      "Dimensional Modeling": {
+        "definition": "A data structure technique optimized for data warehouse queries and reporting",
+        "example": "Organizing data into facts (measurable events) and dimensions (descriptive attributes)"
+      },
+      "Data Mart": {
+        "definition": "A subset of a data warehouse focused on a specific business function or department",
+        "example": "Marketing data mart containing only customer demographics and campaign performance data"
+      },
+      "OLTP vs OLAP": {
+        "definition": "Online Transaction Processing (operational) vs Online Analytical Processing (analytical)",
+        "example": "OLTP: Order processing system; OLAP: Sales reporting and analysis system"
+      },
+      "Batch Processing": {
+        "definition": "Processing large volumes of data in scheduled intervals",
+        "example": "Daily batch job processing yesterday's transactions for reporting"
+      },
+      "Stream Processing": {
+        "definition": "Real-time processing of data as it arrives",
+        "example": "Processing credit card transactions instantly to detect fraud"
+      },
+      "Data Lineage": {
+        "definition": "The path data takes from source to destination, including all transformations",
+        "example": "Tracking how customer data flows from CRM → ETL → Data Warehouse → Dashboard"
+      },
+      "SCD": {
+        "definition": "Slowly Changing Dimensions - methods to handle changes in dimension data over time",
+        "example": "Type 2 SCD keeping history when a customer moves to a new address"
+      }
+    }
+  },
+  "senior": {
+    "title": "Senior Data Engineer Terms",
+    "description": "Expert-level concepts for senior data engineers",
+    "terms": {
+      "Data Mesh": {
+        "definition": "A decentralized approach to data architecture where domain teams own their data products",
+        "example": "Each business unit (Sales, Marketing, Finance) manages their own data pipelines and APIs"
+      },
+      "Lambda Architecture": {
+        "definition": "A data processing architecture combining batch and real-time processing layers",
+        "example": "Batch layer for historical analysis + Speed layer for real-time alerts + Serving layer for queries"
+      },
+      "Kappa Architecture": {
+        "definition": "A simplified architecture using only stream processing for both real-time and batch workloads",
+        "example": "Using Kafka Streams to process both real-time events and reprocess historical data"
+      },
+      "Change Data Capture (CDC)": {
+        "definition": "The process of identifying and capturing changes made to data in a database",
+        "example": "Debezium capturing every INSERT/UPDATE/DELETE from PostgreSQL to sync with data lake"
+      },
+      "Data Vault": {
+        "definition": "A database modeling methodology designed for data warehouses in big data environments",
+        "example": "Hub (business keys), Link (relationships), Satellite (descriptive attributes) tables"
+      },
+      "Microservices Architecture": {
+        "definition": "Architectural style structuring an application as a collection of loosely coupled services",
+        "example": "Separate services for data ingestion, transformation, quality checks, and serving"
+      },
+      "Event Sourcing": {
+        "definition": "Storing all changes to application state as a sequence of events",
+        "example": "Bank account balance calculated from sequence of deposit/withdrawal events"
+      },
+      "CQRS": {
+        "definition": "Command Query Responsibility Segregation - separating read and write operations",
+        "example": "Write commands to OLTP database, read queries from optimized OLAP views"
+      },
+      "Polyglot Persistence": {
+        "definition": "Using different data storage technologies for different data types and use cases",
+        "example": "PostgreSQL for transactions, MongoDB for documents, Redis for caching, Elasticsearch for search"
+      },
+      "Data Catalog": {
+        "definition": "A centralized inventory of data assets with metadata for discovery and governance",
+        "example": "Apache Atlas cataloging all datasets with schemas, owners, and data lineage"
+      },
+      "DataOps": {
+        "definition": "Collaborative data management practice focused on improving communication and automation",
+        "example": "CI/CD pipelines for data with automated testing, monitoring, and deployment"
+      },
+      "Data Governance": {
+        "definition": "Framework ensuring data is properly managed, secure, and compliant with regulations",
+        "example": "GDPR compliance policies for customer data access, retention, and deletion"
+      }
+    }
+  },
+  "mstic": {
+    "title": "Microsoft MSTIC Senior Data Engineer Terms",
+    "description": "Specialized terms for Microsoft security and intelligence platforms",
+    "terms": {
+      "Azure Sentinel": {
+        "definition": "Microsoft's cloud-native SIEM (Security Information and Event Management) solution",
+        "example": "Collecting security logs from Office 365, Azure AD, and firewalls for threat detection"
+      },
+      "KQL (Kusto Query Language)": {
+        "definition": "Query language used in Azure Data Explorer, Log Analytics, and Azure Sentinel",
+        "example": "SecurityEvent | where TimeGenerated > ago(24h) | summarize count() by Computer"
+      },
+      "Azure Data Explorer (ADX)": {
+        "definition": "Fast, fully managed data analytics service for real-time analysis of large volumes of data",
+        "example": "Analyzing petabytes of telemetry data for security threat hunting"
+      },
+      "Log Analytics Workspace": {
+        "definition": "Azure service that collects and analyzes log data from various sources",
+        "example": "Centralized workspace collecting logs from VMs, applications, and Azure services"
+      },
+      "Data Connector": {
+        "definition": "Components that enable data ingestion from various sources into Azure Sentinel",
+        "example": "Office 365 connector bringing email and SharePoint activity logs into Sentinel"
+      },
+      "Hunting Queries": {
+        "definition": "Proactive search queries to find threats and suspicious activities in security data",
+        "example": "KQL query searching for unusual login patterns or potential insider threats"
+      },
+      "Workbooks": {
+        "definition": "Interactive dashboards in Azure Sentinel for data visualization and analysis",
+        "example": "Security dashboard showing threat trends, incident status, and investigation metrics"
+      },
+      "Playbooks": {
+        "definition": "Automated response workflows triggered by security incidents or alerts",
+        "example": "Logic App that automatically blocks suspicious IPs when malware is detected"
+      },
+      "MITRE ATT&CK": {
+        "definition": "Framework describing adversary tactics and techniques based on real-world observations",
+        "example": "Mapping detected activities to MITRE techniques like T1078 (Valid Accounts)"
+      },
+      "Threat Intelligence": {
+        "definition": "Organized data about current and potential security threats",
+        "example": "IoC (Indicators of Compromise) feeds providing known malicious IP addresses and domains"
+      },
+      "SIEM": {
+        "definition": "Security Information and Event Management - platform for log collection and security analysis",
+        "example": "Azure Sentinel as cloud SIEM collecting logs from all enterprise systems"
+      },
+      "SOAR": {
+        "definition": "Security Orchestration, Automation and Response - platform for automating security operations",
+        "example": "Automated incident response workflows reducing manual investigation time"
+      },
+      "CommonSecurityLog": {
+        "definition": "Standardized log format in Azure Sentinel for security event data",
+        "example": "Firewall logs normalized into CommonSecurityLog table for consistent querying"
+      },
+      "Advanced Threat Protection (ATP)": {
+        "definition": "Microsoft's suite of security tools for detecting and responding to advanced threats",
+        "example": "Microsoft Defender ATP detecting fileless malware using behavioral analysis"
+      },
+      "Zero Trust": {
+        "definition": "Security model assuming no implicit trust and verifying every transaction",
+        "example": "Conditional Access policies requiring MFA even for internal network access"
+      }
+    }
+  },
+  "tools": {
+    "title": "Essential Data Engineering Tools",
+    "description": "Common tools and platforms used in data engineering",
+    "terms": {
+      "Apache Spark": {
+        "definition": "Unified analytics engine for large-scale data processing with built-in modules for SQL, streaming, ML",
+        "example": "Processing 10TB of customer data across 100 nodes for monthly analytics reports",
+        "when_to_use": "Large-scale data processing, ETL jobs, machine learning pipelines"
+      },
+      "Databricks": {
+        "definition": "Unified platform combining Apache Spark with collaborative notebooks and MLOps capabilities",
+        "example": "Data scientists and engineers collaborating on customer churn prediction model",
+        "when_to_use": "Collaborative analytics, machine learning workflows, complex data transformations"
+      },
+      "Snowflake": {
+        "definition": "Cloud-based data warehouse platform with automatic scaling and separation of compute/storage",
+        "example": "Enterprise data warehouse storing 50TB of structured data with instant scaling for reporting",
+        "when_to_use": "Data warehousing, business intelligence, analytical workloads"
+      },
+      "dbt (data build tool)": {
+        "definition": "Tool for transforming data in your warehouse using SQL and software engineering best practices",
+        "example": "Version-controlled SQL transformations with testing and documentation for customer metrics",
+        "when_to_use": "Data transformation, maintaining data models, analytics engineering"
+      },
+      "Apache Kafka": {
+        "definition": "Distributed streaming platform for building real-time data pipelines and applications",
+        "example": "Streaming millions of IoT sensor readings per second for real-time monitoring",
+        "when_to_use": "Real-time data streaming, event-driven architectures, microservices communication"
+      },
+      "Apache Airflow": {
+        "definition": "Platform to programmatically author, schedule and monitor workflows",
+        "example": "Orchestrating daily ETL pipeline with 20 dependent tasks and error handling",
+        "when_to_use": "Workflow orchestration, ETL scheduling, complex data pipeline management"
+      },
+      "Terraform": {
+        "definition": "Infrastructure as Code tool for building, changing, and versioning infrastructure",
+        "example": "Defining entire cloud data platform infrastructure in code for reproducible deployments",
+        "when_to_use": "Infrastructure automation, environment consistency, cloud resource management"
+      },
+      "Docker": {
+        "definition": "Platform for developing, shipping, and running applications in containers",
+        "example": "Packaging data pipeline with all dependencies for consistent deployment across environments",
+        "when_to_use": "Application packaging, environment consistency, microservices deployment"
+      },
+      "Kubernetes": {
+        "definition": "Container orchestration platform for automating deployment, scaling, and management",
+        "example": "Auto-scaling Spark jobs based on data volume and cluster resource availability",
+        "when_to_use": "Container orchestration, auto-scaling applications, cloud-native architectures"
+      },
+      "Apache Nifi": {
+        "definition": "Data integration tool for automating the flow of data between disparate systems",
+        "example": "Visual data flow connecting 50 different data sources with transformation and routing",
+        "when_to_use": "Data integration, real-time data flows, complex routing and transformation"
+      },
+      "Elasticsearch": {
+        "definition": "Distributed search and analytics engine built on Apache Lucene",
+        "example": "Full-text search across millions of customer support tickets with sub-second response",
+        "when_to_use": "Search functionality, log analytics, real-time data exploration"
+      },
+      "Redis": {
+        "definition": "In-memory data structure store used as database, cache, and message broker",
+        "example": "Caching frequently accessed customer profiles to reduce database load by 80%",
+        "when_to_use": "Caching, session storage, real-time analytics, pub/sub messaging"
+      },
+      "MinIO": {
+        "definition": "High-performance object storage compatible with Amazon S3 APIs",
+        "example": "On-premises object storage for data lake holding petabytes of unstructured data",
+        "when_to_use": "Object storage, data lake storage, S3-compatible storage on-premises"
+      },
+      "Apache Iceberg": {
+        "definition": "Open table format for huge analytic datasets with ACID transactions and schema evolution",
+        "example": "Maintaining consistent views of evolving customer data across multiple analytics tools",
+        "when_to_use": "Data lake table management, schema evolution, time travel queries"
+      },
+      "Great Expectations": {
+        "definition": "Python library for data validation, documentation, and profiling",
+        "example": "Automated data quality checks ensuring customer email formats are valid in every batch",
+        "when_to_use": "Data quality validation, pipeline testing, data documentation"
+      }
+    }
+  }
+}
