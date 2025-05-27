@@ -1,6 +1,6 @@
 # Data Engineering
 
-Interactive learning platform for Data Engineering topics including SQL and Python.
+Interactive learning platform for Data Engineering topics including SQL and Python. 🚀
 
 ## Table of Contents
 
