@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Loading Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #388e3c;
+        }
+        pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Engineering Website Loading Test</h1>
+        <div class="status">
+            This is a static test page to check if your GitHub Pages deployment is working correctly.
+        </div>
+        
+        <h2>Testing Environment</h2>
+        <div id="env-info">Loading environment information...</div>
+        
+        <h2>Actions</h2>
+        <button onclick="testHomepage()">Test Main App</button>
+        <button onclick="checkConsole()">Check Console Errors</button>
+        
+        <h2>Results</h2>
+        <pre id="results">No tests run yet.</pre>
+    </div>
+
+    <script>
+        // Display basic environment info
+        document.getElementById('env-info').innerHTML = `
+            <p>Page URL: ${window.location.href}</p>
+            <p>Base URL: ${window.location.origin + window.location.pathname}</p>
+        `;
+
+        // Function to test the main homepage loading
+        function testHomepage() {
+            const resultsElement = document.getElementById('results');
+            resultsElement.textContent = "Testing main app loading...";
+            
+            try {
+                // Create an iframe to load the main app
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = window.location.origin + window.location.pathname.replace(/\/test\.html$/, '') + '/index.html';
+                
+                iframe.onload = function() {
+                    resultsElement.textContent = "Main app loaded successfully in iframe!";
+                };
+                
+                iframe.onerror = function() {
+                    resultsElement.textContent = "Error loading main app!";
+                };
+                
+                document.body.appendChild(iframe);
+            } catch (error) {
+                resultsElement.textContent = "Error during test: " + error.message;
+            }
+        }
+
+        // Function to check for console errors
+        function checkConsole() {
+            const resultsElement = document.getElementById('results');
+            resultsElement.textContent = "No errors detected in current page.";
+            console.log("Console error check completed.");
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import TabNavigation from './components/TabNavigation';
@@ -7,6 +7,7 @@ import SQLBasics from './components/tabs/SQLBasics';
 import SQLAdvanced from './components/tabs/SQLAdvanced';
 import PythonBasics from './components/tabs/PythonBasics';
 import PythonAdvanced from './components/tabs/PythonAdvanced';
+import Glossary from './components/tabs/Glossary';
 import { ApiTest } from './components/ApiTest';
 
 // Apply dark mode on initial load
@@ -24,7 +25,12 @@ const DarkModeInitializer = () => {
   return null;
 };
 
+// Determine if we're in production GitHub Pages or local development
+const isGitHubPages = window.location.hostname.includes('github.io');
+
 function App() {
+  const Router = isGitHubPages ? HashRouter : BrowserRouter;
+  
   return (
     <AppProvider>
       <DarkModeInitializer />
@@ -38,6 +44,7 @@ function App() {
               <Route path="/sql-advanced" element={<SQLAdvanced />} />
               <Route path="/python-basics" element={<PythonBasics />} />
               <Route path="/python-advanced" element={<PythonAdvanced />} />
+              <Route path="/glossary" element={<Glossary />} />
               <Route path="/api-test" element={<ApiTest />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
