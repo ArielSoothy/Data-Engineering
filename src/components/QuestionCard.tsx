@@ -63,7 +63,7 @@ const QuestionCard = ({
           sqlRef.current = new SQL.Database();
           
           // Load mock database schema and data
-          const response = await fetch('/src/data/mock-db.sql');
+          const response = await fetch('./src/data/mock-db.sql');
           const sqlInit = await response.text();
           
           // Split and execute each statement separately
