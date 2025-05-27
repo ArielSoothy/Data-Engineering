@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Shuffle, CheckCircle, XCircle, ArrowRight, RotateCcw, Target } from 'lucide-react';
+import { Shuffle, CheckCircle, XCircle, ArrowRight, RotateCcw, Target, Sparkles } from 'lucide-react';
 import { useQuestions } from '../../hooks/useQuestions';
 import { generateTriviaAnswers, type TriviaAnswer } from '../../services/triviaService';
+import { generateAITriviaQuestions } from '../../services/aiTriviaService';
 import type { Question } from '../../hooks/useQuestions';
 
 interface TriviaQuestion extends Question {
@@ -20,6 +21,7 @@ const Trivia = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState<'All' | 'Easy' | 'Medium' | 'Hard'>('All');
+  const [questionSource, setQuestionSource] = useState<'existing' | 'ai-generated'>('existing');
   const [scoreHistory, setScoreHistory] = useState<{ correct: boolean; difficulty: string; time: number }[]>([]);
 
   // Load questions from all categories
@@ -42,43 +44,51 @@ const Trivia = () => {
 
   // Initialize trivia questions
   const initializeTrivia = async () => {
-    if (isLoadingData) return;
+    if (questionSource === 'existing' && isLoadingData) return;
 
     setIsLoading(true);
     try {
-      // Combine all questions from different categories
-      const allQuestions: Question[] = [
-        ...(sqlBasics || []),
-        ...(sqlAdvanced || []),
-        ...(pythonBasics || []),
-        ...(pythonAdvanced || [])
-      ];
+      if (questionSource === 'ai-generated') {
+        // Generate AI-powered questions
+        const aiQuestions = await generateAITriviaQuestions(selectedDifficulty, 20);
+        setTriviaQuestions(aiQuestions);
+      } else {
+        // Use existing questions logic
+        // Combine all questions from different categories
+        const allQuestions: Question[] = [
+          ...(sqlBasics || []),
+          ...(sqlAdvanced || []),
+          ...(pythonBasics || []),
+          ...(pythonAdvanced || [])
+        ];
 
-      if (allQuestions.length === 0) {
-        console.warn('No questions loaded');
-        return;
+        if (allQuestions.length === 0) {
+          console.warn('No questions loaded');
+          return;
+        }
+
+        // Filter questions by selected difficulty
+        const filteredQuestions = selectedDifficulty === 'All' 
+          ? allQuestions 
+          : allQuestions.filter(q => q.difficulty === selectedDifficulty);
+
+        // Select 20 random questions
+        const selectedQuestions = shuffleArray(filteredQuestions).slice(0, 20);
+
+        // Generate trivia answers for each question
+        const triviaQuestionsWithAnswers: TriviaQuestion[] = await Promise.all(
+          selectedQuestions.map(async (question) => {
+            const answers = await generateTriviaAnswers(question, allQuestions);
+            return {
+              ...question,
+              answers: shuffleArray(answers) // Shuffle answer order
+            } as TriviaQuestion;
+          })
+        );
+
+        setTriviaQuestions(triviaQuestionsWithAnswers);
       }
 
-      // Filter questions by selected difficulty
-      const filteredQuestions = selectedDifficulty === 'All' 
-        ? allQuestions 
-        : allQuestions.filter(q => q.difficulty === selectedDifficulty);
-
-      // Select 20 random questions
-      const selectedQuestions = shuffleArray(filteredQuestions).slice(0, 20);
-
-      // Generate trivia answers for each question
-      const triviaQuestionsWithAnswers: TriviaQuestion[] = await Promise.all(
-        selectedQuestions.map(async (question) => {
-          const answers = await generateTriviaAnswers(question, allQuestions);
-          return {
-            ...question,
-            answers: shuffleArray(answers) // Shuffle answer order
-          } as TriviaQuestion;
-        })
-      );
-
-      setTriviaQuestions(triviaQuestionsWithAnswers);
       setCurrentQuestionIndex(0);
       setScore(0);
       setQuestionsAnswered(0);
@@ -134,6 +144,7 @@ const Trivia = () => {
     setSelectedAnswer(null);
     setShowExplanation(false);
     setSelectedDifficulty('All');
+    setQuestionSource('existing');
     setScoreHistory([]);
   };
 
@@ -141,7 +152,10 @@ const Trivia = () => {
   const isGameComplete = currentQuestionIndex === triviaQuestions.length - 1 && showExplanation;
   const scorePercentage = questionsAnswered > 0 ? Math.round((score / questionsAnswered) * 100) : 0;
 
-  if (isLoadingData) {
+  // Only show loading for existing questions when data is still loading
+  const shouldShowLoadingForExisting = questionSource === 'existing' && isLoadingData;
+
+  if (shouldShowLoadingForExisting) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -162,13 +176,14 @@ const Trivia = () => {
               Interactive Trivia Challenge
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-6 text-lg">
-              Test your knowledge with 20 random questions from SQL and Python topics.
-              Each question has 3 multiple choice answers - only one is correct!
+              Test your knowledge with 20 questions from SQL, Python, Azure, and system design topics.
+              Choose between curated existing questions or AI-generated questions tailored for Microsoft interviews!
             </p>
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
               <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">What you'll get:</h3>
               <ul className="text-blue-800 dark:text-blue-400 text-sm space-y-1">
-                <li>• 20 questions from SQL Basics, SQL Advanced, Python Basics & Python Advanced</li>
+                <li>• 📚 <strong>Existing Questions:</strong> Curated questions from SQL Basics, SQL Advanced, Python Basics & Python Advanced</li>
+                <li>• 🤖 <strong>AI-Generated:</strong> Fresh questions covering Azure, system design, and Microsoft-specific topics</li>
                 <li>• Multiple choice format with realistic distractors</li>
                 <li>• Detailed explanations after each answer</li>
                 <li>• Progress tracking and final score</li>
@@ -194,20 +209,57 @@ const Trivia = () => {
               </div>
             </div>
 
+            {/* Question Source Selection */}
+            <div className="mb-6">
+              <label className="block text-left mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Question Source:
+              </label>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <button
+                  onClick={() => setQuestionSource('existing')}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center 
+                    ${questionSource === 'existing' ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+                >
+                  📚 Existing Questions
+                </button>
+                <button
+                  onClick={() => setQuestionSource('ai-generated')}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center 
+                    ${questionSource === 'ai-generated' ? 'bg-purple-500 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}
+                >
+                  <Sparkles className="mr-1 h-4 w-4" />
+                  AI-Generated
+                </button>
+              </div>
+              {questionSource === 'ai-generated' && (
+                <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <p className="text-sm text-purple-800 dark:text-purple-300">
+                    <Sparkles className="inline h-4 w-4 mr-1" />
+                    AI will generate fresh questions tailored to Microsoft Data Engineer interviews, 
+                    including Azure, SQL, Python, and system design topics.
+                  </p>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={initializeTrivia}
-              disabled={isLoading}
+              disabled={isLoading || (questionSource === 'existing' && isLoadingData)}
               className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 flex items-center mx-auto"
             >
               {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Preparing Questions...
+                  {questionSource === 'ai-generated' ? 'Generating AI Questions...' : 'Preparing Questions...'}
                 </>
               ) : (
                 <>
-                  <Shuffle className="mr-2 h-5 w-5" />
-                  Start Trivia Challenge
+                  {questionSource === 'ai-generated' ? (
+                    <Sparkles className="mr-2 h-5 w-5" />
+                  ) : (
+                    <Shuffle className="mr-2 h-5 w-5" />
+                  )}
+                  {questionSource === 'ai-generated' ? 'Generate AI Trivia' : 'Start Trivia Challenge'}
                 </>
               )}
             </button>
