@@ -1,0 +1,204 @@
+{
+  "services": [
+    {
+      "id": 1,
+      "name": "Azure Data Factory",
+      "category": "Integration",
+      "description": "A cloud-based ETL and data integration service that allows you to create data-driven workflows for orchestrating data movement and transforming data at scale.",
+      "keyFeatures": [
+        "Visual ETL/ELT pipeline creation",
+        "90+ built-in connectors",
+        "Code-free data transformation with mapping data flows",
+        "Serverless Apache Spark for data transformation",
+        "CI/CD integration with Git repositories"
+      ],
+      "commonUseCases": [
+        "Data ingestion into data lakes",
+        "Code-free ETL processes",
+        "Lift and shift SSIS packages",
+        "Data transformation at scale"
+      ],
+      "interviewTips": "Emphasize the difference between control flow activities vs. data flow activities. Mention how ADF integrates with Azure DevOps for CI/CD and how you would handle error logging and notifications."
+    },
+    {
+      "id": 2,
+      "name": "Azure Synapse Analytics",
+      "category": "Analytics",
+      "description": "An integrated analytics service that brings together enterprise data warehousing, big data analytics, and data integration into a single unified platform.",
+      "keyFeatures": [
+        "SQL pools (formerly SQL DW) for enterprise data warehousing",
+        "Spark pools for big data processing",
+        "Serverless SQL pool for on-demand querying",
+        "Data integration with built-in ETL/ELT",
+        "Unified experience with Power BI, Azure ML, and Azure Data Factory"
+      ],
+      "commonUseCases": [
+        "Enterprise data warehousing",
+        "Advanced analytics on large datasets",
+        "Real-time analytics",
+        "Data exploration and discovery"
+      ],
+      "interviewTips": "Discuss distribution strategies (hash, round-robin, replicated) for tables and when to use each. Explain how workload management works and how to optimize resource utilization between different user groups."
+    },
+    {
+      "id": 3,
+      "name": "Azure Databricks",
+      "category": "Analytics",
+      "description": "A fast, easy, and collaborative Apache Spark-based analytics service designed for data science and data engineering.",
+      "keyFeatures": [
+        "Optimized Spark runtime (up to 50x faster)",
+        "Interactive notebooks (Python, Scala, R, SQL)",
+        "Built-in MLflow for machine learning lifecycle",
+        "Delta Lake for reliable data lakes",
+        "Fine-grained security with Azure AD integration"
+      ],
+      "commonUseCases": [
+        "Advanced analytics and machine learning",
+        "ETL/ELT processing",
+        "Streaming analytics",
+        "Delta Lake implementation"
+      ],
+      "interviewTips": "Explain the difference between Databricks Runtime and standard Apache Spark. Discuss how Delta Lake improves data reliability with ACID transactions and how you would implement medallion architecture (bronze, silver, gold layers)."
+    },
+    {
+      "id": 4,
+      "name": "Azure Data Lake Storage",
+      "category": "Storage",
+      "description": "A highly scalable and cost-effective data lake solution for big data analytics, built on Azure Blob Storage with enhanced security and performance features.",
+      "keyFeatures": [
+        "Hierarchical namespace (folders and files)",
+        "Massive scalability for petabyte-scale workloads",
+        "POSIX-compliant ACLs for fine-grained access control",
+        "Optimized driver for analytics engines",
+        "Integration with Azure analytics services"
+      ],
+      "commonUseCases": [
+        "Data lake implementation",
+        "Hadoop-compatible storage",
+        "Batch and stream analytics",
+        "Data archiving"
+      ],
+      "interviewTips": "Explain the difference between Gen1 and Gen2. Highlight that Gen2 is built on Blob Storage but adds hierarchical namespace. Discuss how you would implement lifecycle management policies to optimize storage costs."
+    },
+    {
+      "id": 5,
+      "name": "Azure Stream Analytics",
+      "category": "Analytics",
+      "description": "A real-time analytics service designed for mission-critical workloads with high throughput, low latency, and built-in fault tolerance.",
+      "keyFeatures": [
+        "Real-time processing with SQL-like language",
+        "Temporal query support (windowing functions)",
+        "Built-in machine learning capabilities",
+        "Sub-second processing latency",
+        "No-code editing with visual query builder"
+      ],
+      "commonUseCases": [
+        "IoT analytics",
+        "Real-time dashboards and alerts",
+        "Fraud detection",
+        "Application log monitoring"
+      ],
+      "interviewTips": "Be prepared to explain different windowing functions (tumbling, hopping, sliding, session) and when to use each. Discuss checkpointing and how it ensures exactly-once processing semantics for fault tolerance."
+    },
+    {
+      "id": 6,
+      "name": "Azure Cosmos DB",
+      "category": "Database",
+      "description": "A globally distributed, multi-model database service designed for low latency and scalable applications anywhere in the world.",
+      "keyFeatures": [
+        "Multiple API options (SQL, MongoDB, Cassandra, Gremlin, Table)",
+        "Global distribution with multi-region writes",
+        "Five well-defined consistency levels",
+        "Automatic and instant scalability",
+        "99.999% availability SLA"
+      ],
+      "commonUseCases": [
+        "Global web and mobile apps",
+        "IoT and telematics",
+        "Retail catalogs",
+        "Gaming applications"
+      ],
+      "interviewTips": "Explain the consistency spectrum from strong to eventual and the trade-offs of each level. Discuss partitioning strategy and how to choose an effective partition key for performance. Be ready to compare Cosmos DB with other Azure database offerings."
+    },
+    {
+      "id": 7,
+      "name": "Azure Event Hubs",
+      "category": "Integration",
+      "description": "A big data streaming platform and event ingestion service capable of receiving and processing millions of events per second.",
+      "keyFeatures": [
+        "Fully managed PaaS (no servers to manage)",
+        "Support for Apache Kafka protocol",
+        "Automatic capture to Azure Storage or Data Lake",
+        "AVRO format support for efficient serialization",
+        "Scaling from megabytes to gigabytes of events"
+      ],
+      "commonUseCases": [
+        "Telemetry processing",
+        "Live dashboarding",
+        "Data archival",
+        "Transaction processing"
+      ],
+      "interviewTips": "Compare Event Hubs with other messaging services like Service Bus and Event Grid. Explain partitioning in Event Hubs and how consumer groups work. Discuss Capture feature for long-term retention of streaming data."
+    },
+    {
+      "id": 8,
+      "name": "Azure SQL Database",
+      "category": "Database",
+      "description": "A fully managed relational database with auto-scaling, integral intelligence, and robust security features.",
+      "keyFeatures": [
+        "Built-in intelligence and automatic tuning",
+        "Advanced security (Always Encrypted, Dynamic Data Masking)",
+        "Automatic scaling (serverless option)",
+        "High availability (99.995% SLA)",
+        "Geo-replication and failover groups"
+      ],
+      "commonUseCases": [
+        "Modern cloud applications",
+        "Enterprise applications requiring high security",
+        "Applications requiring high performance and availability",
+        "SaaS multi-tenant applications"
+      ],
+      "interviewTips": "Explain the differences between DTU-based and vCore-based purchasing models. Discuss how Intelligent Query Processing features work and how to implement disaster recovery using active geo-replication and failover groups."
+    },
+    {
+      "id": 9,
+      "name": "Azure Purview",
+      "category": "Governance",
+      "description": "A unified data governance service that helps manage and govern on-premises, multi-cloud, and SaaS data.",
+      "keyFeatures": [
+        "Automated data discovery and classification",
+        "Data catalog with business glossary",
+        "Data lineage visualization across the data estate",
+        "Sensitive data protection with integration to Azure Information Protection",
+        "Insights into data landscape and usage"
+      ],
+      "commonUseCases": [
+        "Data governance across hybrid environments",
+        "Regulatory compliance",
+        "Self-service data discovery",
+        "Data protection and risk management"
+      ],
+      "interviewTips": "Explain how Purview differs from traditional metadata management tools. Discuss how it integrates with other Azure services for comprehensive governance. Mention how it helps with regulations like GDPR, CCPA, or HIPAA."
+    },
+    {
+      "id": 10,
+      "name": "Azure Machine Learning",
+      "category": "AI/ML",
+      "description": "A cloud-based service that enables data scientists and developers to build, train, and deploy machine learning models efficiently.",
+      "keyFeatures": [
+        "End-to-end MLOps capabilities",
+        "Automated ML for no-code model development",
+        "Designer for drag-and-drop ML pipeline creation",
+        "Integration with open-source frameworks (TensorFlow, PyTorch, etc.)",
+        "Robust model management and deployment"
+      ],
+      "commonUseCases": [
+        "Predictive maintenance",
+        "Recommendation engines",
+        "Customer churn prediction",
+        "Text analytics and sentiment analysis"
+      ],
+      "interviewTips": "Explain the difference between Azure ML Studio (classic) and the new Azure Machine Learning service. Discuss how MLOps works and why it's important. Be prepared to talk about how you would implement responsible AI practices."
+    }
+  ]
+}
