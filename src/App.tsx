@@ -7,6 +7,7 @@ import SQLBasics from './components/tabs/SQLBasics';
 import SQLAdvanced from './components/tabs/SQLAdvanced';
 import PythonBasics from './components/tabs/PythonBasics';
 import PythonAdvanced from './components/tabs/PythonAdvanced';
+import Trivia from './components/tabs/Trivia';
 import Glossary from './components/tabs/Glossary';
 import { ApiTest } from './components/ApiTest';
 import { ApiDiagnostic } from './components/ApiDiagnostic';
@@ -45,6 +46,7 @@ function App() {
               <Route path="/sql-advanced" element={<SQLAdvanced />} />
               <Route path="/python-basics" element={<PythonBasics />} />
               <Route path="/python-advanced" element={<PythonAdvanced />} />
+              <Route path="/trivia" element={<Trivia />} />
               <Route path="/glossary" element={<Glossary />} />
               <Route path="/api-test" element={<ApiTest />} />
               <Route path="/api-diagnostic" element={<ApiDiagnostic />} />
