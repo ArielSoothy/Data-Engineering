@@ -266,7 +266,6 @@ const PythonBasics = () => {
               difficulty={question.difficulty}
               timeEstimate={question.timeEstimate}
               pseudoCode={question.pseudoCode}
-              aiApproach={question.aiApproach}
               category="pythonBasics"
               completed={getQuestionProgress(question.id)?.completed || false}
               onToggleCompletion={toggleQuestionCompletion}

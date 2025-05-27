@@ -266,7 +266,6 @@ const SQLAdvanced = () => {
               difficulty={question.difficulty}
               timeEstimate={question.timeEstimate}
               pseudoCode={question.pseudoCode}
-              aiApproach={question.aiApproach}
               category="sqlAdvanced"
               completed={getQuestionProgress(question.id)?.completed || false}
               onToggleCompletion={toggleQuestionCompletion}

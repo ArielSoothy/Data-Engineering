@@ -93,9 +93,9 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
   };
 
   return (
-    <div className="flex flex-col h-[500px] bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col h-[40vh] sm:h-[45vh] md:h-[500px] max-h-[350px] sm:max-h-[400px] md:max-h-[500px] bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700">
       {/* Messages area */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-4">
+      <div className="flex-1 p-3 md:p-4 overflow-y-auto space-y-3 md:space-y-4">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -104,19 +104,21 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
             }`}
           >
             <div
-              className={`max-w-[80%] p-3 rounded-lg ${
+              className={`max-w-[85%] md:max-w-[80%] p-2 md:p-3 rounded-lg break-words ${
                 message.role === 'user'
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
               }`}
             >
-              {message.content}
+              <div className="whitespace-pre-wrap text-sm md:text-base">
+                {message.content}
+              </div>
             </div>
           </div>
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-200 dark:bg-gray-800 p-3 rounded-lg">
+            <div className="bg-gray-200 dark:bg-gray-800 p-2 md:p-3 rounded-lg">
               <div className="animate-pulse">Generating feedback...</div>
             </div>
           </div>
@@ -124,27 +126,28 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
       </div>
 
       {/* Input area */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col space-y-3">
+      <form onSubmit={handleSubmit} className="p-3 md:p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col space-y-2 md:space-y-3">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your answer here. Be comprehensive and detailed to get the best feedback..."
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            className="w-full p-2 md:p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm md:text-base"
             disabled={isLoading}
-            rows={6}
+            rows={3}
             style={{ resize: 'vertical' }}
           />
           <div className="flex justify-end">
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className={`px-4 py-2 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-200 flex items-center ${
+              className={`px-3 md:px-4 py-2 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-200 flex items-center text-sm md:text-base ${
                 isLoading || !input.trim() ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              <Send size={18} className="mr-2" />
-              {isLoading ? 'Generating feedback...' : 'Get AI Feedback'}
+              <Send size={16} className="mr-1 md:mr-2" />
+              <span className="hidden sm:inline">{isLoading ? 'Generating...' : 'Get AI Feedback'}</span>
+              <span className="sm:hidden">{isLoading ? 'Loading...' : 'Get Feedback'}</span>
             </button>
           </div>
         </div>

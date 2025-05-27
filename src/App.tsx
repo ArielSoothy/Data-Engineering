@@ -9,6 +9,7 @@ import PythonBasics from './components/tabs/PythonBasics';
 import PythonAdvanced from './components/tabs/PythonAdvanced';
 import Glossary from './components/tabs/Glossary';
 import { ApiTest } from './components/ApiTest';
+import { ApiDiagnostic } from './components/ApiDiagnostic';
 
 // Apply dark mode on initial load
 const DarkModeInitializer = () => {
@@ -46,6 +47,7 @@ function App() {
               <Route path="/python-advanced" element={<PythonAdvanced />} />
               <Route path="/glossary" element={<Glossary />} />
               <Route path="/api-test" element={<ApiTest />} />
+              <Route path="/api-diagnostic" element={<ApiDiagnostic />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
