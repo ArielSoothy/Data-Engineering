@@ -28,7 +28,6 @@ const Glossary = () => {
   const [expandedTerms, setExpandedTerms] = useState<Set<string>>(new Set());
   
   // Trivia state
-  const [showTrivia, setShowTrivia] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<{
     term: string;
     definition: string;
