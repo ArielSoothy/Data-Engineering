@@ -1,0 +1,184 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "Get the current salary for each employee from the payroll table where an ETL error caused multiple salary entries",
+      "difficulty": "Hard",
+      "timeEstimate": 12,
+      "answer": "Use window functions like ROW_NUMBER() or FIRST_VALUE() to identify the most recent salary record for each employee based on effective date.",
+      "pseudoCode": "-- Using ROW_NUMBER approach\nWITH CurrentSalaries AS (\n    SELECT \n        employee_id,\n        salary,\n        effective_date,\n        ROW_NUMBER() OVER (\n            PARTITION BY employee_id \n            ORDER BY effective_date DESC, created_timestamp DESC\n        ) as rn\n    FROM payroll\n)\nSELECT \n    employee_id,\n    salary as current_salary,\n    effective_date\nFROM CurrentSalaries\nWHERE rn = 1;",
+      "aiApproach": "This is a common data cleaning scenario. Window functions are ideal for ranking records within groups. The partitioning defines groups (by employee) while the ordering specifies which record to consider 'current' (latest date). The second approach with FIRST_VALUE is more concise but may be less familiar to interviewers."
+    },
+    {
+      "id": 2,
+      "question": "Write a query using RANK() and DENSE_RANK() to compare their differences",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "RANK() leaves gaps after ties while DENSE_RANK() assigns consecutive ranks. ROW_NUMBER() always gives unique numbers regardless of ties.",
+      "pseudoCode": "SELECT \n    employee_id,\n    name,\n    salary,\n    RANK() OVER (ORDER BY salary DESC) as salary_rank,\n    DENSE_RANK() OVER (ORDER BY salary DESC) as salary_dense_rank,\n    ROW_NUMBER() OVER (ORDER BY salary DESC) as salary_row_num\nFROM employees\nORDER BY salary DESC;",
+      "aiApproach": "Window functions are powerful for ranking and analytical operations. RANK() mirrors traditional competition ranking (1st, 2nd, 2nd, 4th) while DENSE_RANK() uses compact ranking (1st, 2nd, 2nd, 3rd). Choose based on your business requirements."
+    },
+    {
+      "id": 3,
+      "question": "Explain how to write a query to pivot rows into columns.",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Use CASE expressions or the PIVOT function (in SQL Server) to transform rows into columns. This is useful for creating cross-tabulation reports.",
+      "pseudoCode": "-- Using CASE (works in most RDBMS)\nSELECT \n  category,\n  SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as Active,\n  SUM(CASE WHEN status = 'Inactive' THEN 1 ELSE 0 END) as Inactive\nFROM table_name\nGROUP BY category\n\n-- Using PIVOT (SQL Server)\nSELECT *\nFROM (\n  SELECT category, status, value\n  FROM table_name\n) src\nPIVOT (\n  SUM(value) FOR status IN ([Active], [Inactive])\n) pvt",
+      "aiApproach": "When designing a pivot query, first identify the key elements: the row identifier, the column identifier (what becomes column headers), and the aggregated value."
+    },
+    {
+      "id": 4,
+      "question": "Write a query to calculate a running total.",
+      "difficulty": "Hard",
+      "timeEstimate": 12,
+      "answer": "Use window functions with the SUM() function and an OVER clause that defines the window as all rows from the beginning of the partition up to the current row.",
+      "pseudoCode": "SELECT \n  transaction_date,\n  amount,\n  SUM(amount) OVER (\n    PARTITION BY account_id \n    ORDER BY transaction_date\n    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n  ) as running_total\nFROM transactions",
+      "aiApproach": "Window functions are powerful for analytical queries. The default for SUM() OVER with just ORDER BY is already a running total, but being explicit with ROWS BETWEEN makes the intent clearer."
+    },
+    {
+      "id": 5,
+      "question": "Implement a query to find gaps in sequential data.",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Use window functions to identify where the difference between consecutive values is greater than the expected sequence increment.",
+      "pseudoCode": "WITH numbered AS (\n  SELECT \n    id, \n    ROW_NUMBER() OVER (ORDER BY id) as row_num\n  FROM sequence_table\n)\nSELECT \n  n1.id + 1 as gap_start,\n  n2.id - 1 as gap_end\nFROM numbered n1\nJOIN numbered n2 \n  ON n2.row_num = n1.row_num + 1\nWHERE n2.id - n1.id > 1",
+      "aiApproach": "This pattern works by comparing each value with the next one in sequence. It's useful for finding gaps in dates, IDs, or any sequential data."
+    },
+    {
+      "id": 6,
+      "question": "Write a query to get the current salary for each employee from a payroll table with multiple entries per employee",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Use ROW_NUMBER() or FIRST_VALUE() window functions to identify the most recent salary record for each employee based on the effective date.",
+      "pseudoCode": "WITH CurrentSalaries AS (\n  SELECT \n    employee_id,\n    salary,\n    effective_date,\n    ROW_NUMBER() OVER (\n      PARTITION BY employee_id \n      ORDER BY effective_date DESC, created_timestamp DESC\n    ) as rn\n  FROM payroll\n)\nSELECT \n  employee_id,\n  salary as current_salary,\n  effective_date\nFROM CurrentSalaries\nWHERE rn = 1;",
+      "aiApproach": "When dealing with temporal data like salary history, window functions help you filter to the most recent records by partitioning by the entity (employee) and ordering by the time dimension."
+    },
+    {
+      "id": 7,
+      "question": "Explain the differences between ROW_NUMBER(), RANK(), and DENSE_RANK() window functions",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "ROW_NUMBER() assigns unique sequential numbers (no ties). RANK() assigns the same rank to ties but leaves gaps in the sequence. DENSE_RANK() assigns the same rank to ties without leaving gaps.",
+      "pseudoCode": "SELECT \n  name,\n  salary,\n  ROW_NUMBER() OVER (ORDER BY salary DESC) as row_num,\n  RANK() OVER (ORDER BY salary DESC) as rank_num,\n  DENSE_RANK() OVER (ORDER BY salary DESC) as dense_rank_num\nFROM employees\nORDER BY salary DESC;",
+      "aiApproach": "Choose the appropriate ranking function based on your requirements: ROW_NUMBER() for pagination, RANK() for traditional rankings (like sports), and DENSE_RANK() for compact rankings without gaps."
+    },
+    {
+      "id": 8,
+      "question": "Demonstrate the use of LAG and LEAD window functions",
+      "difficulty": "Hard",
+      "timeEstimate": 12,
+      "answer": "LAG accesses previous rows and LEAD accesses subsequent rows in a result set, making them perfect for comparing current values with adjacent records.",
+      "pseudoCode": "SELECT \n  date_recorded,\n  stock_price,\n  LAG(stock_price, 1) OVER (ORDER BY date_recorded) as previous_price,\n  LEAD(stock_price, 1) OVER (ORDER BY date_recorded) as next_price,\n  stock_price - LAG(stock_price, 1) OVER (ORDER BY date_recorded) as price_change,\n  CASE \n    WHEN stock_price > LAG(stock_price, 1) OVER (ORDER BY date_recorded) THEN 'UP'\n    WHEN stock_price < LAG(stock_price, 1) OVER (ORDER BY date_recorded) THEN 'DOWN'\n    ELSE 'SAME'\n  END as trend_direction\nFROM stock_prices\nORDER BY date_recorded;",
+      "aiApproach": "LAG and LEAD are powerful for time-series analysis, trend detection, and calculating period-over-period changes in financial data, sales analysis, and performance metrics."
+    },
+    {
+      "id": 9,
+      "question": "Calculate percentage of total using window functions",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Use SUM() with an empty OVER() clause to calculate the total across all rows, then divide each individual value by that total and multiply by 100.",
+      "pseudoCode": "SELECT \n  department_id,\n  employee_id,\n  salary,\n  SUM(salary) OVER () as total_company_payroll,\n  ROUND(\n    (salary * 100.0) / SUM(salary) OVER (), 2\n  ) as percentage_of_total_payroll,\n  SUM(salary) OVER (PARTITION BY department_id) as dept_total_payroll,\n  ROUND(\n    (salary * 100.0) / SUM(salary) OVER (PARTITION BY department_id), 2\n  ) as percentage_of_dept_payroll\nFROM employees\nORDER BY department_id, salary DESC;",
+      "aiApproach": "Window functions with empty OVER() clauses calculate across the entire result set, while adding PARTITION BY calculates within groups. This pattern is invaluable for contribution analysis and normalized metrics."
+    },
+    {
+      "id": 10,
+      "question": "Use FIRST_VALUE and LAST_VALUE functions to analyze data",
+      "difficulty": "Hard",
+      "timeEstimate": 12,
+      "answer": "FIRST_VALUE retrieves the first value in an ordered window, while LAST_VALUE retrieves the last. They're useful for finding extreme values or comparing current values with start/end points.",
+      "pseudoCode": "SELECT \n  employee_id,\n  department_id,\n  salary,\n  hire_date,\n  FIRST_VALUE(salary) OVER (\n    PARTITION BY department_id \n    ORDER BY hire_date\n  ) as first_hire_salary,\n  LAST_VALUE(salary) OVER (\n    PARTITION BY department_id \n    ORDER BY hire_date\n    ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING\n  ) as last_hire_salary,\n  FIRST_VALUE(name) OVER (\n    PARTITION BY department_id \n    ORDER BY salary DESC\n  ) as highest_paid_in_dept\nFROM employees\nORDER BY department_id, hire_date;",
+      "aiApproach": "LAST_VALUE often requires an explicit frame clause (ROWS BETWEEN...) to work as expected, since the default frame only extends from the start of the partition to the current row."
+    },
+    {
+      "id": 11,
+      "question": "Calculate moving averages using window functions",
+      "difficulty": "Hard",
+      "timeEstimate": 12,
+      "answer": "Use the AVG() function with a window frame clause to define the number of rows to include in each moving average calculation.",
+      "pseudoCode": "-- 3-period moving average\nSELECT \n  date_recorded,\n  sales_amount,\n  AVG(sales_amount) OVER (\n    ORDER BY date_recorded \n    ROWS BETWEEN 2 PRECEDING AND CURRENT ROW\n  ) as moving_avg_3_period,\n  AVG(sales_amount) OVER (\n    ORDER BY date_recorded \n    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n  ) as moving_avg_7_period\nFROM daily_sales\nORDER BY date_recorded;",
+      "aiApproach": "Moving averages help smooth out short-term fluctuations to highlight longer-term trends. The window frame size determines the smoothing level - larger frames give smoother results but may miss recent changes."
+    },
+    {
+      "id": 12,
+      "question": "Write a query to find the median using window functions",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Use PERCENTILE_CONT(0.5) for databases that support it, or manually calculate using ROW_NUMBER and counting techniques for other databases.",
+      "pseudoCode": "-- Method 1: Using PERCENTILE_CONT (most databases)\nSELECT \n  department_id,\n  PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) as median_salary\nFROM employees\nGROUP BY department_id;\n\n-- Method 2: Manual calculation\nWITH MedianCalc AS (\n  SELECT \n    department_id,\n    salary,\n    ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary) as row_num,\n    COUNT(*) OVER (PARTITION BY department_id) as total_count\n  FROM employees\n)\nSELECT \n  department_id,\n  AVG(salary) as median_salary\nFROM MedianCalc\nWHERE row_num IN ((total_count + 1) / 2, (total_count + 2) / 2)\nGROUP BY department_id;",
+      "aiApproach": "The median is less affected by outliers than the mean, making it valuable for skewed distributions. PERCENTILE_CONT is cleaner but not available in all databases, so the manual approach provides cross-database compatibility."
+    },
+    {
+      "id": 13,
+      "question": "Write a query to randomly sample a row from a table with 100 million rows",
+      "difficulty": "Hard",
+      "timeEstimate": 10,
+      "answer": "For very large tables, avoid full table scans by using sampling methods like TABLESAMPLE, hash-based filtering, or system-specific random functions with efficient indexing strategies.",
+      "pseudoCode": "-- Method 1: Using TABLESAMPLE (SQL Server - most efficient)\nSELECT * \nFROM large_table \nTABLESAMPLE (1 ROWS);\n\n-- Method 2: Efficient method for very large tables\nSELECT TOP 1 * \nFROM large_table \nWHERE ABS(CHECKSUM(NEWID())) % 10000 = 1  -- Sample ~0.01%\nORDER BY NEWID();",
+      "aiApproach": "With very large tables, performance is critical. Simple ORDER BY RANDOM() approaches scan the entire table, which is prohibitively expensive. Instead, use statistical sampling techniques that can work with indexes or smaller data portions."
+    },
+    {
+      "id": 14,
+      "question": "Design a query for finding the greatest common denominator (GCD) of a list of integers",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "answer": "Implement the Euclidean algorithm using recursive CTEs or stored procedures to iteratively calculate GCDs of pairs of numbers.",
+      "pseudoCode": "-- Recursive CTE approach for GCD calculation\nWITH RECURSIVE GCDCalc AS (\n  -- Base case: start with first two numbers\n  SELECT \n    num1,\n    num2,\n    CASE \n      WHEN num2 = 0 THEN num1\n      ELSE num2\n    END as current_gcd,\n    CASE \n      WHEN num2 = 0 THEN 0\n      ELSE num1 % num2\n    END as remainder\n  FROM (SELECT 12 as num1, 18 as num2) base\n  \n  UNION ALL\n  \n  -- Recursive case: apply Euclidean algorithm\n  SELECT \n    current_gcd as num1,\n    remainder as num2,\n    CASE \n      WHEN remainder = 0 THEN current_gcd\n      ELSE remainder\n    END as current_gcd,\n    CASE \n      WHEN remainder = 0 THEN 0\n      ELSE current_gcd % remainder\n    END as remainder\n  FROM GCDCalc\n  WHERE remainder != 0\n)\nSELECT current_gcd as gcd_result\nFROM GCDCalc\nWHERE remainder = 0;",
+      "aiApproach": "SQL is not designed for mathematical algorithms, but recursive CTEs can implement iterative algorithms like Euclidean GCD. For multiple numbers, calculate GCD of pairs iteratively: gcd(a,b,c) = gcd(gcd(a,b),c)."
+    },
+    {
+      "id": 15,
+      "question": "Write a query to pivot data from rows to columns",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Use PIVOT functions in databases that support them (like SQL Server) or CASE statements with aggregation for cross-database compatibility.",
+      "pseudoCode": "-- Method 1: Using PIVOT (SQL Server)\nSELECT \n  month,\n  [Product_A] as Product_A_Sales,\n  [Product_B] as Product_B_Sales,\n  [Product_C] as Product_C_Sales\nFROM (\n  SELECT month, product, sales\n  FROM sales_data\n) as source_data\nPIVOT (\n  SUM(sales)\n  FOR product IN ([Product_A], [Product_B], [Product_C])\n) as pivot_table;\n\n-- Method 2: Using CASE (works in all databases)\nSELECT \n  month,\n  SUM(CASE WHEN product = 'Product_A' THEN sales ELSE 0 END) as Product_A_Sales,\n  SUM(CASE WHEN product = 'Product_B' THEN sales ELSE 0 END) as Product_B_Sales,\n  SUM(CASE WHEN product = 'Product_C' THEN sales ELSE 0 END) as Product_C_Sales\nFROM sales_data\nGROUP BY month\nORDER BY month;",
+      "aiApproach": "Pivoting transforms normalized data into a crosstab format for reporting. While PIVOT is cleaner, CASE expressions are more flexible and work across database systems. For dynamic pivoting with unknown column values, use dynamic SQL generation."
+    },
+    {
+      "id": 16,
+      "question": "Handle duplicate detection in large datasets",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Use a combination of exact and fuzzy matching techniques, with performance optimizations like hashing and indexing for large datasets.",
+      "pseudoCode": "-- Exact duplicate detection with window functions\nWITH DuplicateAnalysis AS (\n  SELECT \n    *,\n    ROW_NUMBER() OVER (\n      PARTITION BY customer_id, order_date, amount \n      ORDER BY created_timestamp DESC\n    ) as row_num,\n    COUNT(*) OVER (\n      PARTITION BY customer_id, order_date, amount\n    ) as duplicate_count\n  FROM orders\n)\nSELECT \n  customer_id, order_date, amount, duplicate_count,\n  CASE WHEN row_num = 1 THEN 'Keep' ELSE 'Remove' END as action\nFROM DuplicateAnalysis\nWHERE duplicate_count > 1;\n\n-- Efficient removal for large datasets\nCREATE TABLE orders_dedup_staging AS\nSELECT \n  *,\n  MD5(CONCAT(customer_id, '|', order_date, '|', amount)) as record_hash,\n  ROW_NUMBER() OVER (\n    PARTITION BY MD5(CONCAT(customer_id, '|', order_date, '|', amount))\n    ORDER BY created_timestamp DESC\n  ) as duplicate_rank\nFROM orders;\n\n-- Insert only unique records\nINSERT INTO orders_clean\nSELECT * FROM orders_dedup_staging\nWHERE duplicate_rank = 1;",
+      "aiApproach": "For very large datasets, performance is critical. Use hash-based techniques, appropriate indexes, and batch processing. Consider implementing real-time duplicate prevention with triggers or constraints rather than just cleaning up after the fact."
+    },
+    {
+      "id": 17,
+      "question": "Write a query for comprehensive data quality checks",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Create a dashboard that combines checks for completeness, validity, consistency, uniqueness, and accuracy, with metrics on failure rates and trend analysis.",
+      "pseudoCode": "WITH DataQualityChecks AS (\n  -- Completeness checks\n  SELECT \n    'Completeness' as check_category,\n    'Missing Customer ID' as check_name,\n    COUNT(*) as failed_records,\n    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2) as failure_rate\n  FROM orders \n  WHERE customer_id IS NULL\n  \n  UNION ALL\n  \n  -- Validity checks\n  SELECT \n    'Validity',\n    'Invalid Email Format',\n    COUNT(*),\n    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM customers), 2)\n  FROM customers \n  WHERE email IS NOT NULL \n  AND email NOT LIKE '%_@_%.__%'\n  \n  UNION ALL\n  \n  -- Consistency checks\n  SELECT \n    'Consistency',\n    'Orders without Customer',\n    COUNT(*),\n    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2)\n  FROM orders o\n  LEFT JOIN customers c ON o.customer_id = c.customer_id\n  WHERE c.customer_id IS NULL\n  \n  UNION ALL\n  \n  -- Uniqueness checks\n  SELECT \n    'Uniqueness',\n    'Duplicate Customer Emails',\n    COUNT(*) - COUNT(DISTINCT email),\n    ROUND((COUNT(*) - COUNT(DISTINCT email)) * 100.0 / COUNT(*), 2)\n  FROM customers\n  WHERE email IS NOT NULL\n)\nSELECT *\nFROM DataQualityChecks\nWHERE failed_records > 0\nORDER BY check_category, failure_rate DESC;",
+      "aiApproach": "Automated data quality monitoring should be part of the data pipeline, not just ad-hoc analysis. Set thresholds for acceptable quality levels and build alerting systems for violations. Track trends over time to identify degrading data quality."
+    },
+    {
+      "id": 18,
+      "question": "Implement soft deletes in SQL",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Add flag columns to indicate deletion status instead of physically removing records, with supporting structures like views, indexes, and audit trails.",
+      "pseudoCode": "-- Add soft delete columns\nALTER TABLE customers \nADD COLUMN is_deleted BOOLEAN DEFAULT FALSE,\nADD COLUMN deleted_at TIMESTAMP NULL,\nADD COLUMN deleted_by VARCHAR(100) NULL;\n\n-- Create index for performance\nCREATE INDEX idx_customers_soft_delete ON customers(is_deleted);\n\n-- Soft delete operation\nUPDATE customers \nSET \n  is_deleted = TRUE,\n  deleted_at = CURRENT_TIMESTAMP,\n  deleted_by = CURRENT_USER\nWHERE customer_id = 456;\n\n-- Create view for active records only\nCREATE VIEW customers_active AS\nSELECT *\nFROM customers\nWHERE is_deleted = FALSE OR is_deleted IS NULL;\n\n-- Query with soft delete awareness\nSELECT c.customer_id, c.name, o.order_id, o.amount\nFROM customers c\nINNER JOIN orders o ON c.customer_id = o.customer_id\nWHERE (c.is_deleted = FALSE OR c.is_deleted IS NULL)\n  AND (o.is_deleted = FALSE OR o.is_deleted IS NULL);",
+      "aiApproach": "Soft deletes preserve historical data and enable recovery, but add complexity to queries and potentially impact performance. Use views to abstract the complexity, modify application logic to handle deleted flags, and implement cleanup procedures for truly old data."
+    },
+    {
+      "id": 19,
+      "question": "Write a query for handling hierarchical data",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Use recursive CTEs to traverse tree structures for organizational hierarchies, product categories, and other hierarchical data models.",
+      "pseudoCode": "-- Recursive CTE for organizational hierarchy\nWITH RECURSIVE EmployeeHierarchy AS (\n  -- Anchor: Top-level managers\n  SELECT \n    employee_id, name, manager_id, department,\n    1 as level,\n    CAST(name AS VARCHAR(1000)) as hierarchy_path\n  FROM employees\n  WHERE manager_id IS NULL\n  \n  UNION ALL\n  \n  -- Recursive: Add direct reports\n  SELECT \n    e.employee_id, e.name, e.manager_id, e.department,\n    eh.level + 1,\n    CAST(eh.hierarchy_path || ' -> ' || e.name AS VARCHAR(1000))\n  FROM employees e\n  INNER JOIN EmployeeHierarchy eh ON e.manager_id = eh.employee_id\n)\nSELECT \n  level, \n  REPEAT('  ', level - 1) || name as indented_name, \n  hierarchy_path,\n  department\nFROM EmployeeHierarchy\nORDER BY hierarchy_path;",
+      "aiApproach": "When working with hierarchical data, consider the appropriate model: adjacency lists are simple but require recursion for traversal, nested sets optimize read operations but are complex to update, and materialized path models balance these concerns. Choose based on your read-to-write ratio."
+    },
+    {
+      "id": 20,
+      "question": "Handle time series data aggregation",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Implement specialized queries for time-based aggregation, gap filling, moving calculations, and anomaly detection in temporal data.",
+      "pseudoCode": "-- Hourly aggregation with moving averages\nSELECT \n  sensor_id,\n  DATE_TRUNC('hour', reading_timestamp) as hour_bucket,\n  AVG(temperature) as avg_temperature,\n  -- 3-hour moving average\n  AVG(temperature) OVER (\n    PARTITION BY sensor_id \n    ORDER BY DATE_TRUNC('hour', reading_timestamp) \n    ROWS BETWEEN 2 PRECEDING AND CURRENT ROW\n  ) as moving_avg_3hour\nFROM sensor_data\nWHERE reading_timestamp >= CURRENT_DATE - INTERVAL '7 days'\nGROUP BY sensor_id, DATE_TRUNC('hour', reading_timestamp)\nORDER BY sensor_id, hour_bucket;\n\n-- Gap filling for missing time intervals\nWITH TimeSeries AS (\n  -- Generate complete time series (every hour)\n  SELECT \n    s.sensor_id,\n    generate_series(\n      DATE_TRUNC('hour', CURRENT_TIMESTAMP - INTERVAL '7 days'),\n      DATE_TRUNC('hour', CURRENT_TIMESTAMP),\n      INTERVAL '1 hour'\n    ) as time_bucket\n  FROM (SELECT DISTINCT sensor_id FROM sensor_data) s\n),\nAggregatedData AS (\n  SELECT \n    sensor_id,\n    DATE_TRUNC('hour', reading_timestamp) as time_bucket,\n    AVG(temperature) as avg_temperature\n  FROM sensor_data\n  GROUP BY sensor_id, DATE_TRUNC('hour', reading_timestamp)\n)\nSELECT \n  ts.sensor_id,\n  ts.time_bucket,\n  COALESCE(ad.avg_temperature, \n           LAG(ad.avg_temperature) IGNORE NULLS OVER (\n             PARTITION BY ts.sensor_id ORDER BY ts.time_bucket\n           )) as temperature  -- Forward fill missing values\nFROM TimeSeries ts\nLEFT JOIN AggregatedData ad \n  ON ts.sensor_id = ad.sensor_id AND ts.time_bucket = ad.time_bucket\nORDER BY ts.sensor_id, ts.time_bucket;",
+      "aiApproach": "Time series data requires specialized handling: regular intervals with gap-filling for missing data, time-weighted calculations for irregular intervals, smoothing techniques like moving averages, and pattern detection algorithms for anomalies and trends."
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "scenarios": [
+    {
+      "id": 1,
+      "title": "Designing a Real-time Analytics Pipeline",
+      "description": "You need to design a system to ingest, process, and visualize clickstream data from a high-traffic e-commerce website. The system should handle peak loads of 10,000 events per second and provide real-time dashboards with a maximum delay of 5 seconds.",
+      "difficulty": "Hard",
+      "timeEstimate": 25,
+      "systemComponents": [
+        "Data Ingestion Layer",
+        "Stream Processing",
+        "Storage Solution",
+        "Analytics Engine",
+        "Visualization Layer"
+      ],
+      "keyConsiderations": [
+        "Scalability for traffic spikes",
+        "Fault tolerance",
+        "Schema evolution handling",
+        "Cost optimization",
+        "Data latency requirements"
+      ],
+      "solutionApproach": "A lambda architecture would be suitable, with: (1) Azure Event Hubs for ingestion, (2) Azure Stream Analytics for real-time processing, (3) Azure Data Lake Storage for raw data, (4) Azure Synapse Analytics for batch processing, (5) Power BI for dashboards with DirectQuery.",
+      "pseudoCode": "// Azure Stream Analytics Query\nSELECT\n  userId,\n  productId,\n  eventType,\n  TUMBLING(MINUTE, 1) as timeWindow,\n  COUNT(*) as eventCount\nINTO outputPowerBI\nFROM inputEventHub\nGROUP BY\n  userId,\n  productId,\n  eventType,\n  TUMBLING(MINUTE, 1)",
+      "aiApproach": "Consider using anomaly detection algorithms directly in Stream Analytics to identify unusual patterns in real-time. This avoids the need to process all data in a separate step and can trigger immediate alerts."
+    },
+    {
+      "id": 2,
+      "title": "Building a Data Lake for Multiple Teams",
+      "description": "Your company has diverse data needs across marketing, finance, and product teams. Design a data lake architecture that provides a single source of truth while enabling team-specific analytics needs with appropriate governance.",
+      "difficulty": "Hard",
+      "timeEstimate": 30,
+      "systemComponents": [
+        "Raw Data Zone",
+        "Curated Data Zone",
+        "Team Workspaces",
+        "Governance Layer",
+        "Self-service Analytics"
+      ],
+      "keyConsiderations": [
+        "Data quality controls",
+        "Access management",
+        "Metadata management",
+        "Cost allocation",
+        "Integration with existing tools"
+      ],
+      "solutionApproach": "Implement a medallion architecture in Azure Data Lake Storage Gen2: (1) Bronze layer for raw data, (2) Silver layer for validated and cleansed data, (3) Gold layer for business aggregates, (4) Azure Purview for data governance, (5) Role-based access control for team-specific zones.",
+      "pseudoCode": "// Define the Azure Data Lake folder structure\n/data\n  /bronze\n    /source1/{YYYY}/{MM}/{DD}/raw_files\n    /source2/{YYYY}/{MM}/{DD}/raw_files\n  /silver\n    /customers/delta_table\n    /products/delta_table\n    /transactions/delta_table\n  /gold\n    /marketing/customer_segments\n    /finance/revenue_reports\n    /product/usage_metrics\n\n// Azure Databricks job for bronze to silver transformation\ndf = spark.read.format(\"json\").load(\"/data/bronze/source1/2023/05/23/*\")\ndf_clean = df.dropDuplicates().na.fill(...)\ndf_clean.write.format(\"delta\").mode(\"append\").save(\"/data/silver/customers/delta_table\")",
+      "aiApproach": "Implement a data contract approach between teams, where each team defines its data requirements as a 'contract' that other teams must fulfill when modifying shared datasets."
+    },
+    {
+      "id": 3,
+      "title": "Optimizing a Slow Data Warehouse",
+      "description": "A retail company's Azure Synapse Analytics (formerly SQL DW) instance is experiencing performance issues with month-end reporting queries taking 4+ hours. Redesign the system to bring reporting time under 30 minutes.",
+      "difficulty": "Medium",
+      "timeEstimate": 20,
+      "systemComponents": [
+        "Data Modeling",
+        "Partitioning Strategy",
+        "Indexing Approach",
+        "Query Optimization",
+        "Caching Layer"
+      ],
+      "keyConsiderations": [
+        "Distribution key selection",
+        "Partition alignment with queries",
+        "Statistics maintenance",
+        "Resource allocation",
+        "Query patterns analysis"
+      ],
+      "solutionApproach": "Optimize by: (1) Converting fact tables to columnstore indexes, (2) Implementing hash distribution on high-cardinality join keys, (3) Partitioning large tables by date aligned with common filters, (4) Creating materialized views for common aggregations, (5) Increasing DWU during reporting periods.",
+      "pseudoCode": "-- Optimize table distribution and storage\nCREATE TABLE FactSales\n(\n    SalesKey INT NOT NULL,\n    CustomerKey INT NOT NULL,\n    ProductKey INT NOT NULL,\n    DateKey INT NOT NULL,\n    Quantity INT,\n    UnitPrice DECIMAL(18,2),\n    TotalPrice DECIMAL(18,2)\n)\nWITH\n(\n    DISTRIBUTION = HASH(CustomerKey),\n    CLUSTERED COLUMNSTORE INDEX,\n    PARTITION(DateKey RANGE RIGHT FOR VALUES\n    (20230101, 20230201, 20230301, ...))\n);\n\n-- Create materialized view for common aggregate\nCREATE MATERIALIZED VIEW MV_MonthlySalesByProduct\nWITH (DISTRIBUTION = HASH(ProductKey))\nAS\nSELECT \n    ProductKey,\n    DATEPART(YEAR, d.Date) as Year,\n    DATEPART(MONTH, d.Date) as Month,\n    SUM(Quantity) as TotalQuantity,\n    SUM(TotalPrice) as TotalSales\nFROM FactSales s\nJOIN DimDate d ON s.DateKey = d.DateKey\nGROUP BY\n    ProductKey,\n    DATEPART(YEAR, d.Date),\n    DATEPART(MONTH, d.Date);",
+      "aiApproach": "Use dynamic resource allocation with Azure Automation to increase compute resources just before scheduled report runs and scale down afterward to optimize costs."
+    },
+    {
+      "id": 4,
+      "title": "Designing a Multi-Region Data Replication Strategy",
+      "description": "For a global financial application, design a data architecture that ensures data consistency, disaster recovery with RPO < 5 minutes, and optimized read performance for users across different geographic regions.",
+      "difficulty": "Hard",
+      "timeEstimate": 25,
+      "systemComponents": [
+        "Primary Database",
+        "Regional Replicas",
+        "Synchronization Mechanism",
+        "Failover Process",
+        "Conflict Resolution"
+      ],
+      "keyConsiderations": [
+        "Regulatory compliance",
+        "Data sovereignty",
+        "Latency requirements",
+        "Consistency model",
+        "Failover automation"
+      ],
+      "solutionApproach": "Implement: (1) Azure SQL Database with auto-failover groups for primary redundancy, (2) Cosmos DB with multi-region writes for global transactions, (3) Azure Traffic Manager for intelligent routing, (4) Event-driven architecture with Event Grid for change notifications, (5) Azure Site Recovery for comprehensive DR.",
+      "pseudoCode": "// Cosmos DB configuration with multi-region writes\nCosmosClient client = new CosmosClient(\n    connectionString,\n    new CosmosClientOptions()\n    {\n        ApplicationRegion = Regions.WestUS,\n        EnableContentResponseOnWrite = false,\n        ConsistencyLevel = ConsistencyLevel.BoundedStaleness\n    });\n\n// Set up automatic failover priority\nDatabaseProperties dbProperties = new DatabaseProperties\n{\n    Id = \"FinancialData\",\n    // Configure multiple write regions\n    Regions = new List<string> { Regions.WestUS, Regions.EastUS, Regions.WestEurope },\n    // Set failover priorities\n    FailoverPolicies = new List<FailoverPolicy>\n    {\n        new FailoverPolicy(Regions.WestUS, 0), // Primary\n        new FailoverPolicy(Regions.EastUS, 1), // First failover\n        new FailoverPolicy(Regions.WestEurope, 2) // Second failover\n    }\n};\n\n// Handle conflict resolution\nContainerProperties containerProperties = new ContainerProperties\n{\n    Id = \"Transactions\",\n    PartitionKeyPath = \"/accountId\",\n    ConflictResolutionPolicy = new ConflictResolutionPolicy\n    {\n        Mode = ConflictResolutionMode.LastWriterWins,\n        ConflictResolutionPath = \"/lastModified\"\n    }\n};",
+      "aiApproach": "Implement a custom conflict resolution policy using Azure Functions to handle region-specific business logic rather than relying solely on timestamp-based resolution."
+    },
+    {
+      "id": 5,
+      "title": "Migrating an On-Premises Data Warehouse to Azure",
+      "description": "A company wants to migrate its 15TB on-premises SQL Server data warehouse to Azure with minimal downtime. The solution should address performance, security, and cost optimization while enabling future scalability.",
+      "difficulty": "Medium",
+      "timeEstimate": 20,
+      "systemComponents": [
+        "Migration Assessment",
+        "ETL/ELT Process",
+        "Target Architecture",
+        "Validation Strategy",
+        "Cutover Plan"
+      ],
+      "keyConsiderations": [
+        "Data transfer approach",
+        "Schema compatibility",
+        "Historical data handling",
+        "Business continuity",
+        "Cost management"
+      ],
+      "solutionApproach": "Implement a phased migration: (1) Use Azure Data Migration Service for assessment, (2) Azure Data Factory for orchestration, (3) Stage migration to Azure Synapse Analytics, (4) Implement PolyBase for efficient loading, (5) Set up dual-write during transition, (6) Use Azure Monitor for performance validation.",
+      "pseudoCode": "// Azure Data Factory pipeline for incremental migration\n{\n    \"name\": \"IncrementalLoadPipeline\",\n    \"properties\": {\n        \"activities\": [\n            {\n                \"name\": \"GetChangeTracking\",\n                \"type\": \"Lookup\",\n                \"source\": {\n                    \"type\": \"SqlSource\",\n                    \"sqlReaderQuery\": \"SELECT MAX(LastModifiedDate) as HighWatermark FROM SourceTable WHERE LastModifiedDate > @{pipeline().parameters.LastLoadDate}\"\n                }\n            },\n            {\n                \"name\": \"CopyIncrementalData\",\n                \"type\": \"Copy\",\n                \"source\": {\n                    \"type\": \"SqlSource\",\n                    \"sqlReaderQuery\": \"SELECT * FROM SourceTable WHERE LastModifiedDate > @{pipeline().parameters.LastLoadDate} AND LastModifiedDate <= @{activity('GetChangeTracking').output.firstRow.HighWatermark}\"\n                },\n                \"sink\": {\n                    \"type\": \"SqlDWSink\",\n                    \"preCopyScript\": \"TRUNCATE TABLE StagingTable\",\n                    \"writeBatchSize\": 1000000,\n                    \"sqlWriterStoredProcedureName\": \"sp_UpsertData\"\n                }\n            },\n            {\n                \"name\": \"UpdateLoadDate\",\n                \"type\": \"SqlServerStoredProcedure\",\n                \"storedProcedureName\": \"sp_UpdateLastLoadDate\",\n                \"storedProcedureParameters\": {\n                    \"LastLoadDate\": {\n                        \"value\": \"@{activity('GetChangeTracking').output.firstRow.HighWatermark}\",\n                        \"type\": \"DateTime\"\n                    }\n                }\n            }\n        ]\n    }\n}",
+      "aiApproach": "Consider a 'lift and improve' approach instead of 'lift and shift', using the migration as an opportunity to redesign problematic schemas and implement modern data patterns like slowly changing dimensions."
+    }
+  ]
+}

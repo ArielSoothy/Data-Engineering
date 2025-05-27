@@ -1,0 +1,139 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "What's the difference between a list and tuple in Python?",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "List: Mutable (can be changed), uses square brackets [].\nTuple: Immutable (cannot be changed), uses parentheses ().\nLists are for changing collections, tuples for fixed data. Tuples are faster and use less memory but can't be modified after creation.",
+      "pseudoCode": "# List (mutable)\nmy_list = [1, 2, 3, 4]\nmy_list.append(5)        # Works - adds element\nmy_list[0] = 10          # Works - changes element\n\n# Tuple (immutable)\nmy_tuple = (1, 2, 3, 4)\n# my_tuple.append(5)     # ERROR - no append method\n# my_tuple[0] = 10       # ERROR - cannot change elements",
+      "aiApproach": "Choose list when you need to add/remove/change elements. Choose tuple when data is fixed (coordinates, RGB values, etc.). Tuples can be dictionary keys, lists cannot. Tuples are faster for iteration and element access."
+    },
+    {
+      "id": 2,
+      "question": "What's the difference between a dictionary and a set?",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "Dictionary: Key-value pairs, ordered (Python 3.7+), mutable.\nSet: Unique values only, unordered, mutable.\nDictionaries map keys to values, sets store unique items. Use dictionaries for lookups, sets for uniqueness and mathematical operations.",
+      "pseudoCode": "# Dictionary - key-value mapping\nemployee = {\n    'name': 'John Doe',\n    'age': 30,\n    'department': 'Engineering'\n}\nprint(employee['name'])     # 'John Doe'\nemployee['age'] = 31       # Update value\n\n# Set - unique collection\nskills = {'Python', 'SQL', 'AWS', 'Python'}  # Duplicate ignored\nprint(skills)               # {'Python', 'SQL', 'AWS'}\nskills.add('Docker')       # Add new element",
+      "aiApproach": "Use dictionaries when you need to associate values with keys for quick lookups. Use sets when you need to ensure uniqueness or perform set operations like union, intersection, or difference."
+    },
+    {
+      "id": 3,
+      "question": "How do you handle exceptions in Python?",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "Python uses try/except blocks for exception handling. You can catch specific exceptions or use a general except clause. The finally block executes regardless of whether an exception occurred. You can also raise exceptions explicitly and create custom exception classes.",
+      "pseudoCode": "# Basic exception handling\ndef divide_numbers(a, b):\n    try:\n        result = a / b\n        return result\n    except ZeroDivisionError:\n        print(\"Error: Cannot divide by zero\")\n        return None\n    except TypeError:\n        print(\"Error: Both arguments must be numbers\")\n        return None\n    finally:\n        print(\"Division operation completed\")",
+      "aiApproach": "Always catch specific exceptions first, then more general ones. Use finally for cleanup code that must always run. Create custom exception classes for domain-specific errors. Consider re-raising exceptions when you want to log but not fully handle them."
+    },
+    {
+      "id": 4,
+      "question": "What are list comprehensions? Give an example",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "List comprehensions provide a concise way to create lists based on existing iterables. They combine a for loop and an optional if condition into a single line. They're more readable and often faster than traditional loops for simple operations.",
+      "pseudoCode": "# Basic list comprehension syntax: [expression for item in iterable if condition]\n\n# Traditional approach\nnumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\nsquares = []\nfor num in numbers:\n    if num % 2 == 0:\n        squares.append(num ** 2)\n\n# List comprehension (more Pythonic)\nsquares = [num ** 2 for num in numbers if num % 2 == 0]\nprint(squares)  # [4, 16, 36, 64, 100]",
+      "aiApproach": "Use list comprehensions for simple transformations and filtering. They're more readable for one-line operations and offer better performance than loops. Avoid using them when the logic becomes complex or when multiple statements are needed."
+    },
+    {
+      "id": 5,
+      "question": "Explain the difference between deep copy and shallow copy",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "Shallow copy creates a new object but references the same nested objects. Deep copy creates completely independent objects. Choose based on whether you need to modify nested data. Shallow copy is faster but can lead to unexpected behavior when modifying nested objects.",
+      "pseudoCode": "import copy\n\n# Original list with nested objects\noriginal = [[1, 2, 3], [4, 5, 6]]\n\n# Shallow copy - copies references to nested objects\nshallow = copy.copy(original)  # or original.copy() or list(original)\n\n# Deep copy - creates completely independent copy\ndeep = copy.deepcopy(original)\n\n# Modify nested object\noriginal[0][0] = 999\n\nprint(\"Original:\", original)     # [[999, 2, 3], [4, 5, 6]]\nprint(\"Shallow:\", shallow)      # [[999, 2, 3], [4, 5, 6]] - AFFECTED!\nprint(\"Deep:\", deep)           # [[1, 2, 3], [4, 5, 6]] - NOT affected",
+      "aiApproach": "Use shallow copy for simple objects or when you won't modify nested data. Use deep copy when you need complete independence. Consider performance impact of deep copying large structures."
+    },
+    {
+      "id": 6,
+      "question": "How do you read a CSV file in Python?",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "You can read CSV files using pandas.read_csv() or the built-in csv module. Pandas is preferred for data analysis, while the csv module is useful for row-by-row processing. For large files, use pandas' chunksize parameter to process in chunks.",
+      "pseudoCode": "# Using pandas (most common for data engineering)\nimport pandas as pd\n\n# Basic reading\ndf = pd.read_csv('data.csv')\n\n# With options\ndf = pd.read_csv(\n    'data.csv',\n    sep=',',                 # Delimiter\n    header=0,                # Row with column names\n    na_values=['NA', 'NULL'] # Values to treat as NA\n)\n\n# For large files (process in chunks)\nchunks = []\nfor chunk in pd.read_csv('large_file.csv', chunksize=10000):\n    # Process each chunk\n    chunks.append(chunk.mean())\n\n# Using csv module\nimport csv\nwith open('data.csv', 'r') as file:\n    csv_reader = csv.reader(file)\n    header = next(csv_reader)  # Skip header\n    for row in csv_reader:\n        # Process each row\n        print(row)",
+      "aiApproach": "For data analysis, use pandas.read_csv() with appropriate options for data types, missing values, and column selection. For very large files, use the chunksize parameter to avoid memory issues. Use error handling for production code."
+    },
+    {
+      "id": 7,
+      "question": "What's the difference between pandas DataFrame and Series?",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "A Series is a one-dimensional labeled array similar to a column in a spreadsheet. A DataFrame is a two-dimensional labeled data structure similar to a table in a database. DataFrame columns are actually Series objects sharing the same index.",
+      "pseudoCode": "import pandas as pd\n\n# Series - 1D labeled array\nseries = pd.Series([10, 20, 30, 40], index=['A', 'B', 'C', 'D'])\nprint(series.shape)  # (4,)\n\n# DataFrame - 2D labeled data structure\ndf = pd.DataFrame({\n    'name': ['Alice', 'Bob', 'Carol'],\n    'age': [25, 30, 35],\n    'department': ['IT', 'HR', 'Finance']\n})\nprint(df.shape)  # (3, 3)\n\n# Accessing Series from DataFrame\nage_series = df['age']  # Returns a Series",
+      "aiApproach": "Think of a Series as a single column of data with row labels, and a DataFrame as multiple Series objects sharing the same index. Series operations typically return scalars, while DataFrame operations often return Series objects."
+    },
+    {
+      "id": 8,
+      "question": "How do you handle missing values in pandas?",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "Missing values in pandas can be handled by: 1) Detecting them with df.isnull() or df.isna(), 2) Removing them with df.dropna(), 3) Filling them with df.fillna(), 4) Interpolating with df.interpolate(), or 5) Forward/backward filling with methods='ffill'/'bfill'.",
+      "pseudoCode": "import pandas as pd\nimport numpy as np\n\n# Create DataFrame with missing values\ndf = pd.DataFrame({\n    'A': [1, np.nan, 3],\n    'B': [4, 5, np.nan]\n})\n\n# Detect missing values\nprint(df.isnull().sum())  # Count NaN per column\n\n# Remove rows with any NaN values\ndf_dropna = df.dropna()\n\n# Fill missing values with a constant\ndf_fill = df.fillna(0)\n\n# Fill with column mean\ndf_mean = df.fillna(df.mean())\n\n# Forward fill (use previous value)\ndf_ffill = df.fillna(method='ffill')",
+      "aiApproach": "Choose your missing value strategy based on the data context. For time series, forward/backward fill works well. For numerical features, mean/median is common. For categorical data, use mode or a specific value like 'Unknown'."
+    },
+    {
+      "id": 9,
+      "question": "What's the difference between merge() and join() in pandas?",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "merge() is more flexible and can join on any columns, while join() is optimized for index-based joins. merge() works like SQL joins with inner, outer, left, and right options. join() is primarily for combining DataFrames on their indexes.",
+      "pseudoCode": "import pandas as pd\n\n# Create sample DataFrames\ndf1 = pd.DataFrame({'key': ['A', 'B', 'C'], 'value1': [1, 2, 3]})\ndf2 = pd.DataFrame({'key': ['B', 'C', 'D'], 'value2': [4, 5, 6]})\n\n# merge() - can join on any columns\nmerged = pd.merge(\n    df1, df2,\n    on='key',      # Common column\n    how='left'     # Keep all rows from df1\n)\n\n# join() - index-based\ndf1_idx = df1.set_index('key')\ndf2_idx = df2.set_index('key')\njoined = df1_idx.join(df2_idx, how='left')",
+      "aiApproach": "Use merge() for complex joins on specific columns, particularly when the join columns have different names. Use join() for simple index-based operations, which is often faster when repeatedly joining indexed DataFrames."
+    },
+    {
+      "id": 10,
+      "question": "How do you group data in pandas?",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "Use the groupby() method to split data into groups based on some criteria, then apply aggregate functions like sum(), mean(), or count() to each group. You can group by one or multiple columns and apply different aggregations to different columns.",
+      "pseudoCode": "import pandas as pd\n\n# Sample data\ndf = pd.DataFrame({\n    'department': ['Sales', 'HR', 'Sales', 'IT', 'HR'],\n    'employee': ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve'],\n    'salary': [50000, 60000, 55000, 65000, 62000],\n    'bonus': [5000, 3000, 4500, 7000, 3500]\n})\n\n# Group by one column and calculate mean\ndept_avg = df.groupby('department').mean()\n\n# Group by and apply multiple aggregations\ndept_stats = df.groupby('department').agg({\n    'salary': ['mean', 'min', 'max', 'count'],\n    'bonus': ['mean', 'sum']\n})\n\n# Apply custom function to each group\ndef salary_range(x):\n    return x.max() - x.min()\n    \ndf.groupby('department')['salary'].apply(salary_range)",
+      "aiApproach": "GroupBy operations follow a split-apply-combine pattern: split the data into groups, apply a function to each group, then combine the results. Use the agg() method for multiple aggregations and transform() to keep the original DataFrame structure."
+    },
+    {
+      "id": 11,
+      "question": "Explain the differences between Pandas Series and DataFrame.",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "A Series is a one-dimensional labeled array that can hold data of any type, similar to a column in a spreadsheet. A DataFrame is a two-dimensional labeled data structure with columns that can be of different types, similar to a table in a database or a spreadsheet.",
+      "pseudoCode": "# Creating a Series\nimport pandas as pd\ns = pd.Series([1, 2, 3], index=['a', 'b', 'c'])\n\n# Creating a DataFrame\ndf = pd.DataFrame({\n    'A': [1, 2, 3],\n    'B': ['a', 'b', 'c']\n})",
+      "aiApproach": "Think of a Series as a single column of data with row labels, and a DataFrame as multiple Series objects sharing the same index. Most operations that work on Series also work on DataFrames, column-wise."
+    },
+    {
+      "id": 12,
+      "question": "How would you handle missing values in a DataFrame?",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "You can handle missing values by: (1) Detecting them using isnull() or isna(), (2) Removing them using dropna(), (3) Filling them with a specific value using fillna(), (4) Interpolating them using interpolate(), or (5) Forward/backward filling using ffill() or bfill().",
+      "pseudoCode": "# Detect missing values\ndf.isnull().sum()\n\n# Remove rows with missing values\ndf_clean = df.dropna()\n\n# Fill missing values with a constant\ndf_filled = df.fillna(0)\n\n# Fill with column mean\ndf_mean_filled = df.fillna(df.mean())\n\n# Forward fill (use previous value)\ndf_ffill = df.fillna(method='ffill')",
+      "aiApproach": "Choose your missing value strategy based on the data context. Forward/backward fill works well for time series, mean/median for numerical features, and mode for categorical data."
+    },
+    {
+      "id": 13,
+      "question": "How would you merge two DataFrames in Pandas?",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Use pd.merge() or the DataFrame.merge() method to combine DataFrames. You can specify the type of join (inner, outer, left, right), the columns to join on, and how to handle overlapping columns.",
+      "pseudoCode": "# Inner join on a common column\nmerged_df = pd.merge(df1, df2, on='key_column')\n\n# Left join with different column names\nmerged_df = pd.merge(\n    df1, df2, \n    left_on='df1_key', \n    right_on='df2_key', \n    how='left'\n)\n\n# Outer join on index\nmerged_df = pd.merge(\n    df1, df2,\n    left_index=True,\n    right_index=True,\n    how='outer'\n)",
+      "aiApproach": "Think of DataFrame merges just like SQL joins. Use suffixes parameter to handle duplicate column names (e.g., suffixes=('_left', '_right'))."
+    },
+    {
+      "id": 14,
+      "question": "Explain the difference between .loc and .iloc in Pandas.",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": ".loc is label-based indexing, meaning it uses the actual labels of the rows/columns. .iloc is integer position-based indexing, using the numeric position (starting from 0). .loc includes the last element when slicing, while .iloc excludes it.",
+      "pseudoCode": "# .loc examples (label-based)\ndf.loc['row_label', 'column_label']  # Single value\ndf.loc['row_label1':'row_label2', ['col1', 'col2']]  # Slice\n\n# .iloc examples (position-based)\ndf.iloc[0, 0]  # First cell\ndf.iloc[0:2, 1:3]  # First 2 rows, columns 1 and 2",
+      "aiApproach": "Remember: .loc is for Labels, .iloc is for Integer positions. When slicing with .loc, both start and end labels are included. With .iloc, the end index is excluded."
+    },
+    {
+      "id": 15,
+      "question": "How would you perform a GroupBy operation in Pandas?",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "Use the groupby() method to split data into groups based on some criteria, then apply an aggregate function like sum(), mean(), count(), etc. to each group. You can group by one or multiple columns.",
+      "pseudoCode": "# Group by one column and calculate mean of other columns\ndf.groupby('category').mean()\n\n# Group by multiple columns with multiple aggregations\ndf.groupby(['category', 'subcategory']).agg({\n    'value': ['sum', 'mean', 'count'],\n    'other_value': ['min', 'max']\n})\n\n# Apply a custom function to each group\ndf.groupby('category').apply(lambda x: x['value'].max() - x['value'].min())",
+      "aiApproach": "GroupBy operations follow a split-apply-combine pattern: split the data into groups, apply a function to each group, then combine the results. This mirrors the SQL GROUP BY behavior."
+    }
+  ]
+}
