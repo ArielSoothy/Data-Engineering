@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Clock, Check, Code, Lightbulb, Play, MessageSquare } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, Check, Play, MessageSquare } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import type { CategoryProgress } from '../context/AppContext';
 import { getDifficultyColor, getDifficultyBgColor, formatTime } from '../utils/helpers';
@@ -16,7 +16,6 @@ interface QuestionCardProps {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   timeEstimate: number;
   pseudoCode?: string;
-  aiApproach?: string;
   category: keyof CategoryProgress;
   completed?: boolean;
   onToggleCompletion?: (id: number, completed: boolean) => void;
@@ -29,13 +28,12 @@ const QuestionCard = ({
   difficulty,
   timeEstimate,
   pseudoCode,
-  aiApproach,
   category,
   completed = false,
   onToggleCompletion
 }: QuestionCardProps) => {
   const [expanded, setExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'answer' | 'code' | 'ai' | 'tryit' | 'practice'>('answer');
+  const [activeTab, setActiveTab] = useState<'answer' | 'tryit' | 'practice'>('answer');
   const [editorContent, setEditorContent] = useState(pseudoCode || '');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
@@ -128,7 +126,7 @@ const QuestionCard = ({
     setExpanded(!expanded);
   };
   
-  const handleTabClick = (tab: 'answer' | 'code' | 'ai' | 'tryit' | 'practice') => {
+  const handleTabClick = (tab: 'answer' | 'tryit' | 'practice') => {
     setActiveTab(tab);
   };
   
@@ -209,38 +207,6 @@ const QuestionCard = ({
               Solution
             </button>
             
-            {pseudoCode && (
-              <button
-                onClick={() => handleTabClick('code')}
-                className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                  activeTab === 'code'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <div className="flex items-center">
-                  <Code size={16} className="mr-1" />
-                  <span>Code</span>
-                </div>
-              </button>
-            )}
-            
-            {aiApproach && (
-              <button
-                onClick={() => handleTabClick('ai')}
-                className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                  activeTab === 'ai'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <div className="flex items-center">
-                  <Lightbulb size={16} className="mr-1" />
-                  <span>AI Approach</span>
-                </div>
-              </button>
-            )}
-            
             {/* Try It tab for code execution */}
             {(category.includes('python') || category.includes('sql')) && (
               <button
@@ -279,38 +245,6 @@ const QuestionCard = ({
             {activeTab === 'answer' && (
               <div className="text-gray-700 dark:text-gray-300">
                 {answer}
-              </div>
-            )}
-            
-            {activeTab === 'code' && pseudoCode && (
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-md overflow-hidden">
-                <Editor
-                  height="200px"
-                  defaultLanguage={
-                    category.includes('sql') ? 'sql' : 
-                    category.includes('python') ? 'python' : 
-                    'javascript'
-                  }
-                  theme={localStorage.getItem('msInterviewPreferences')?.includes('"darkMode":true') ? 'vs-dark' : 'light'}
-                  value={pseudoCode}
-                  options={{
-                    readOnly: true,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    lineNumbers: 'on',
-                    wordWrap: 'on'
-                  }}
-                />
-              </div>
-            )}
-            
-            {activeTab === 'ai' && aiApproach && (
-              <div className="p-4 bg-indigo-50 dark:bg-indigo-900 dark:bg-opacity-20 rounded-md border border-indigo-100 dark:border-indigo-800">
-                <div className="flex items-start mb-2">
-                  <Lightbulb size={18} className="text-indigo-600 dark:text-indigo-400 mr-2 mt-0.5" />
-                  <h4 className="text-indigo-800 dark:text-indigo-300 font-medium">AI-Augmented Approach</h4>
-                </div>
-                <p className="text-gray-700 dark:text-gray-300">{aiApproach}</p>
               </div>
             )}
 
@@ -354,14 +288,14 @@ const QuestionCard = ({
                 </div>
               </div>
             )}
-
-            {activeTab === 'practice' && (
-              <div>
-                <PracticeChat question={question} answer={answer} />
-              </div>
-            )}
-
           </div>
+
+          {/* Practice tab - outside prose container for better mobile layout */}
+          {activeTab === 'practice' && (
+            <div className="mt-4 -mx-2 md:mx-0">
+              <PracticeChat question={question} answer={answer} />
+            </div>
+          )}
         </div>
       )}
     </div>

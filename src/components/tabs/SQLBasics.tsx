@@ -266,7 +266,6 @@ const SQLBasics = () => {
               difficulty={question.difficulty}
               timeEstimate={question.timeEstimate}
               pseudoCode={question.pseudoCode}
-              aiApproach={question.aiApproach}
               category="sqlBasics"
               completed={getQuestionProgress(question.id)?.completed || false}
               onToggleCompletion={toggleQuestionCompletion}
