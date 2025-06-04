@@ -47,9 +47,14 @@ This is a React-based learning platform for Data Engineering concepts, including
 Create a `.env` file in the root directory with:
 
 ```
-VITE_CLAUDE_API_KEY=your_api_key_here
+CLAUDE_API_KEY=your_api_key_here
 ```
-```
+
+This key is read only on the server. Client code calls the `/api/claudeProxy` endpoint which forwards requests to Anthropics' API.
+
+### Serverless Deployment
+
+Deploy to Vercel or Netlify and add a secret named `CLAUDE_API_KEY` in your project settings. The `api/claudeProxy.ts` file will be automatically picked up as a serverless function.
 
 ## Deployment
 
