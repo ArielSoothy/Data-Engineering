@@ -5,11 +5,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ command }) => {
   return {
     plugins: [react()],
-    // Make sure environment variables are properly loaded
-    define: {
-      // Explicitly expose the VITE_CLAUDE_API_KEY env variable
-      'import.meta.env.VITE_CLAUDE_API_KEY': JSON.stringify(process.env.VITE_CLAUDE_API_KEY),
-    },
     // Use different base paths for development and production
     base: command === 'serve' ? '/' : '/Data-Engineering/',    build: {
       // Generate sourcemaps for easier debugging
