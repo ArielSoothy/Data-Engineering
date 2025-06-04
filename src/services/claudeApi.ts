@@ -1,37 +1,7 @@
 import axios from 'axios';
 
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-// Handle various formats of the API key that might cause issues
-const CLAUDE_API_KEY = (() => {
-  // Try multiple approaches to get the API key
-  const key = import.meta.env.VITE_CLAUDE_API_KEY;
-  
-  // For debugging - remove in production
-  console.log('Raw API key type:', typeof key);
-  console.log('Raw API key length:', key?.length);
-  
-  // If key is undefined, null, or empty
-  if (!key) {
-    console.warn('API key is missing in environment variables');
-    // As a fallback for development, try to load from a hardcoded value
-    // This should NEVER be used in production
-    if (import.meta.env.DEV) {
-      const fallbackKey = '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';
-      console.warn('Using fallback API key in development mode - NOT SECURE FOR PRODUCTION');
-      return fallbackKey;
-    }
-    return null;
-  }
-  
-  // If key is a string but surrounded with quotes or has extra whitespace
-  if (typeof key === 'string') {
-    // Remove any surrounding quotes if they exist and trim whitespace
-    return key.replace(/^["'](.*)["']$/, '$1').trim();
-  }
-  
-  // Otherwise return as is
-  return key;
-})();
+// Requests are now proxied through the serverless function
+const CLAUDE_API_URL = '/api/claudeProxy';
 
 // Context prompt for interview preparation
 const CONTEXT_PROMPT = `You are helping Ariel, a 42-year-old Senior Data Engineer at Nuvei (fintech/payments) prepare for a Microsoft Data Engineer technical interview. 
@@ -128,32 +98,7 @@ export const generateFeedback = async (
   correctAnswer: string,
   pseudoCode?: string
 ): Promise<string> => {
-  console.log('API Key debug info:',{ 
-    exists: !!CLAUDE_API_KEY,
-    length: CLAUDE_API_KEY?.length, 
-    type: typeof CLAUDE_API_KEY,
-    firstChars: CLAUDE_API_KEY?.substring(0, 8),
-    lastChars: CLAUDE_API_KEY?.slice(-5)
-  });
-  
-  // Perform comprehensive validation of the API key
-  const isValidApiKey = CLAUDE_API_KEY && 
-                       typeof CLAUDE_API_KEY === 'string' &&
-                       CLAUDE_API_KEY !== 'undefined' && 
-                       CLAUDE_API_KEY !== '"undefined"' &&
-                       CLAUDE_API_KEY.startsWith('sk-ant-');
 
-  if (!isValidApiKey) {
-    console.warn('Claude API key is not configured properly, using mock response');
-    console.warn('API Key value:', typeof CLAUDE_API_KEY === 'string' 
-                ? `${CLAUDE_API_KEY.substring(0, 10)}...` 
-                : String(CLAUDE_API_KEY));
-    console.warn('API Key value type:', typeof CLAUDE_API_KEY);
-    console.warn('Raw env value type:', typeof import.meta.env.VITE_CLAUDE_API_KEY);
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return generateMockFeedback(userAnswer, correctAnswer);
-  }
 
   try {
     console.log('Calling Claude API...');
@@ -191,19 +136,15 @@ Keep feedback practical and interview-focused (not academic).`
     console.log('Sending request to Claude API...');
     
     console.log('API Request Headers:', {
-      contentType: 'application/json',
-      apiKeyLength: CLAUDE_API_KEY?.length,
-      apiKeyFirstChars: CLAUDE_API_KEY?.substring(0, 8)
+      contentType: 'application/json'
     });
-    
+
     const response = await axios.post(
       CLAUDE_API_URL,
       payload,
       {
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01'
+          'Content-Type': 'application/json'
         },
         timeout: 30000
       }
