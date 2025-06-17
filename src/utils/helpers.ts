@@ -104,3 +104,12 @@ export const getFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
     return defaultValue;
   }
 };
+
+// Retrieve the Claude API key from env or localStorage
+export const getApiKey = (): string | undefined => {
+  const raw = import.meta.env.VITE_CLAUDE_API_KEY as string | undefined;
+  const cleaned = typeof raw === 'string' ? raw.replace(/^['"]|['"]$/g, '').trim() : undefined;
+  if (cleaned) return cleaned;
+  const stored = localStorage.getItem('claude_api_key');
+  return stored || undefined;
+};
