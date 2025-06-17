@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getApiKey } from '../utils/helpers';
 
 // Requests are now proxied through the serverless function
 const CLAUDE_API_URL = '/api/claudeProxy';
@@ -141,12 +142,14 @@ Keep feedback practical and interview-focused (not academic).`
       contentType: 'application/json'
     });
 
+    const apiKey = getApiKey();
     const response = await axios.post(
       CLAUDE_API_URL,
       payload,
       {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(apiKey ? { 'x-api-key': apiKey } : {})
         },
         timeout: 30000
       }
