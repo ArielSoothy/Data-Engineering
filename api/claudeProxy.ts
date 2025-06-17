@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
+const DEFAULT_MODEL = process.env.CLAUDE_MODEL || 'claude-3-haiku-20240307';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -16,7 +17,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const response = await axios.post(CLAUDE_ENDPOINT, req.body, {
+    const body = { ...req.body, model: req.body.model || DEFAULT_MODEL };
+    const response = await axios.post(CLAUDE_ENDPOINT, body, {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
@@ -41,9 +43,10 @@ export const handler = async (event: any) => {
   }
 
   const body = event.body ? JSON.parse(event.body) : {};
+  const requestBody = { ...body, model: body.model || DEFAULT_MODEL };
 
   try {
-    const response = await axios.post(CLAUDE_ENDPOINT, body, {
+    const response = await axios.post(CLAUDE_ENDPOINT, requestBody, {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,

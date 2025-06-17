@@ -44,13 +44,18 @@ This is a React-based learning platform for Data Engineering concepts, including
 
 ### Environment Variables
 
-Create a `.env` file in the root directory with:
+Create a `.env` file in the root directory (see `.env.example` for a template) and provide your Anthropic API key:
 
 ```
 CLAUDE_API_KEY=your_api_key_here
+VITE_CLAUDE_API_KEY=your_api_key_here
+
+# Optional: choose which Claude model to use
+CLAUDE_MODEL=claude-3-haiku-20240307
+VITE_CLAUDE_MODEL=claude-3-haiku-20240307
 ```
 
-This key is read only on the server. Client code calls the `/api/claudeProxy` endpoint which forwards requests to Anthropics' API.
+The client loads `VITE_CLAUDE_API_KEY` and `VITE_CLAUDE_MODEL` at build time. All requests go through `/api/claudeProxy`, which uses `CLAUDE_API_KEY` and `CLAUDE_MODEL` on the server.
 
 ### Serverless Deployment
 
