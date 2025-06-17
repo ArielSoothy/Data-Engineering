@@ -10,7 +10,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const apiKey = process.env.CLAUDE_API_KEY;
+  // Allow API key to be supplied in the request header for local/static deployments
+  const apiKey =
+    (req.headers['x-api-key'] as string | undefined) || process.env.CLAUDE_API_KEY;
   if (!apiKey) {
     res.status(500).json({ error: 'CLAUDE_API_KEY is not set' });
     return;
@@ -37,7 +39,8 @@ export const handler = async (event: any) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const apiKey = process.env.CLAUDE_API_KEY;
+  const apiKey =
+    (event.headers?.['x-api-key'] as string | undefined) || process.env.CLAUDE_API_KEY;
   if (!apiKey) {
     return { statusCode: 500, body: JSON.stringify({ error: 'CLAUDE_API_KEY is not set' }) };
   }
