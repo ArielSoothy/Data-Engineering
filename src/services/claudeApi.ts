@@ -102,9 +102,11 @@ export const generateFeedback = async (
 
   try {
     console.log('Calling Claude API...');
-    
+
+    const model = import.meta.env.VITE_CLAUDE_MODEL || 'claude-3-haiku-20240307';
+
     const payload = {
-      model: 'claude-3-5-sonnet-20241022', // Use the latest available model
+      model,
       messages: [
         {
           role: 'user',
