@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { getApiKey } from '../utils/helpers';
 
-// Requests are now proxied through the serverless function
-const CLAUDE_API_URL = '/api/claudeProxy';
+// Use direct API calls for GitHub Pages deployment
+const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 
 // Context prompt for interview preparation
 const CONTEXT_PROMPT = `You are helping Ariel, a 42-year-old Senior Data Engineer at Nuvei (fintech/payments) prepare for a Microsoft Data Engineer technical interview. 
@@ -149,7 +149,8 @@ Keep feedback practical and interview-focused (not academic).`
       {
         headers: {
           'Content-Type': 'application/json',
-          ...(apiKey ? { 'x-api-key': apiKey } : {})
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
         },
         timeout: 30000
       }
