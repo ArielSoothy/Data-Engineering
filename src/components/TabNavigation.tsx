@@ -119,6 +119,9 @@ const TabNavigation = () => {
             >
               {preferences.darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
+            <div className="hidden lg:flex items-center text-xs text-gray-400 pl-2 pr-4">
+              {(import.meta.env.VITE_AI_PROVIDER || 'gemini').toLowerCase() === 'gemini' ? 'Gemini 1.5 Flash' : 'Claude'}
+            </div>
           </div>
         </div>
       </div>

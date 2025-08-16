@@ -17,7 +17,7 @@ const Dashboard = () => {
   } = useAppContext();
   
   const [currentDate] = useState(new Date());
-  const [interviewDate] = useState(new Date(2023, 11, 17)); // Dec 17, 2023
+  const [interviewDate] = useState(new Date(2025, 11, 17)); // Dec 17, 2025 - Updated for current year
   const [daysRemaining, setDaysRemaining] = useState(0);
   
   // Calculate days remaining until interview
@@ -30,9 +30,9 @@ const Dashboard = () => {
   // Define the study plan timeline
   const timeline = [
     {
-      day: 'Friday Evening',
-      date: 'Dec 13',
-      title: 'Foundation',
+      day: 'Week 1',
+      date: 'Foundation',
+      title: 'SQL Fundamentals',
       hours: 4,
       focus: ['SQL Basics (Questions 1-20)'],
       goal: 'Core SQL understanding',
@@ -40,8 +40,8 @@ const Dashboard = () => {
       completed: getCategoryProgress('sqlBasics') >= 50 // 20/40 = 50%
     },
     {
-      day: 'Saturday',
-      date: 'Dec 14',
+      day: 'Week 2',
+      date: 'Advanced',
       title: 'SQL Mastery',
       hours: 8,
       focus: [

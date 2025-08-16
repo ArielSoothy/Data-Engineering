@@ -27,7 +27,7 @@ const DarkModeInitializer = () => {
   return null;
 };
 
-// Determine if we're in production GitHub Pages or local development
+// Determine base router strategy: GitHub Pages needs HashRouter
 const isGitHubPages = window.location.hostname.includes('github.io');
 
 function App() {

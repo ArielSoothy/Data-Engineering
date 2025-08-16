@@ -1,8 +1,17 @@
 import axios from 'axios';
 import { getApiKey } from '../utils/helpers';
 
-// Requests are now proxied through the serverless function
-const CLAUDE_API_URL = '/api/claudeProxy';
+// Provider selection
+const AI_PROVIDER = (import.meta.env.VITE_AI_PROVIDER || 'gemini').toLowerCase();
+
+// Use local proxy in dev, relative path in production
+const CLAUDE_API_URL = import.meta.env.DEV
+  ? 'http://localhost:3000/api/claudeProxy'
+  : '/api/claudeProxy';
+
+const GEMINI_API_URL = import.meta.env.DEV
+  ? 'http://localhost:3000/api/geminiProxy'
+  : '/api/geminiProxy';
 
 // Context prompt for interview preparation
 const CONTEXT_PROMPT = `You are helping Ariel, a 42-year-old Senior Data Engineer at Nuvei (fintech/payments) prepare for a Microsoft Data Engineer technical interview. 
@@ -102,16 +111,7 @@ export const generateFeedback = async (
 
 
   try {
-    console.log('Calling Claude API...');
-
-    const model = import.meta.env.VITE_CLAUDE_MODEL || 'claude-3-haiku-20240307';
-
-    const payload = {
-      model,
-      messages: [
-        {
-          role: 'user',
-          content: `**INTERVIEW QUESTION:**
+    const basePrompt = `**INTERVIEW QUESTION:**
 ${question}
 
 **CANDIDATE'S ANSWER:**
@@ -128,48 +128,73 @@ ${pseudoCode ? `**REFERENCE CODE:**\n${pseudoCode}` : ''}
 3. Connection to candidate's fintech background if relevant
 4. Key points Microsoft expects to hear
 
-Keep feedback practical and interview-focused (not academic).`
-        }
-      ],
-      system: CONTEXT_PROMPT,
-      max_tokens: 800,
-      temperature: 0.3
-    };
-    
-    console.log('Sending request to Claude API...');
-    
-    console.log('API Request Headers:', {
-      contentType: 'application/json'
-    });
+Keep feedback practical and interview-focused (not academic).`;
 
-    const apiKey = getApiKey();
-    const response = await axios.post(
-      CLAUDE_API_URL,
-      payload,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(apiKey ? { 'x-api-key': apiKey } : {})
+    if (AI_PROVIDER === 'gemini') {
+      console.log('Calling Gemini API via proxy...');
+      const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash';
+      const response = await axios.post(
+        GEMINI_API_URL,
+        {
+          model,
+          prompt: basePrompt,
+          system: CONTEXT_PROMPT,
+          maxOutputTokens: 800,
+          temperature: 0.3
         },
-        timeout: 30000
-      }
-    );
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 30000
+        }
+      );
 
-    console.log('Claude API response received:', response.status);
-    
-    // Simple response handling - Claude's Messages API returns content in a straightforward way
-    if (response.data && response.data.content && response.data.content.length > 0) {
-      // Extract text from the first content block
-      const textContent = response.data.content[0].text;
-      console.log('Extracted feedback successfully');
-      return textContent;
+      if (response.data && response.data.content && response.data.content.length > 0) {
+        const textContent = response.data.content[0].text;
+        return textContent;
+      }
+      console.error('Unexpected response format from Gemini:', response.data);
+      throw new Error('Unexpected response format from Gemini API');
+    } else {
+      console.log('Calling Claude API via proxy...');
+      const model = import.meta.env.VITE_CLAUDE_MODEL || 'claude-3-haiku-20240307';
+      const payload = {
+        model,
+        messages: [
+          {
+            role: 'user',
+            content: basePrompt
+          }
+        ],
+        system: CONTEXT_PROMPT,
+        max_tokens: 800,
+        temperature: 0.3
+      };
+
+      const apiKey = getApiKey();
+      const response = await axios.post(
+        CLAUDE_API_URL,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(apiKey ? { 'x-api-key': apiKey } : {})
+          },
+          timeout: 30000
+        }
+      );
+
+      if (response.data && response.data.content && response.data.content.length > 0) {
+        const textContent = response.data.content[0].text;
+        return textContent;
+      }
+      console.error('Unexpected response format from Claude:', response.data);
+      throw new Error('Unexpected response format from Claude API');
     }
-    
-    console.error('Unexpected response format:', response.data);
-    throw new Error('Unexpected response format from Claude API');
+    // Should not reach here; handled in branches above
+    throw new Error('Unexpected response format from AI provider');
     
   } catch (error: any) {
-    console.error('Error calling Claude API:', error);
+    console.error('Error calling AI provider:', error);
     
     if (error.response) {
       console.error('API Error Details:', {
@@ -181,6 +206,9 @@ Keep feedback practical and interview-focused (not academic).`
       // Handle specific error cases with clear messages
       if (error.response.status === 401) {
         console.error('Authentication failed. Check your API key.');
+        if (AI_PROVIDER === 'gemini') {
+          throw new Error('Invalid API key. Please check your GEMINI_API_KEY in the deployment environment.');
+        }
         throw new Error('Invalid API key. Please check your Claude API key in the .env file.');
       } else if (error.response.status === 429) {
         throw new Error('Rate limit exceeded. Please try again in a moment.');

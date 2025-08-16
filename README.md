@@ -1,6 +1,49 @@
-# Data Engineering
+### Vercel Deployment
 
-Interactive learning platform for Data Engineering topics including SQL and Python. 🚀
+1. Push the repo to GitHub.
+2. Import the repo in Vercel.
+3. Set Environment Variables in Vercel Project Settings:
+   - `VITE_AI_PROVIDER=gemini`
+   - `GEMINI_API_KEY=...` (for Gemini)
+   - (Optional) `CLAUDE_API_KEY=...` if switching provider
+   - (Optional) `GITHUB_PAGES=false`
+4. Build command: `npm run build`
+5. Output directory: `dist`
+6. Serverless routes: `api/geminiProxy.ts`, `api/claudeProxy.ts` are auto-detected by Vercel.
+
+## AI Provider Configuration
+
+This app supports multiple AI providers via serverless API routes and can run on Vercel:
+
+- Set `VITE_AI_PROVIDER` to `gemini` (default) or `claude`.
+- For Gemini (Gemini 1.5 Flash Free):
+  - Create an environment variable `GEMINI_API_KEY` in Vercel project settings.
+  - Optionally set `GEMINI_MODEL` (defaults to `gemini-1.5-flash`).
+- For Claude:
+  - Create `CLAUDE_API_KEY` in Vercel project settings.
+  - Optionally set `CLAUDE_MODEL`.
+
+Local dev uses `http://localhost:3000/api/*` proxies; production uses relative `/api/*` paths.
+
+If deploying to GitHub Pages, set `GITHUB_PAGES=true` prior to build to keep repo base path.
+# Data Engineering Learning Platform
+
+🎯 **Interactive Microsoft Technical Interview Preparation** | Built for Google/Reichman AI & Deep Learning Course
+
+*Professional-grade React + AI learning platform with 115+ curated questions, browser-based code execution, and dual AI feedback (Claude + Gemini)*
+
+## 🏆 Project Showcase
+
+**Live Demo:** https://arielsoothy.github.io/Data-Engineering/
+**Technologies:** React 18, TypeScript, Vite, Tailwind CSS, Monaco Editor, Pyodide, SQL.js
+**AI Integration:** Claude (Anthropic) + Gemini (Google) with serverless API architecture
+**Course Context:** Google/Reichman University AI & Deep Learning Program
+
+### Key Technical Achievements
+- 🧠 **Dual AI Provider Architecture** - Seamless failover between Claude and Gemini APIs
+- 💻 **Browser Code Execution** - Run Python and SQL directly in browser without servers
+- 📱 **Enterprise UX** - Responsive design with progress tracking and dark mode
+- 🚀 **Multi-Platform Deployment** - GitHub Pages + Vercel with serverless functions
 
 ## Table of Contents
 
@@ -89,8 +132,19 @@ This will:
 
 ### Accessing the Site
 
-- Main Site: https://arielsoothy.github.io/Data-Engineering/
-- The site should also be accessible via https://arielsoothy.github.io/
+- **Main Site:** https://arielsoothy.github.io/Data-Engineering/
+- **Alternative URL:** https://arielsoothy.github.io/
+
+### 📢 LinkedIn/Professional Sharing
+
+**Project Highlights for Social Media:**
+- 🎯 Built comprehensive Microsoft Data Engineer interview prep platform
+- 🧠 Integrated dual AI providers (Claude + Gemini) with seamless failover
+- 💻 Implemented browser-based Python and SQL execution environments
+- 📱 Created responsive, accessible UX with progress tracking
+- 🚀 Deployed multi-platform architecture (GitHub Pages + Vercel serverless)
+
+**Technologies Showcase:** React 18, TypeScript, AI APIs, Monaco Editor, WebAssembly (Pyodide), SQL.js, Tailwind CSS
 
 ## Troubleshooting
 
