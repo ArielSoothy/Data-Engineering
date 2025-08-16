@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Send } from 'lucide-react';
 import { generateFeedback } from '../services/claudeApi';
 
@@ -19,6 +19,8 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
   }]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,10 +94,29 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
     }
   };
 
+  // Auto-scroll on new messages or loading state changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  }, [messages, isLoading]);
+
+  // Submit with Cmd/Ctrl + Enter
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!isLoading && input.trim()) {
+        // Create a synthetic event for form submit
+        const form = e.currentTarget.form;
+        form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col h-[40vh] sm:h-[45vh] md:h-[500px] max-h-[350px] sm:max-h-[400px] md:max-h-[500px] bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700">
       {/* Messages area */}
-      <div className="flex-1 p-3 md:p-4 overflow-y-auto space-y-3 md:space-y-4">
+      <div ref={scrollContainerRef} className="flex-1 p-3 md:p-4 overflow-y-auto space-y-3 md:space-y-4">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -123,6 +144,7 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input area */}
@@ -131,6 +153,7 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Type your answer here. Be comprehensive and detailed to get the best feedback..."
             className="w-full p-2 md:p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm md:text-base"
             disabled={isLoading}

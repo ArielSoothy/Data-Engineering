@@ -15,10 +15,12 @@ export const ApiDiagnostic = () => {
     
     // Test 1: Environment Variables
     addResult('🔍 Checking environment variables...');
-    const apiKey = import.meta.env.VITE_CLAUDE_API_KEY;
-    addResult(`API Key present: ${!!apiKey}`);
-    addResult(`API Key length: ${apiKey?.length || 0}`);
-    addResult(`API Key format valid: ${apiKey?.startsWith('sk-ant-') || false}`);
+    const provider = (import.meta.env.VITE_AI_PROVIDER || 'gemini').toLowerCase();
+    addResult(`AI Provider: ${provider}`);
+    const claudeKey = import.meta.env.VITE_CLAUDE_API_KEY;
+    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    addResult(`Claude key present: ${!!claudeKey}`);
+    addResult(`Gemini key present: ${!!geminiKey}`);
     
     // Test 2: Network connectivity test
     addResult('🌐 Testing basic network connectivity...');
@@ -36,35 +38,58 @@ export const ApiDiagnostic = () => {
       addResult(`❌ Network test failed: ${error.message}`);
     }
 
-    // Test 3: Anthropic API endpoint connectivity
-    addResult('🔗 Testing Anthropic API endpoint connectivity...');
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey || 'test-key',
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          messages: [{ role: 'user', content: 'test' }],
-          max_tokens: 10
-        })
-      });
-      
-      if (response.status === 401) {
-        addResult('✅ Anthropic API endpoint reachable (401 = auth issue, but endpoint accessible)');
-      } else if (response.status === 400) {
-        addResult('✅ Anthropic API endpoint reachable (400 = bad request, but endpoint accessible)');
-      } else {
-        addResult(`📊 Anthropic API response: ${response.status} ${response.statusText}`);
+    // Test 3: Provider endpoint connectivity
+    if (provider === 'gemini') {
+      addResult('🔗 Testing Gemini API endpoint connectivity...');
+      try {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + (geminiKey || 'test-key'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'test' }] }] })
+        });
+        if (response.status === 401 || response.status === 403) {
+          addResult('✅ Gemini endpoint reachable (auth issue indicates reachability)');
+        } else if (response.status === 400) {
+          addResult('✅ Gemini endpoint reachable (400 bad request indicates reachability)');
+        } else {
+          addResult(`📊 Gemini API response: ${response.status} ${response.statusText}`);
+        }
+      } catch (error: any) {
+        if (error.message.includes('blocked') || error.message.includes('CORS')) {
+          addResult('❌ Corporate firewall likely blocking Google Generative Language API');
+        } else {
+          addResult(`❌ Gemini API test failed: ${error.message}`);
+        }
       }
-    } catch (error: any) {
-      if (error.message.includes('blocked') || error.message.includes('CORS')) {
-        addResult('❌ Corporate firewall likely blocking Anthropic API');
-      } else {
-        addResult(`❌ Anthropic API test failed: ${error.message}`);
+    } else {
+      addResult('🔗 Testing Anthropic API endpoint connectivity...');
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': claudeKey || 'test-key',
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-5-sonnet-20241022',
+            messages: [{ role: 'user', content: 'test' }],
+            max_tokens: 10
+          })
+        });
+        if (response.status === 401) {
+          addResult('✅ Anthropic API endpoint reachable (401 = auth issue, but endpoint accessible)');
+        } else if (response.status === 400) {
+          addResult('✅ Anthropic API endpoint reachable (400 = bad request, but endpoint accessible)');
+        } else {
+          addResult(`📊 Anthropic API response: ${response.status} ${response.statusText}`);
+        }
+      } catch (error: any) {
+        if (error.message.includes('blocked') || error.message.includes('CORS')) {
+          addResult('❌ Corporate firewall likely blocking Anthropic API');
+        } else {
+          addResult(`❌ Anthropic API test failed: ${error.message}`);
+        }
       }
     }
 
@@ -97,7 +122,7 @@ export const ApiDiagnostic = () => {
       </h2>
       
       <p className="text-gray-600 dark:text-gray-400 mb-6">
-        This tool will help diagnose if the Practice Chat API is working correctly and identify any corporate network restrictions.
+        This tool helps diagnose connectivity to the configured AI provider and app API.
       </p>
 
       <button

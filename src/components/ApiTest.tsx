@@ -26,7 +26,7 @@ export const ApiTest = () => {
 
   return (
     <div className="p-4 border rounded-md">
-      <h2 className="text-xl font-bold mb-4">Claude API Test</h2>
+      <h2 className="text-xl font-bold mb-4">AI API Test</h2>
       
       <button
         onClick={handleTestApi}

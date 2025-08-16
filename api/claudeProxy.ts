@@ -4,7 +4,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const DEFAULT_MODEL = process.env.CLAUDE_MODEL || 'claude-3-haiku-20240307';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+async function vercelHandler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -19,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const body = { ...req.body, model: req.body.model || DEFAULT_MODEL };
+    const body = { ...req.body, model: req.body?.model || DEFAULT_MODEL };
     const response = await axios.post(CLAUDE_ENDPOINT, body, {
       headers: {
         'Content-Type': 'application/json',
@@ -62,3 +62,5 @@ export const handler = async (event: any) => {
     return { statusCode: status, body: JSON.stringify({ error: err.message, data: err.response?.data }) };
   }
 };
+
+export default vercelHandler;

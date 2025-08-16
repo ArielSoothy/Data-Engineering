@@ -1,3 +1,53 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI API Test</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; padding: 24px; }
+      textarea { width: 100%; min-height: 120px; }
+      pre { background: #f6f8fa; padding: 12px; border-radius: 8px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <h1>AI API Test</h1>
+    <p>Quick test page to verify serverless API works in the deployed environment.</p>
+
+    <label>Provider (env VITE_AI_PROVIDER): <strong id="provider">gemini</strong></label>
+    <br /><br />
+    <textarea id="prompt">Test prompt</textarea>
+    <br />
+    <button id="run">Run</button>
+    <pre id="out"></pre>
+
+    <script>
+      const provider = (new URLSearchParams(location.search).get('provider') || 'gemini').toLowerCase();
+      document.getElementById('provider').textContent = provider;
+      const out = document.getElementById('out');
+      document.getElementById('run').onclick = async () => {
+        out.textContent = 'Running...';
+        try {
+          const endpoint = provider === 'gemini' ? '/api/geminiProxy' : '/api/claudeProxy';
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: provider === 'gemini' ? 'gemini-1.5-flash' : 'claude-3-haiku-20240307',
+              prompt: 'Say hello',
+              system: 'You are a helpful assistant.'
+            })
+          });
+          const data = await res.json();
+          out.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          out.textContent = 'Error: ' + e.message;
+        }
+      };
+    </script>
+  </body>
+</html>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
