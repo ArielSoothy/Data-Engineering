@@ -5,6 +5,16 @@ const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const DEFAULT_MODEL = process.env.CLAUDE_MODEL || 'claude-3-haiku-20240307';
 
 async function vercelHandler(req: VercelRequest, res: VercelResponse) {
+  // Add CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
