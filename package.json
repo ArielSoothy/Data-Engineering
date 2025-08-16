@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.55.0",
     "axios": "^1.10.0",
     "express": "^5.1.0",
     "html2canvas": "^1.4.1",
@@ -26,10 +28,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
-    "@vercel/node": "^3.2.25",
     "@types/react": "^18.2.57",
     "@types/react-dom": "^18.2.19",
     "@types/sql.js": "^1.4.9",
+    "@vercel/node": "^3.2.25",
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.21",
     "dotenv": "^16.5.0",

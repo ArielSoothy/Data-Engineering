@@ -228,17 +228,17 @@ INSERT INTO table3 (id, column1, column2, column3, table2_id) VALUES
 
 -- Payroll history with some duplicate entries to simulate ETL errors
 INSERT INTO payroll (payroll_id, employee_id, salary, effective_date) VALUES
-    (1, 95000.00, '2020-01-15'),
-    (1, 98000.00, '2021-01-15'),
-    (1, 100000.00, '2022-01-15'),
-    (1, 100000.00, '2022-01-15'),  -- Duplicate entry
-    (2, 90000.00, '2020-02-01'),
-    (2, 92000.00, '2021-02-01'),
-    (2, 95000.00, '2022-02-01'),
-    (2, 95000.00, '2022-02-01'),  -- Duplicate entry
-    (3, 80000.00, '2020-03-15'),
-    (3, 82000.00, '2021-03-15'),
-    (3, 85000.00, '2022-03-15');
+    (1, 1, 95000.00, '2020-01-15'),
+    (2, 1, 98000.00, '2021-01-15'),
+    (3, 1, 100000.00, '2022-01-15'),
+    (4, 1, 100000.00, '2022-01-15'),  -- Duplicate entry
+    (5, 2, 90000.00, '2020-02-01'),
+    (6, 2, 92000.00, '2021-02-01'),
+    (7, 2, 95000.00, '2022-02-01'),
+    (8, 2, 95000.00, '2022-02-01'),  -- Duplicate entry
+    (9, 3, 80000.00, '2020-03-15'),
+    (10, 3, 82000.00, '2021-03-15'),
+    (11, 3, 85000.00, '2022-03-15');
 
 -- Salary reviews data
 INSERT INTO salary_reviews (review_id, employee_id, review_date, salary, performance_rating) VALUES

@@ -105,11 +105,10 @@ export const getFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
   }
 };
 
-// Retrieve the Claude API key from env or localStorage
+// For serverless deployment, we don't need frontend API keys
+// The API keys are stored securely in the serverless functions
 export const getApiKey = (): string | undefined => {
-  const raw = import.meta.env.VITE_CLAUDE_API_KEY as string | undefined;
-  const cleaned = typeof raw === 'string' ? raw.replace(/^['"]|['"]$/g, '').trim() : undefined;
-  if (cleaned) return cleaned;
-  const stored = localStorage.getItem('claude_api_key');
-  return stored || undefined;
+  // Return undefined for serverless deployment
+  // API keys are handled by the serverless functions
+  return undefined;
 };
