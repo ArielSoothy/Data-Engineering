@@ -190,8 +190,6 @@ Keep feedback practical and interview-focused (not academic).`;
       console.error('Unexpected response format from Claude:', response.data);
       throw new Error('Unexpected response format from Claude API');
     }
-    // Should not reach here; handled in branches above
-    throw new Error('Unexpected response format from AI provider');
     
   } catch (error: any) {
     console.error('Error calling AI provider:', error);
