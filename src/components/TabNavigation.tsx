@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import {
   LayoutDashboard, Database, Code, Braces, BarChart,
-  Cloud, Video, Book, Moon, Sun, Target, GraduationCap
+  Cloud, Video, Book, Moon, Sun, Target, GraduationCap, Briefcase
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
@@ -68,17 +68,23 @@ const TabNavigation = () => {
       icon: <Cloud size={20} />,
       path: '/tech-stack'
     },
-    { 
-      id: 'mock-interview', 
-      label: 'Mock Interview', 
-      icon: <Video size={20} />, 
-      path: '/mock-interview' 
+    {
+      id: 'mock-interview',
+      label: 'Mock Interview',
+      icon: <Video size={20} />,
+      path: '/mock-interview'
     },
-    { 
-      id: 'glossary', 
-      label: 'Glossary', 
-      icon: <Book size={20} />, 
-      path: '/glossary' 
+    {
+      id: 'my-projects',
+      label: 'My Projects',
+      icon: <Briefcase size={20} />,
+      path: '/my-projects'
+    },
+    {
+      id: 'glossary',
+      label: 'Glossary',
+      icon: <Book size={20} />,
+      path: '/glossary'
     }
   ];
   

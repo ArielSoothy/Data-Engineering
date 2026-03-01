@@ -1,0 +1,86 @@
+{
+  "projects": [
+    {
+      "id": "simplex",
+      "name": "Simplex — Enterprise dbt Platform",
+      "shortName": "Simplex",
+      "duration": "3 years",
+      "tags": ["SQL", "Data Modeling", "Behavioral"],
+      "metrics": "248 dbt models · 41 Airflow DAGs · Custom Snowflake operators",
+      "headline": "Built and owned a production dbt platform from scratch",
+      "starStory": "Built Simplex's entire data transformation layer — 248 dbt models, 41 Airflow DAGs, and custom Snowflake MERGE operators. Owned the full pipeline from raw ingestion to BI-ready marts."
+    },
+    {
+      "id": "nuvei",
+      "name": "Nuvei — Custom dbt Materialization",
+      "shortName": "Nuvei",
+      "duration": "Current",
+      "tags": ["SQL", "Data Modeling", "Behavioral"],
+      "metrics": "Custom dbt materialization for SingleStore · 45 SSIS packages · Trained full team",
+      "headline": "Built custom dbt materialization for SingleStore — never done before",
+      "starStory": "SingleStore wasn't supported by dbt. Wrote a custom materialization from scratch, trained the team on it, and migrated 45 SSIS packages to the new pattern."
+    },
+    {
+      "id": "poc",
+      "name": "POC — Snowflake vs Databricks Validation",
+      "shortName": "POC Validation",
+      "duration": "3 months",
+      "tags": ["SQL", "Product Sense"],
+      "metrics": "12.6M records validated · 99.8% accuracy · Snowflake vs Databricks",
+      "headline": "Cross-platform data validation at 12.6M records with 99.8% accuracy",
+      "starStory": "Validated 12.6M records between Snowflake and Databricks for a platform migration decision. Achieved 99.8% row-level accuracy — the remaining 0.2% was explainable edge cases."
+    },
+    {
+      "id": "verdict-ai",
+      "name": "Verdict AI — Multi-AI Platform",
+      "shortName": "Verdict AI",
+      "duration": "3 weeks",
+      "tags": ["Behavioral", "System Design"],
+      "metrics": "76K LOC · 8 AI providers · SSE streaming · Solo build in 3 weeks",
+      "headline": "76K line multi-AI platform solo in 3 weeks with 8 providers",
+      "starStory": "Built a production AI routing platform solo in 3 weeks — 76,000 lines of code, 8 AI providers (OpenAI, Anthropic, Gemini, etc.), SSE streaming, real-time routing. Shipped to production."
+    },
+    {
+      "id": "observability",
+      "name": "Observability Dashboard",
+      "shortName": "Observability",
+      "duration": "6 months",
+      "tags": ["System Design", "Product Sense", "Behavioral"],
+      "metrics": "784K work items · 200ms load · $0 vs $150K/yr commercial tools",
+      "headline": "$0 alternative to $150K/yr observability tools — 784K items at 200ms",
+      "starStory": "Replaced $150K/yr commercial observability tools with a custom dashboard. Handles 784,000 work items with 200ms load time. Saved the company $150K/yr."
+    },
+    {
+      "id": "ai-course",
+      "name": "AI/ML Course Projects",
+      "shortName": "AI/ML",
+      "duration": "1 year",
+      "tags": ["Product Sense", "Behavioral"],
+      "metrics": "DistilBERT 98% precision · CNN Explorer 9K LOC · MIMIC-III healthcare ML",
+      "headline": "DistilBERT 98% precision, CNN Explorer, MIMIC-III healthcare ML",
+      "starStory": "Built DistilBERT fine-tuned model (98% precision), a 9K LOC CNN Explorer in TensorFlow.js, and healthcare ML on MIMIC-III dataset. Demonstrated ML fundamentals and applied AI."
+    }
+  ],
+  "mappings": [
+    { "questionKey": "1-1", "projectIds": ["simplex", "nuvei"], "relevanceNote": "Window functions and cohort analysis at production scale" },
+    { "questionKey": "1-2", "projectIds": ["simplex"], "relevanceNote": "Sessionization logic matches Airflow DAG patterns I built" },
+    { "questionKey": "1-3", "projectIds": ["simplex", "nuvei"], "relevanceNote": "Top-N ranking queries with ties — optimized across both dbt platforms" },
+    { "questionKey": "1-4", "projectIds": ["nuvei", "simplex"], "relevanceNote": "Deduplication is a core dbt problem I solved at both companies" },
+    { "questionKey": "2-1", "projectIds": ["simplex", "nuvei"], "relevanceNote": "Star schema and fact/dimension design — my core work at Simplex" },
+    { "questionKey": "2-2", "projectIds": ["nuvei"], "relevanceNote": "SCD Type 2 is a key pattern in Nuvei's custom materialization" },
+    { "questionKey": "2-3", "projectIds": ["simplex"], "relevanceNote": "Grain selection is fundamental to 248 dbt models I designed" },
+    { "questionKey": "2-4", "projectIds": ["simplex", "nuvei"], "relevanceNote": "Incremental loading patterns are my specialty — dbt incremental models" },
+    { "questionKey": "3-1", "projectIds": ["observability", "verdict-ai"], "relevanceNote": "System design at scale — I built both of these from scratch" },
+    { "questionKey": "3-2", "projectIds": ["verdict-ai"], "relevanceNote": "SSE streaming and fault tolerance — exactly what Verdict AI handles" },
+    { "questionKey": "3-3", "projectIds": ["observability"], "relevanceNote": "Incident response and monitoring — the core of my Observability Dashboard" },
+    { "questionKey": "3-4", "projectIds": ["simplex"], "relevanceNote": "Data partitioning strategy — optimized in Snowflake at Simplex" },
+    { "questionKey": "4-1", "projectIds": ["observability", "ai-course"], "relevanceNote": "Metrics definition — I defined KPIs for my observability platform" },
+    { "questionKey": "4-2", "projectIds": ["poc"], "relevanceNote": "A/B test and experiment analysis — POC validation used similar techniques" },
+    { "questionKey": "4-3", "projectIds": ["observability"], "relevanceNote": "Funnel analysis patterns match dashboard query design" },
+    { "questionKey": "4-4", "projectIds": ["ai-course"], "relevanceNote": "ML metrics and anomaly detection — DistilBERT precision work" },
+    { "questionKey": "5-1", "projectIds": ["nuvei"], "relevanceNote": "Proactively identified and solved a problem no one else had solved" },
+    { "questionKey": "5-2", "projectIds": ["verdict-ai"], "relevanceNote": "Solo technical ownership — 76K LOC in 3 weeks is a strong ownership story" },
+    { "questionKey": "5-3", "projectIds": ["simplex", "nuvei"], "relevanceNote": "Led technical adoption of dbt across teams at both companies" },
+    { "questionKey": "5-4", "projectIds": ["observability", "poc"], "relevanceNote": "Unblocking teams — both projects removed major blockers for others" }
+  ]
+}
