@@ -12,7 +12,6 @@ import { Button, Badge } from './ui';
 interface ProviderMeta {
   label: string;
   badge: string;
-  badgeColor: string;
   keyPlaceholder: string;
   keyLink?: string;
   keyLinkLabel?: string;
@@ -23,7 +22,6 @@ const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
   groq: {
     label: 'Groq',
     badge: 'Free',
-    badgeColor: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
     keyPlaceholder: 'gsk_...',
     keyLink: 'https://console.groq.com/keys',
     keyLinkLabel: 'Get free key at console.groq.com',
@@ -32,7 +30,6 @@ const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
   gemini: {
     label: 'Gemini',
     badge: 'Free',
-    badgeColor: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
     keyPlaceholder: 'AIza...',
     keyLink: 'https://aistudio.google.com/app/apikey',
     keyLinkLabel: 'Get free key at aistudio.google.com',
@@ -41,7 +38,6 @@ const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
   claude: {
     label: 'Claude',
     badge: 'Paid',
-    badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
     keyPlaceholder: 'sk-ant-...',
     description: 'Claude Haiku — Anthropic, requires paid API key'
   }
@@ -80,10 +76,13 @@ export const AISettings = () => {
   return (
     <div className="card">
       {/* Header — always visible */}
-      <button
+      <Button
+        variant="ghost"
         onClick={() => setIsOpen(prev => !prev)}
-        className="w-full flex items-center justify-between"
+        className="w-full justify-between px-0 py-0 hover:bg-transparent dark:hover:bg-transparent rounded-none"
         aria-expanded={isOpen}
+        icon={isOpen ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+        iconPosition="right"
       >
         <div className="flex items-center gap-3">
           <div className="text-base font-semibold">AI Settings</div>
@@ -98,8 +97,7 @@ export const AISettings = () => {
             </span>
           </span>
         </div>
-        {isOpen ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
-      </button>
+      </Button>
 
       {/* Collapsible body */}
       {isOpen && (
@@ -169,14 +167,15 @@ export const AISettings = () => {
                            bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
                            text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowKey(prev => !prev)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-transparent dark:hover:bg-transparent border-none"
                 aria-label={showKey ? 'Hide key' : 'Show key'}
-              >
-                {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+                icon={showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+              />
             </div>
             <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
               Stored only in your browser's localStorage — never sent anywhere except the provider's API.

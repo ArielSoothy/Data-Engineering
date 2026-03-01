@@ -66,7 +66,7 @@ export const Button = ({
         .join(' ')}
     >
       {loading && (
-        <span className="loader-border" />
+        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
       )}
       {!loading && icon && iconPosition === 'left' && (
         <span className="shrink-0">{icon}</span>
