@@ -7,6 +7,7 @@ import {
   setProviderApiKey,
   type AIProvider
 } from '../services/aiService';
+import { Button, Badge } from './ui';
 
 interface ProviderMeta {
   label: string;
@@ -123,9 +124,12 @@ export const AISettings = () => {
                     }`}
                   >
                     <span className="font-medium">{meta.label}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${meta.badgeColor}`}>
-                      {meta.badge}
-                    </span>
+                    <Badge
+                      label={meta.badge}
+                      variant="custom"
+                      color={meta.badge === 'Free' ? 'green' : 'yellow'}
+                      size="sm"
+                    />
                     <span className={configured ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}>
                       {configured ? '✓' : '✗'}
                     </span>
@@ -181,14 +185,15 @@ export const AISettings = () => {
 
           {/* Save button */}
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white
-                         rounded-md text-sm font-medium transition-colors"
+              icon={<Save size={15} />}
+              iconPosition="left"
             >
-              <Save size={15} />
               Save Settings
-            </button>
+            </Button>
             {saved && (
               <span className="text-sm text-green-600 dark:text-green-400">
                 Saved! Active on next request.
