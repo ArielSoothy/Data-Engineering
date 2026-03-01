@@ -15,6 +15,8 @@ export interface AIServiceConfig {
 
 const STORAGE_PROVIDER_KEY = 'ai_provider';
 
+const VALID_PROVIDERS: AIProvider[] = ['groq', 'claude', 'gemini'];
+
 const PROVIDER_API_KEY_MAP: Record<AIProvider, string> = {
   groq: 'groq_api_key',
   claude: 'claude_api_key',
@@ -23,11 +25,11 @@ const PROVIDER_API_KEY_MAP: Record<AIProvider, string> = {
 
 export function getActiveProvider(): AIProvider {
   const stored = localStorage.getItem(STORAGE_PROVIDER_KEY) as AIProvider | null;
-  if (stored && ['groq', 'claude', 'gemini'].includes(stored)) {
+  if (stored && VALID_PROVIDERS.includes(stored)) {
     return stored;
   }
   const envProvider = import.meta.env.VITE_AI_PROVIDER as string | undefined;
-  if (envProvider && ['groq', 'claude', 'gemini'].includes(envProvider)) {
+  if (envProvider && VALID_PROVIDERS.includes(envProvider as AIProvider)) {
     return envProvider as AIProvider;
   }
   return 'groq';
