@@ -2,203 +2,203 @@
   "services": [
     {
       "id": 1,
-      "name": "Azure Data Factory",
-      "category": "Integration",
-      "description": "A cloud-based ETL and data integration service that allows you to create data-driven workflows for orchestrating data movement and transforming data at scale.",
+      "name": "Presto",
+      "category": "Query Engine",
+      "description": "Meta's primary interactive SQL query engine for ad-hoc analytics on the data warehouse. Presto runs distributed queries across Hive-partitioned tables stored in HDFS or S3-compatible object storage at petabyte scale.",
       "keyFeatures": [
-        "Visual ETL/ELT pipeline creation",
-        "90+ built-in connectors",
-        "Code-free data transformation with mapping data flows",
-        "Serverless Apache Spark for data transformation",
-        "CI/CD integration with Git repositories"
+        "Massively parallel query execution across hundreds of nodes",
+        "Supports complex window functions, CTEs, QUALIFY clause",
+        "Federated queries across Hive, MySQL, Kafka, and other connectors",
+        "Cost-based optimizer for join ordering and predicate pushdown",
+        "No data movement — queries run in-place on storage"
       ],
       "commonUseCases": [
-        "Data ingestion into data lakes",
-        "Code-free ETL processes",
-        "Lift and shift SSIS packages",
-        "Data transformation at scale"
+        "Ad-hoc analytics and exploration on petabyte-scale tables",
+        "Dashboard queries served from pre-aggregated Hive tables",
+        "Cross-database joins for data reconciliation",
+        "Data quality checks and profiling on large partitions"
       ],
-      "interviewTips": "Emphasize the difference between control flow activities vs. data flow activities. Mention how ADF integrates with Azure DevOps for CI/CD and how you would handle error logging and notifications."
+      "interviewTips": "Know how to write QUALIFY to filter window function results without a subquery. Understand partition pruning — always filter on the partition key (usually event_date) first. Know the difference between Presto and Hive: Presto is interactive (seconds to minutes), Hive is batch (minutes to hours). Mention predicate pushdown and why column pruning matters for ORC/Parquet files."
     },
     {
       "id": 2,
-      "name": "Azure Synapse Analytics",
-      "category": "Analytics",
-      "description": "An integrated analytics service that brings together enterprise data warehousing, big data analytics, and data integration into a single unified platform.",
+      "name": "Hive",
+      "category": "Batch Processing",
+      "description": "Meta's batch SQL execution engine for large-scale ETL and data warehouse pipelines. Hive translates SQL queries into MapReduce or Tez jobs that process data in HDFS-backed partitioned tables.",
       "keyFeatures": [
-        "SQL pools (formerly SQL DW) for enterprise data warehousing",
-        "Spark pools for big data processing",
-        "Serverless SQL pool for on-demand querying",
-        "Data integration with built-in ETL/ELT",
-        "Unified experience with Power BI, Azure ML, and Azure Data Factory"
+        "Partitioned table support with partition pruning",
+        "ORC and Parquet columnar storage formats",
+        "ACID transactions for INSERT, UPDATE, DELETE on managed tables",
+        "Static and dynamic partition overwrite for idempotent writes",
+        "HiveQL supports most standard SQL including window functions"
       ],
       "commonUseCases": [
-        "Enterprise data warehousing",
-        "Advanced analytics on large datasets",
-        "Real-time analytics",
-        "Data exploration and discovery"
+        "Nightly ETL batch jobs writing to warehouse tables",
+        "Historical data backfills and partition-level rewrites",
+        "Large aggregations that exceed Presto's memory limits",
+        "Data compaction and table maintenance jobs"
       ],
-      "interviewTips": "Discuss distribution strategies (hash, round-robin, replicated) for tables and when to use each. Explain how workload management works and how to optimize resource utilization between different user groups."
+      "interviewTips": "Know INSERT OVERWRITE for idempotent partition writes — this is how you make pipelines safe to re-run. Understand the difference between external and managed tables (dropping a managed table deletes data). Know how ORC file statistics enable partition and file-level pruning. Mention that Hive on Tez is significantly faster than Hive on MapReduce."
     },
     {
       "id": 3,
-      "name": "Azure Databricks",
-      "category": "Analytics",
-      "description": "A fast, easy, and collaborative Apache Spark-based analytics service designed for data science and data engineering.",
+      "name": "Apache Spark",
+      "category": "Distributed Processing",
+      "description": "Meta's distributed data processing framework for large-scale ETL, machine learning feature pipelines, and streaming data processing. Spark Structured Streaming handles real-time event processing with exactly-once semantics.",
       "keyFeatures": [
-        "Optimized Spark runtime (up to 50x faster)",
-        "Interactive notebooks (Python, Scala, R, SQL)",
-        "Built-in MLflow for machine learning lifecycle",
-        "Delta Lake for reliable data lakes",
-        "Fine-grained security with Azure AD integration"
+        "In-memory distributed computation — significantly faster than Hive for iterative algorithms",
+        "Structured Streaming for real-time event processing with watermarking",
+        "DataFrames API in Python, Scala, and SQL",
+        "MLlib for distributed machine learning",
+        "Catalyst query optimizer and Tungsten execution engine"
       ],
       "commonUseCases": [
-        "Advanced analytics and machine learning",
-        "ETL/ELT processing",
-        "Streaming analytics",
-        "Delta Lake implementation"
+        "Real-time event deduplication and sessionization",
+        "Graph algorithm processing (connected components, PageRank)",
+        "ML feature engineering pipelines at scale",
+        "Data lake compaction and small file consolidation"
       ],
-      "interviewTips": "Explain the difference between Databricks Runtime and standard Apache Spark. Discuss how Delta Lake improves data reliability with ACID transactions and how you would implement medallion architecture (bronze, silver, gold layers)."
+      "interviewTips": "Know the difference between transformations (lazy, build the DAG) and actions (trigger execution). Understand why shuffles are expensive and how to minimize them with proper partitioning. For streaming, know what watermarking does — it bounds late-data handling and controls state store size. Know when to use foreachBatch to write to multiple sinks. Explain RDD vs DataFrame vs Dataset."
     },
     {
       "id": 4,
-      "name": "Azure Data Lake Storage",
-      "category": "Storage",
-      "description": "A highly scalable and cost-effective data lake solution for big data analytics, built on Azure Blob Storage with enhanced security and performance features.",
+      "name": "Scribe",
+      "category": "Event Streaming",
+      "description": "Meta's internal high-throughput log aggregation and event streaming system. Scribe collects billions of structured events per day from client apps and server-side services, routes them to appropriate consumers, and persists them to HDFS for batch processing.",
       "keyFeatures": [
-        "Hierarchical namespace (folders and files)",
-        "Massive scalability for petabyte-scale workloads",
-        "POSIX-compliant ACLs for fine-grained access control",
-        "Optimized driver for analytics engines",
-        "Integration with Azure analytics services"
+        "At-least-once delivery semantics (consumers must handle deduplication)",
+        "Structured event schemas enforced at production time",
+        "Multiple consumer groups can read the same stream independently",
+        "Automatic routing based on stream category and retention policies",
+        "Real-time consumer latency of seconds, batch consumer latency of minutes"
       ],
       "commonUseCases": [
-        "Data lake implementation",
-        "Hadoop-compatible storage",
-        "Batch and stream analytics",
-        "Data archiving"
+        "Client-side event logging (clicks, impressions, page views)",
+        "Server-side metrics and audit logs",
+        "Real-time pipeline triggers for stream processing jobs",
+        "Feed into analytics warehouse via Hive batch jobs"
       ],
-      "interviewTips": "Explain the difference between Gen1 and Gen2. Highlight that Gen2 is built on Blob Storage but adds hierarchical namespace. Discuss how you would implement lifecycle management policies to optimize storage costs."
+      "interviewTips": "Scribe is analogous to Kafka in the open-source world — mention this equivalence in interviews. Key concept: at-least-once delivery means your consumer must implement idempotent deduplication using event_id. Know the difference between real-time consumers (Spark Streaming, Flink) and batch consumers (Hive jobs reading from Scribe archives). Pipeline SLAs depend on which consumption mode you choose."
     },
     {
       "id": 5,
-      "name": "Azure Stream Analytics",
-      "category": "Analytics",
-      "description": "A real-time analytics service designed for mission-critical workloads with high throughput, low latency, and built-in fault tolerance.",
+      "name": "dbt (Data Build Tool)",
+      "category": "Transformation",
+      "description": "The SQL-based transformation framework used for building and testing the analytics layer of the data warehouse. dbt models define transformations as SELECT statements, and dbt handles materialization, dependency resolution, and testing.",
       "keyFeatures": [
-        "Real-time processing with SQL-like language",
-        "Temporal query support (windowing functions)",
-        "Built-in machine learning capabilities",
-        "Sub-second processing latency",
-        "No-code editing with visual query builder"
+        "SQL-native transformations — no Python or JVM required for most use cases",
+        "Incremental materialization strategies: append, merge (UPSERT), delete+insert",
+        "Built-in testing: not_null, unique, accepted_values, referential integrity",
+        "Jinja templating for dynamic SQL generation and macros",
+        "Auto-generated documentation and lineage DAG"
       ],
       "commonUseCases": [
-        "IoT analytics",
-        "Real-time dashboards and alerts",
-        "Fraud detection",
-        "Application log monitoring"
+        "Staging models that clean and normalize raw source data",
+        "Intermediate models for complex business logic transformations",
+        "Mart models that serve BI tools and dashboards",
+        "Incremental pipelines for near-real-time data freshness"
       ],
-      "interviewTips": "Be prepared to explain different windowing functions (tumbling, hopping, sliding, session) and when to use each. Discuss checkpointing and how it ensures exactly-once processing semantics for fault tolerance."
+      "interviewTips": "Know the three materialization types: table (full refresh each run), view (query runs at read time), incremental (only process new/changed rows). For incremental, understand the unique_key config — it tells dbt to MERGE rather than APPEND. Know how SCD Type 2 is handled using dbt snapshots (strategy: timestamp or check). Mention the ref() function for dependency management — dbt builds the DAG automatically from refs."
     },
     {
       "id": 6,
-      "name": "Azure Cosmos DB",
-      "category": "Database",
-      "description": "A globally distributed, multi-model database service designed for low latency and scalable applications anywhere in the world.",
+      "name": "Airflow",
+      "category": "Orchestration",
+      "description": "The workflow orchestration platform used to schedule, monitor, and manage data pipeline DAGs. Airflow defines pipeline dependencies as directed acyclic graphs (DAGs) of tasks, with built-in support for retries, SLA monitoring, and backfilling.",
       "keyFeatures": [
-        "Multiple API options (SQL, MongoDB, Cassandra, Gremlin, Table)",
-        "Global distribution with multi-region writes",
-        "Five well-defined consistency levels",
-        "Automatic and instant scalability",
-        "99.999% availability SLA"
+        "DAG-based pipeline definition in Python",
+        "Task-level retries with configurable backoff",
+        "Backfill support for re-running historical date ranges",
+        "Sensor operators for waiting on external conditions (file arrival, API response)",
+        "Extensive operator library: SQL, Spark, dbt, S3, HTTP, and custom operators"
       ],
       "commonUseCases": [
-        "Global web and mobile apps",
-        "IoT and telematics",
-        "Retail catalogs",
-        "Gaming applications"
+        "Scheduling nightly ETL pipeline runs with dependency management",
+        "Triggering dbt runs after source data lands",
+        "Coordinating multi-step data processing workflows",
+        "Monitoring SLA adherence and alerting on pipeline delays"
       ],
-      "interviewTips": "Explain the consistency spectrum from strong to eventual and the trade-offs of each level. Discuss partitioning strategy and how to choose an effective partition key for performance. Be ready to compare Cosmos DB with other Azure database offerings."
+      "interviewTips": "Understand the difference between schedule_interval and execution_date — execution_date is the START of the interval, not when the task runs. Know how to implement idempotent tasks using OVERWRITE semantics so backfills are safe. Explain the XCom mechanism for passing data between tasks (and why it should only be used for small values, not entire DataFrames). Know when to use a Sensor vs. a dependency trigger."
     },
     {
       "id": 7,
-      "name": "Azure Event Hubs",
-      "category": "Integration",
-      "description": "A big data streaming platform and event ingestion service capable of receiving and processing millions of events per second.",
+      "name": "Delta Lake / Apache Hudi",
+      "category": "Storage Format",
+      "description": "ACID-compliant storage layers built on top of Parquet that enable record-level updates, deletes, and time travel on data lakes. Delta Lake (Databricks) and Apache Hudi (Uber/Meta) solve the mutability problem in traditional data lakes.",
       "keyFeatures": [
-        "Fully managed PaaS (no servers to manage)",
-        "Support for Apache Kafka protocol",
-        "Automatic capture to Azure Storage or Data Lake",
-        "AVRO format support for efficient serialization",
-        "Scaling from megabytes to gigabytes of events"
+        "ACID transactions: concurrent reads and writes are safe",
+        "Record-level UPSERT and DELETE — eliminates the need for full partition rewrites",
+        "Time travel: query the table as it was at any point in history",
+        "Schema enforcement and evolution with safe alter operations",
+        "Automatic small file compaction"
       ],
       "commonUseCases": [
-        "Telemetry processing",
-        "Live dashboarding",
-        "Data archival",
-        "Transaction processing"
+        "CDC (Change Data Capture) pipelines that need to apply row-level updates",
+        "Late-arriving data that updates previously written records",
+        "GDPR right-to-be-forgotten (delete specific user records without full rewrite)",
+        "Building mutable fact tables for the identity graph or session data"
       ],
-      "interviewTips": "Compare Event Hubs with other messaging services like Service Bus and Event Grid. Explain partitioning in Event Hubs and how consumer groups work. Discuss Capture feature for long-term retention of streaming data."
+      "interviewTips": "Understand why traditional Parquet/ORC on Hive does not support row-level updates — you must rewrite entire partitions. Delta Lake and Hudi solve this with a transaction log (Delta) or copy-on-write/merge-on-read modes (Hudi). Know the trade-off: write amplification (copy-on-write is slower to write, faster to read) vs. read amplification (merge-on-read is faster to write, slower to read). Mention when you would choose each mode."
     },
     {
       "id": 8,
-      "name": "Azure SQL Database",
-      "category": "Database",
-      "description": "A fully managed relational database with auto-scaling, integral intelligence, and robust security features.",
+      "name": "Snowflake",
+      "category": "Cloud Data Warehouse",
+      "description": "A cloud-native data warehouse with separate compute and storage scaling. Snowflake supports multi-cluster virtual warehouses, zero-copy cloning, and a broad SQL dialect. Commonly used at companies before migrating to internal big data infrastructure.",
       "keyFeatures": [
-        "Built-in intelligence and automatic tuning",
-        "Advanced security (Always Encrypted, Dynamic Data Masking)",
-        "Automatic scaling (serverless option)",
-        "High availability (99.995% SLA)",
-        "Geo-replication and failover groups"
+        "Separate compute and storage: scale each independently",
+        "Multi-cluster warehouses for concurrent workload isolation",
+        "Zero-copy cloning for instant table snapshots without data duplication",
+        "Time travel (up to 90 days) for historical queries and undoing mistakes",
+        "Supports semi-structured data (JSON, Avro, Parquet) via VARIANT type"
       ],
       "commonUseCases": [
-        "Modern cloud applications",
-        "Enterprise applications requiring high security",
-        "Applications requiring high performance and availability",
-        "SaaS multi-tenant applications"
+        "Analytics data warehouse for BI tools and dashboards",
+        "Staging area for data before transformation (ELT pattern)",
+        "Cross-cloud data sharing between organizations",
+        "Development and test environments using zero-copy clones"
       ],
-      "interviewTips": "Explain the differences between DTU-based and vCore-based purchasing models. Discuss how Intelligent Query Processing features work and how to implement disaster recovery using active geo-replication and failover groups."
+      "interviewTips": "Know the difference between virtual warehouse sizes (XS to 6XL) and when to scale up vs. scale out. Understand the SnowflakeManager MERGE pattern for idempotent UPSERTs. Know how clustering keys work — analogous to Hive partitioning but uses micro-partition metadata rather than physical directory structure. Explain why Snowflake's separation of compute and storage eliminates the need to pre-allocate cluster resources."
     },
     {
       "id": 9,
-      "name": "Azure Purview",
-      "category": "Governance",
-      "description": "A unified data governance service that helps manage and govern on-premises, multi-cloud, and SaaS data.",
+      "name": "Apache Kafka",
+      "category": "Event Streaming",
+      "description": "The open-source distributed event streaming platform equivalent to Meta's Scribe. Kafka provides high-throughput, low-latency, fault-tolerant publish-subscribe messaging for real-time data pipelines.",
       "keyFeatures": [
-        "Automated data discovery and classification",
-        "Data catalog with business glossary",
-        "Data lineage visualization across the data estate",
-        "Sensitive data protection with integration to Azure Information Protection",
-        "Insights into data landscape and usage"
+        "Partitioned topics for horizontal scalability",
+        "Consumer groups for parallel processing with offset tracking",
+        "Configurable retention (time-based or size-based)",
+        "Exactly-once semantics via idempotent producers and transactional consumers",
+        "Kafka Streams for lightweight stream processing co-located with brokers"
       ],
       "commonUseCases": [
-        "Data governance across hybrid environments",
-        "Regulatory compliance",
-        "Self-service data discovery",
-        "Data protection and risk management"
+        "Real-time event ingestion from web and mobile clients",
+        "Decoupling microservices with async messaging",
+        "Change Data Capture stream from databases (Debezium connector)",
+        "Log aggregation and metrics collection"
       ],
-      "interviewTips": "Explain how Purview differs from traditional metadata management tools. Discuss how it integrates with other Azure services for comprehensive governance. Mention how it helps with regulations like GDPR, CCPA, or HIPAA."
+      "interviewTips": "Know the difference between at-least-once and exactly-once delivery — exactly-once requires both idempotent producer AND transactional consumer. Understand how partition count affects parallelism (one consumer per partition maximum). Explain the consumer group offset commit strategy: auto-commit vs. manual commit. Know why Kafka retention is not the same as a database — Kafka is for streaming, not querying. Mention the role of the schema registry for enforcing Avro/Protobuf schemas."
     },
     {
       "id": 10,
-      "name": "Azure Machine Learning",
-      "category": "AI/ML",
-      "description": "A cloud-based service that enables data scientists and developers to build, train, and deploy machine learning models efficiently.",
+      "name": "Apache Flink",
+      "category": "Stream Processing",
+      "description": "A stateful distributed stream processing framework for low-latency event processing. Flink provides true streaming semantics (vs. Spark's micro-batch approach) and is well-suited for complex event processing, sessionization, and exactly-once guarantees.",
       "keyFeatures": [
-        "End-to-end MLOps capabilities",
-        "Automated ML for no-code model development",
-        "Designer for drag-and-drop ML pipeline creation",
-        "Integration with open-source frameworks (TensorFlow, PyTorch, etc.)",
-        "Robust model management and deployment"
+        "True streaming: processes events one at a time, not in micro-batches",
+        "Stateful operators with managed state backends (RocksDB, memory)",
+        "Event time processing with watermarks for handling out-of-order events",
+        "Exactly-once semantics via checkpointing and two-phase commit",
+        "Table API and SQL support for familiar query patterns"
       ],
       "commonUseCases": [
-        "Predictive maintenance",
-        "Recommendation engines",
-        "Customer churn prediction",
-        "Text analytics and sentiment analysis"
+        "Real-time fraud detection with complex pattern matching",
+        "Sessionization and user behavior analysis on streaming events",
+        "Real-time feature computation for ML model serving",
+        "CDC stream processing with record-level transformations"
       ],
-      "interviewTips": "Explain the difference between Azure ML Studio (classic) and the new Azure Machine Learning service. Discuss how MLOps works and why it's important. Be prepared to talk about how you would implement responsible AI practices."
+      "interviewTips": "Explain the difference between Flink's true streaming and Spark's micro-batch approach — Flink has lower latency but higher operational complexity. Know what a checkpoint is in Flink — it is a consistent snapshot of all operator states that enables recovery to exactly the last checkpoint on failure. Understand watermarks: they tell Flink how far behind real time the event time data is, and when it is safe to emit window results. Know when to use processing time vs. event time."
     }
   ]
 }
