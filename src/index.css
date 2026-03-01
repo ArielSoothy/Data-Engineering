@@ -20,6 +20,9 @@
   }
 }
 
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
 @layer components {
   .btn {
     @apply px-4 py-2 rounded font-medium transition-colors;

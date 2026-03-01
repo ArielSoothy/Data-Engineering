@@ -150,48 +150,32 @@ const TabNavigation = () => {
           <GraduationCap size={14} className="text-blue-500 dark:text-blue-400" />
           <span className="text-xs font-bold tracking-tight text-gray-800 dark:text-gray-100">DE Prep</span>
         </div>
-        <div className="grid grid-cols-4 gap-1">
-          {tabs.slice(0, 4).map((tab) => (
+
+        {/* Single scrollable row */}
+        <div className="flex overflow-x-auto scrollbar-hide gap-1 px-2 pb-2 pt-1">
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab)}
-              className={`flex flex-col items-center justify-center py-2 ${
+              className={`flex flex-col items-center justify-center px-3 py-1.5 shrink-0 rounded-md ${
                 activeTab.id === tab.id
-                  ? 'text-blue-600 dark:text-blue-400'
+                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
               {tab.icon}
-              <span className="text-xs mt-1">{tab.label.split(' ')[0]}</span>
+              <span className="text-xs mt-0.5 whitespace-nowrap">{tab.label}</span>
             </button>
           ))}
-        </div>
-        
-        {/* Second row for mobile */}
-        <div className="grid grid-cols-4 gap-1 border-t border-gray-200 dark:border-gray-700">
-          {tabs.slice(4).map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab)}
-              className={`flex flex-col items-center justify-center py-2 ${
-                activeTab.id === tab.id
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              {tab.icon}
-              <span className="text-xs mt-1">{tab.label.split(' ')[0]}</span>
-            </button>
-          ))}
-          
-          {/* Dark mode toggle for mobile */}
+
+          {/* Dark mode toggle at end of scroll row */}
           <button
             onClick={toggleDarkMode}
-            className="flex flex-col items-center justify-center py-2 text-gray-500 dark:text-gray-400"
+            className="flex flex-col items-center justify-center px-3 py-1.5 shrink-0 rounded-md text-gray-500 dark:text-gray-400"
             aria-label="Toggle dark mode"
           >
             {preferences.darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            <span className="text-xs mt-1">Theme</span>
+            <span className="text-xs mt-0.5 whitespace-nowrap">Theme</span>
           </button>
         </div>
       </div>
