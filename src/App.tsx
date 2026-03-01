@@ -12,6 +12,7 @@ import Glossary from './components/tabs/Glossary';
 import Decomposition from './components/tabs/Decomposition';
 import MetaTechStack from './components/tabs/MetaTechStack';
 import MockInterview from './components/tabs/MockInterview';
+import MyProjects from './components/tabs/MyProjects';
 import { ApiTest } from './components/ApiTest';
 import { ApiDiagnostic } from './components/ApiDiagnostic';
 
@@ -54,6 +55,7 @@ function App() {
               <Route path="/decomposition" element={<Decomposition />} />
               <Route path="/tech-stack" element={<MetaTechStack />} />
               <Route path="/mock-interview" element={<MockInterview />} />
+              <Route path="/my-projects" element={<MyProjects />} />
               <Route path="/api-test" element={<ApiTest />} />
               <Route path="/api-diagnostic" element={<ApiDiagnostic />} />
               <Route path="*" element={<Navigate to="/" replace />} />
