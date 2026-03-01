@@ -201,48 +201,52 @@ const QuestionCard = ({
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           {/* Tabs */}
           <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => handleTabClick('answer')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              className={`rounded-none px-4 py-2 font-medium border-b-2 -mb-px ${
                 activeTab === 'answer'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-transparent dark:hover:bg-transparent'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
             >
               Solution
-            </button>
+            </Button>
 
             {/* Try It tab for code execution */}
             {(category.includes('python') || category.includes('sql')) && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => handleTabClick('tryit')}
-                className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                className={`rounded-none px-4 py-2 font-medium border-b-2 -mb-px ${
                   activeTab === 'tryit'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-transparent dark:hover:bg-transparent'
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
+                icon={<Play size={16} />}
+                iconPosition="left"
               >
-                <div className="flex items-center">
-                  <Play size={16} className="mr-1" />
-                  <span>Try It</span>
-                </div>
-              </button>
+                Try It
+              </Button>
             )}
 
             {/* Practice tab */}
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => handleTabClick('practice')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              className={`rounded-none px-4 py-2 font-medium border-b-2 -mb-px ${
                 activeTab === 'practice'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-transparent dark:hover:bg-transparent'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
+              icon={<MessageSquare size={16} />}
+              iconPosition="left"
             >
-              <div className="flex items-center">
-                <MessageSquare size={16} className="mr-1" />
-                <span>Practice</span>
-              </div>
-            </button>
+              Practice
+            </Button>
           </div>
           
           {/* Tab content */}

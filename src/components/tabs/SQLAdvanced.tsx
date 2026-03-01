@@ -4,6 +4,7 @@ import QuestionCard from '../QuestionCard';
 import useQuestions from '../../hooks/useQuestions';
 import { useTimer } from '../../hooks/useTimer';
 import { formatTime } from '../../utils/helpers';
+import { Button } from '../ui';
 
 const SQLAdvanced = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,33 +104,41 @@ const SQLAdvanced = () => {
             </div>
             <div className="flex space-x-2">
               {timer.isRunning ? (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={timer.pause}
-                  className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-md dark:bg-yellow-900 dark:bg-opacity-30 dark:text-yellow-300"
+                  className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:bg-opacity-30 dark:text-yellow-300 hover:bg-yellow-200 dark:hover:bg-yellow-900"
                 >
                   Pause
-                </button>
+                </Button>
               ) : timer.isPaused ? (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={timer.resume}
-                  className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md dark:bg-green-900 dark:bg-opacity-30 dark:text-green-300"
+                  className="bg-green-100 text-green-800 dark:bg-green-900 dark:bg-opacity-30 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900"
                 >
                   Resume
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={timer.start}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-md dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300"
+                  className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900"
                 >
                   Start
-                </button>
+                </Button>
               )}
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={timer.reset}
-                className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              >
-                <RotateCcw size={16} />
-              </button>
+                icon={<RotateCcw size={16} />}
+                aria-label="Reset timer"
+                className="p-1"
+              />
             </div>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700 mt-2">
@@ -190,57 +199,61 @@ const SQLAdvanced = () => {
             </div>
             
             <div className="flex">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => toggleSort('id')}
-                className={`px-3 py-2 border ${
-                  sortBy === 'id' 
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300' 
-                    : 'border-gray-300 dark:border-gray-600'
-                } rounded-l-md flex items-center`}
+                className={`rounded-r-none border-r-0 ${
+                  sortBy === 'id'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300'
+                    : ''
+                }`}
+                icon={sortBy === 'id' ? (sortDirection === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />) : undefined}
+                iconPosition="right"
               >
-                <span className="mr-1">#</span>
-                {sortBy === 'id' && (
-                  sortDirection === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />
-                )}
-              </button>
-              <button
+                #
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => toggleSort('difficulty')}
-                className={`px-3 py-2 border-t border-b ${
-                  sortBy === 'difficulty' 
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300' 
-                    : 'border-gray-300 dark:border-gray-600'
-                } flex items-center`}
+                className={`rounded-none border-r-0 ${
+                  sortBy === 'difficulty'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300'
+                    : ''
+                }`}
+                icon={sortBy === 'difficulty' ? (sortDirection === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />) : undefined}
+                iconPosition="right"
               >
-                <span className="mr-1">Difficulty</span>
-                {sortBy === 'difficulty' && (
-                  sortDirection === 'asc' ? <span title="Easy to Hard"><SortAsc size={16} /></span> : <span title="Hard to Easy"><SortDesc size={16} /></span>
-                )}
-              </button>
-              <button
+                Difficulty
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => toggleSort('time')}
-                className={`px-3 py-2 border ${
-                  sortBy === 'time' 
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300' 
-                    : 'border-gray-300 dark:border-gray-600'
-                } rounded-r-md flex items-center`}
+                className={`rounded-l-none ${
+                  sortBy === 'time'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300'
+                    : ''
+                }`}
+                icon={<Clock size={16} />}
+                iconPosition="left"
               >
-                <Clock size={16} className="mr-1" />
-                {sortBy === 'time' && (
-                  sortDirection === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />
-                )}
-              </button>
+                {sortBy === 'time' && (sortDirection === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />)}
+              </Button>
             </div>
-            
-            <button
+
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setShowCompleted(!showCompleted)}
-              className={`px-3 py-2 border rounded-md flex items-center ${
-                !showCompleted 
-                  ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300' 
-                  : 'border-gray-300 dark:border-gray-600'
-              }`}
+              className={!showCompleted
+                ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300'
+                : ''
+              }
             >
               {showCompleted ? 'Hide Completed' : 'Show Completed'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
