@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-
-const SAVE_NOTIFICATION_TIMEOUT_MS = 2500;
 import { Eye, EyeOff, Save, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   getActiveProvider,
@@ -10,6 +8,8 @@ import {
   type AIProvider
 } from '../services/aiService';
 import { Button, Badge } from './ui';
+
+const SAVE_NOTIFICATION_TIMEOUT_MS = 2500;
 
 interface ProviderMeta {
   label: string;
@@ -84,6 +84,8 @@ export const AISettings = () => {
   const currentProvider = getActiveProvider();
   const currentKey = getProviderApiKey(currentProvider);
   const isConfigured = !!currentKey;
+  const selectedMeta = PROVIDER_META[selectedProvider];
+
   return (
     <div className="card">
       {/* Header — always visible */}
@@ -147,7 +149,7 @@ export const AISettings = () => {
               })}
             </div>
             <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-              {PROVIDER_META[selectedProvider].description}
+              {selectedMeta.description}
             </p>
           </div>
 
@@ -155,16 +157,16 @@ export const AISettings = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {PROVIDER_META[selectedProvider].label} API Key
+                {selectedMeta.label} API Key
               </label>
-              {PROVIDER_META[selectedProvider].keyLink && (
+              {selectedMeta.keyLink && (
                 <a
-                  href={PROVIDER_META[selectedProvider].keyLink}
+                  href={selectedMeta.keyLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  {PROVIDER_META[selectedProvider].keyLinkLabel}
+                  {selectedMeta.keyLinkLabel}
                 </a>
               )}
             </div>
@@ -173,7 +175,7 @@ export const AISettings = () => {
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
-                placeholder={PROVIDER_META[selectedProvider].keyPlaceholder}
+                placeholder={selectedMeta.keyPlaceholder}
                 className="w-full pr-10 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
                            bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
                            text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
