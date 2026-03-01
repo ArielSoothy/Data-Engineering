@@ -286,7 +286,7 @@ const MyProjects = () => {
               <Card key={interview.id} padding="none" className="overflow-hidden">
                 {/* Round header */}
                 <button
-                  className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                  className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   onClick={() => setExpandedRoundId(isExpanded ? null : interview.id)}
                   aria-expanded={isExpanded}
                 >
