@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+
+const SAVE_NOTIFICATION_TIMEOUT_MS = 2500;
 import { Eye, EyeOff, Save, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   getActiveProvider,
@@ -12,6 +14,7 @@ import { Button, Badge } from './ui';
 interface ProviderMeta {
   label: string;
   badge: string;
+  badgeColor: 'green' | 'yellow' | 'gray';
   keyPlaceholder: string;
   keyLink?: string;
   keyLinkLabel?: string;
@@ -22,6 +25,7 @@ const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
   groq: {
     label: 'Groq',
     badge: 'Free',
+    badgeColor: 'green',
     keyPlaceholder: 'gsk_...',
     keyLink: 'https://console.groq.com/keys',
     keyLinkLabel: 'Get free key at console.groq.com',
@@ -30,6 +34,7 @@ const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
   gemini: {
     label: 'Gemini',
     badge: 'Free',
+    badgeColor: 'green',
     keyPlaceholder: 'AIza...',
     keyLink: 'https://aistudio.google.com/app/apikey',
     keyLinkLabel: 'Get free key at aistudio.google.com',
@@ -38,6 +43,7 @@ const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
   claude: {
     label: 'Claude',
     badge: 'Paid',
+    badgeColor: 'yellow',
     keyPlaceholder: 'sk-ant-...',
     description: 'Claude Haiku — Anthropic, requires paid API key'
   }
@@ -51,6 +57,11 @@ export const AISettings = () => {
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [configuredMap, setConfiguredMap] = useState<Record<AIProvider, boolean>>(() => ({
+    groq: !!getProviderApiKey('groq'),
+    claude: !!getProviderApiKey('claude'),
+    gemini: !!getProviderApiKey('gemini'),
+  }));
 
   // Load the key for the currently selected provider whenever it changes
   useEffect(() => {
@@ -65,14 +76,14 @@ export const AISettings = () => {
     if (apiKey.trim()) {
       setProviderApiKey(selectedProvider, apiKey.trim());
     }
+    setConfiguredMap(prev => ({ ...prev, [selectedProvider]: !!apiKey.trim() }));
     setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setTimeout(() => setSaved(false), SAVE_NOTIFICATION_TIMEOUT_MS);
   };
 
   const currentProvider = getActiveProvider();
   const currentKey = getProviderApiKey(currentProvider);
   const isConfigured = !!currentKey;
-
   return (
     <div className="card">
       {/* Header — always visible */}
@@ -110,7 +121,7 @@ export const AISettings = () => {
             <div className="flex flex-wrap gap-2">
               {PROVIDERS.map(p => {
                 const meta = PROVIDER_META[p];
-                const configured = !!getProviderApiKey(p);
+                const configured = configuredMap[p];
                 return (
                   <button
                     key={p}
@@ -125,7 +136,7 @@ export const AISettings = () => {
                     <Badge
                       label={meta.badge}
                       variant="custom"
-                      color={meta.badge === 'Free' ? 'green' : 'yellow'}
+                      color={meta.badgeColor}
                       size="sm"
                     />
                     <span className={configured ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}>

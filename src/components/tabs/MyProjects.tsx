@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronDown, ChevronUp, Briefcase, Star, Filter, X } from 'lucide-react';
 import { Badge, Button, Card } from '../ui';
 import projectsData from '../../data/my-projects.json';
@@ -205,29 +205,34 @@ const MyProjects = () => {
   const mappings: Mapping[] = projectsData.mappings;
   const interviews: Interview[] = interviewsData.mockInterviews;
 
-  // Build quick lookup: questionKey → projectIds
-  const questionToProjects = new Map<string, string[]>();
-  mappings.forEach((m) => questionToProjects.set(m.questionKey, m.projectIds));
+  const { questionToProjects, projectById, projectQuestionCount } = useMemo(() => {
+    const questionToProjects = new Map<string, string[]>();
+    mappings.forEach((m) => questionToProjects.set(m.questionKey, m.projectIds));
 
-  // Build lookup: projectId → number of questions it answers
-  const projectQuestionCount = new Map<string, number>();
-  projects.forEach((p) => {
-    const count = mappings.filter((m) => m.projectIds.includes(p.id)).length;
-    projectQuestionCount.set(p.id, count);
-  });
+    // Pre-compute project lookup map (fixes .find() in loops too)
+    const projectById = new Map<string, Project>();
+    projects.forEach((p) => projectById.set(p.id, p));
 
-  const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null;
+    // Fix O(n²) → O(n): count using projectIds arrays directly
+    const projectQuestionCount = new Map<string, number>();
+    projects.forEach((p) => projectQuestionCount.set(p.id, 0));
+    mappings.forEach((m) => {
+      m.projectIds.forEach((pid) => {
+        projectQuestionCount.set(pid, (projectQuestionCount.get(pid) ?? 0) + 1);
+      });
+    });
+
+    return { questionToProjects, projectById, projectQuestionCount };
+  }, [mappings, projects]);
+
+  const selectedProject = selectedProjectId ? (projectById.get(selectedProjectId) ?? null) : null;
 
   // When a filter is active, only show projects that answer questions in that filter set
   const visibleProjects = selectedProjectId
     ? projects.filter((p) => p.id === selectedProjectId)
     : projects;
 
-  const handleProjectChipClick = (projectId: string) => {
-    setSelectedProjectId((prev) => (prev === projectId ? null : projectId));
-  };
-
-  const handleProjectCardClick = (projectId: string) => {
+  const handleProjectSelect = (projectId: string) => {
     setSelectedProjectId((prev) => (prev === projectId ? null : projectId));
   };
 
@@ -263,7 +268,7 @@ const MyProjects = () => {
             className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-full px-3 py-1 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
           >
             <Filter size={11} />
-            Filtering: {projects.find((p) => p.id === selectedProjectId)?.shortName}
+            Filtering: {selectedProjectId ? projectById.get(selectedProjectId)?.shortName : ''}
             <X size={11} />
           </button>
         )}
@@ -335,13 +340,13 @@ const MyProjects = () => {
                                 Your experience:
                               </span>
                               {linkedProjectIds.map((pid) => {
-                                const proj = projects.find((p) => p.id === pid);
+                                const proj = projectById.get(pid);
                                 if (!proj) return null;
                                 const isActive = selectedProjectId === pid;
                                 return (
                                   <button
                                     key={pid}
-                                    onClick={() => handleProjectChipClick(pid)}
+                                    onClick={() => handleProjectSelect(pid)}
                                     className={[
                                       'inline-flex items-center text-xs rounded-full px-2 py-0.5 font-medium transition-colors duration-150',
                                       isActive
@@ -385,7 +390,7 @@ const MyProjects = () => {
                   project={project}
                   isSelected={selectedProjectId === project.id}
                   questionCount={projectQuestionCount.get(project.id) ?? 0}
-                  onClick={() => handleProjectCardClick(project.id)}
+                  onClick={() => handleProjectSelect(project.id)}
                 />
                 {selectedProjectId === project.id && selectedProject && (
                   <ProjectDetail
@@ -414,7 +419,7 @@ const MyProjects = () => {
                       project={project}
                       isSelected={false}
                       questionCount={projectQuestionCount.get(project.id) ?? 0}
-                      onClick={() => handleProjectCardClick(project.id)}
+                      onClick={() => handleProjectSelect(project.id)}
                     />
                   ))}
               </div>
