@@ -1,8 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { 
-  LayoutDashboard, Database, Code, Braces, BarChart, 
-  Cloud, Video, Book, Moon, Sun, Target
+import {
+  LayoutDashboard, Database, Code, Braces, BarChart,
+  Cloud, Video, Book, Moon, Sun, Target, GraduationCap
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
@@ -62,11 +62,11 @@ const TabNavigation = () => {
       icon: <BarChart size={20} />, 
       path: '/decomposition' 
     },
-    { 
-      id: 'azure-services', 
-      label: 'Azure Services', 
-      icon: <Cloud size={20} />, 
-      path: '/azure-services' 
+    {
+      id: 'azure-services',
+      label: 'Meta Tech Stack',
+      icon: <Cloud size={20} />,
+      path: '/azure-services'
     },
     { 
       id: 'mock-interview', 
@@ -96,6 +96,17 @@ const TabNavigation = () => {
       <div className="hidden md:flex border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4">
           <div className="flex overflow-x-auto">
+            {/* Brand */}
+            <div className="flex items-center px-4 py-3 mr-2 shrink-0 gap-2 border-b-2 border-transparent">
+              <GraduationCap size={22} className="text-blue-500 dark:text-blue-400" />
+              <span className="font-bold text-base tracking-tight text-gray-800 dark:text-gray-100">
+                DE Prep
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div className="my-2 w-px bg-gray-200 dark:bg-gray-700 shrink-0" />
+
             {tabs.map((tab) => (
               <button
                 key={tab.id}
