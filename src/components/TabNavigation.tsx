@@ -63,10 +63,10 @@ const TabNavigation = () => {
       path: '/decomposition' 
     },
     {
-      id: 'azure-services',
+      id: 'tech-stack',
       label: 'Meta Tech Stack',
       icon: <Cloud size={20} />,
-      path: '/azure-services'
+      path: '/tech-stack'
     },
     { 
       id: 'mock-interview', 
