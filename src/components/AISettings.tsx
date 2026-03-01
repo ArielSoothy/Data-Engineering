@@ -1,0 +1,211 @@
+import { useState, useEffect } from 'react';
+import { Eye, EyeOff, Save, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  getActiveProvider,
+  setActiveProvider,
+  getProviderApiKey,
+  setProviderApiKey,
+  type AIProvider
+} from '../services/aiService';
+
+interface ProviderMeta {
+  label: string;
+  badge: string;
+  badgeColor: string;
+  keyPlaceholder: string;
+  keyLink?: string;
+  keyLinkLabel?: string;
+  description: string;
+}
+
+const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
+  groq: {
+    label: 'Groq',
+    badge: 'Free',
+    badgeColor: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+    keyPlaceholder: 'gsk_...',
+    keyLink: 'https://console.groq.com/keys',
+    keyLinkLabel: 'Get free key at console.groq.com',
+    description: 'Llama 3.3 70B — fast, free tier, great for practice'
+  },
+  gemini: {
+    label: 'Gemini',
+    badge: 'Free',
+    badgeColor: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+    keyPlaceholder: 'AIza...',
+    keyLink: 'https://aistudio.google.com/app/apikey',
+    keyLinkLabel: 'Get free key at aistudio.google.com',
+    description: 'Gemini 2.5 Flash — Google\'s latest, free tier'
+  },
+  claude: {
+    label: 'Claude',
+    badge: 'Paid',
+    badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+    keyPlaceholder: 'sk-ant-...',
+    description: 'Claude Haiku — Anthropic, requires paid API key'
+  }
+};
+
+const PROVIDERS: AIProvider[] = ['groq', 'gemini', 'claude'];
+
+export const AISettings = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>(getActiveProvider());
+  const [apiKey, setApiKey] = useState('');
+  const [showKey, setShowKey] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Load the key for the currently selected provider whenever it changes
+  useEffect(() => {
+    const existing = getProviderApiKey(selectedProvider);
+    setApiKey(existing ?? '');
+    setShowKey(false);
+    setSaved(false);
+  }, [selectedProvider]);
+
+  const handleSave = () => {
+    setActiveProvider(selectedProvider);
+    if (apiKey.trim()) {
+      setProviderApiKey(selectedProvider, apiKey.trim());
+    }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const currentProvider = getActiveProvider();
+  const currentKey = getProviderApiKey(currentProvider);
+  const isConfigured = !!currentKey;
+
+  return (
+    <div className="card">
+      {/* Header — always visible */}
+      <button
+        onClick={() => setIsOpen(prev => !prev)}
+        className="w-full flex items-center justify-between"
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-center gap-3">
+          <div className="text-base font-semibold">AI Settings</div>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {PROVIDER_META[currentProvider].label}
+            {' '}
+            <span className={isConfigured
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-red-500 dark:text-red-400'
+            }>
+              {isConfigured ? '(key set)' : '(no key — mock mode)'}
+            </span>
+          </span>
+        </div>
+        {isOpen ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+      </button>
+
+      {/* Collapsible body */}
+      {isOpen && (
+        <div className="mt-4 space-y-4">
+          {/* Provider selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Provider
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {PROVIDERS.map(p => {
+                const meta = PROVIDER_META[p];
+                const configured = !!getProviderApiKey(p);
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setSelectedProvider(p)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                      selectedProvider === p
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-30 text-blue-700 dark:text-blue-300'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium">{meta.label}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${meta.badgeColor}`}>
+                      {meta.badge}
+                    </span>
+                    <span className={configured ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}>
+                      {configured ? '✓' : '✗'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {PROVIDER_META[selectedProvider].description}
+            </p>
+          </div>
+
+          {/* API key input */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {PROVIDER_META[selectedProvider].label} API Key
+              </label>
+              {PROVIDER_META[selectedProvider].keyLink && (
+                <a
+                  href={PROVIDER_META[selectedProvider].keyLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {PROVIDER_META[selectedProvider].keyLinkLabel}
+                </a>
+              )}
+            </div>
+            <div className="relative">
+              <input
+                type={showKey ? 'text' : 'password'}
+                value={apiKey}
+                onChange={e => setApiKey(e.target.value)}
+                placeholder={PROVIDER_META[selectedProvider].keyPlaceholder}
+                className="w-full pr-10 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                           bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                           text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey(prev => !prev)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                aria-label={showKey ? 'Hide key' : 'Show key'}
+              >
+                {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              Stored only in your browser's localStorage — never sent anywhere except the provider's API.
+            </p>
+          </div>
+
+          {/* Save button */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white
+                         rounded-md text-sm font-medium transition-colors"
+            >
+              <Save size={15} />
+              Save Settings
+            </button>
+            {saved && (
+              <span className="text-sm text-green-600 dark:text-green-400">
+                Saved! Active on next request.
+              </span>
+            )}
+          </div>
+
+          {/* Quick guide */}
+          <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-md p-3 space-y-1">
+            <div className="font-medium text-gray-600 dark:text-gray-300 mb-1">No key? No problem.</div>
+            <div>The app works in mock feedback mode when no key is set — useful for testing UI without API costs.</div>
+            <div className="mt-1">Groq and Gemini both have generous free tiers. Groq is the default and recommended starting point.</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AISettings;
