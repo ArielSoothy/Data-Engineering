@@ -71,8 +71,8 @@ export const useQuestions = (category: string) => {
         return { progressKey: 'pythonAdvanced', filePath: '/python-advanced.json' };
       case 'decomposition-scenarios':
         return { progressKey: 'decompositionScenarios', filePath: '/decomposition-scenarios.json' };
-      case 'azure-services':
-        return { progressKey: 'azureServices', filePath: '/azure-services.json' };
+      case 'data-stack':
+        return { progressKey: 'azureServices', filePath: '/data-stack.json' };
       case 'mock-interviews':
         return { progressKey: 'mockInterviews', filePath: '/mock-interviews.json' };
       default:
@@ -98,7 +98,7 @@ export const useQuestions = (category: string) => {
         // Handle different data structures based on category
         if (category === 'decomposition-scenarios') {
           setData(jsonData.scenarios || []);
-        } else if (category === 'azure-services') {
+        } else if (category === 'data-stack') {
           setData(jsonData.services || []);
         } else if (category === 'mock-interviews') {
           setData(jsonData.mockInterviews || []);
