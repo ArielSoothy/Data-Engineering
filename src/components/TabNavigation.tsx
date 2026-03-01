@@ -98,7 +98,7 @@ const TabNavigation = () => {
           <div className="flex overflow-x-auto">
             {/* Brand */}
             <div className="flex items-center px-4 py-3 mr-2 shrink-0 gap-2 border-b-2 border-transparent">
-              <GraduationCap size={22} className="text-blue-500 dark:text-blue-400" />
+              <GraduationCap size={20} className="text-blue-500 dark:text-blue-400" />
               <span className="font-bold text-base tracking-tight text-gray-800 dark:text-gray-100">
                 DE Prep
               </span>
@@ -139,6 +139,11 @@ const TabNavigation = () => {
       
       {/* Mobile navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-10">
+        {/* Mobile brand bar */}
+        <div className="flex items-center justify-center gap-1.5 px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <GraduationCap size={14} className="text-blue-500 dark:text-blue-400" />
+          <span className="text-xs font-bold tracking-tight text-gray-800 dark:text-gray-100">DE Prep</span>
+        </div>
         <div className="grid grid-cols-4 gap-1">
           {tabs.slice(0, 4).map((tab) => (
             <button
