@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Clock, Check, Play, MessageSquare } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import type { CategoryProgress } from '../context/AppContext';
-import { getDifficultyColor, getDifficultyBgColor, formatTime } from '../utils/helpers';
+import { formatTime } from '../utils/helpers';
 import Editor from '@monaco-editor/react';
 import { loadPyodide } from 'pyodide';
 import type { Database } from 'sql.js';
 import initSqlJs from 'sql.js';
 import { PracticeChat } from './PracticeChat';
+import { Badge, Button } from './ui';
 
 interface QuestionCardProps {
   id: number;
@@ -152,11 +153,13 @@ const QuestionCard = ({
       <div className="flex justify-between items-start">
         <div className="flex-grow">
           <div className="flex items-center mb-2">
-            <div className={`text-xs font-medium px-2 py-0.5 rounded-full mr-2 ${
-              getDifficultyBgColor(difficulty) + ' ' + getDifficultyColor(difficulty)
-            }`}>
-              {difficulty}
-            </div>
+            <Badge
+              label={difficulty}
+              variant="difficulty"
+              difficulty={difficulty}
+              size="sm"
+              className="mr-2"
+            />
             <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
               <Clock size={14} className="mr-1" />
               <span>{formatTime(timeEstimate)}</span>
@@ -169,25 +172,27 @@ const QuestionCard = ({
         
         {/* Action buttons */}
         <div className="flex ml-4 space-x-2">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleToggleCompletion}
-            className={`p-2 rounded-full ${
+            icon={<Check size={18} />}
+            aria-label={completed ? "Mark as incomplete" : "Mark as complete"}
+            className={`rounded-full p-2 ${
               completed
                 ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:bg-opacity-30 dark:text-green-400'
                 : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
             }`}
-            aria-label={completed ? "Mark as incomplete" : "Mark as complete"}
-          >
-            <Check size={18} />
-          </button>
-          
-          <button
+          />
+
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={toggleExpanded}
-            className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+            icon={expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             aria-label={expanded ? "Collapse" : "Expand"}
-          >
-            {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
+            className="rounded-full p-2 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+          />
         </div>
       </div>
       
@@ -206,7 +211,7 @@ const QuestionCard = ({
             >
               Solution
             </button>
-            
+
             {/* Try It tab for code execution */}
             {(category.includes('python') || category.includes('sql')) && (
               <button
@@ -267,16 +272,15 @@ const QuestionCard = ({
                 </div>
                 
                 <div className="flex">
-                  <button
+                  <Button
+                    variant="primary"
+                    size="md"
                     onClick={runCode}
                     disabled={isRunning || (!pyodideRef.current && !sqlRef.current)}
-                    className={`px-4 py-2 text-sm font-medium bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-200 flex items-center ${
-                      isRunning || (!pyodideRef.current && !sqlRef.current) ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                    loading={isRunning}
                   >
                     {isRunning ? 'Running...' : 'Run Code'}
-                    {isRunning && <div className="loader-border ml-2"></div>}
-                  </button>
+                  </Button>
                 </div>
                 
                 {/* Output area */}
