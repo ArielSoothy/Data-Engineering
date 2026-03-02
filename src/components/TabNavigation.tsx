@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import {
   LayoutDashboard, Database, Code, Braces, BarChart,
-  Cloud, Video, Book, Moon, Sun, Target, GraduationCap, Briefcase
+  Cloud, Video, Book, Moon, Sun, Target, GraduationCap, Briefcase, Zap
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
@@ -50,17 +50,23 @@ const TabNavigation = () => {
       icon: <Braces size={20} />, 
       path: '/python-advanced' 
     },
-    { 
-      id: 'trivia', 
-      label: 'Interactive Trivia', 
-      icon: <Target size={20} />, 
-      path: '/trivia' 
+    {
+      id: 'trivia',
+      label: 'Interactive Trivia',
+      icon: <Target size={20} />,
+      path: '/trivia'
     },
-    { 
-      id: 'decomposition', 
-      label: 'Problem Decomposition', 
-      icon: <BarChart size={20} />, 
-      path: '/decomposition' 
+    {
+      id: 'adaptive',
+      label: 'Adaptive Practice',
+      icon: <Zap size={20} />,
+      path: '/adaptive'
+    },
+    {
+      id: 'decomposition',
+      label: 'Problem Decomposition',
+      icon: <BarChart size={20} />,
+      path: '/decomposition'
     },
     {
       id: 'tech-stack',

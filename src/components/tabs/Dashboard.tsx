@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   Calendar, Clock, BarChart2, Award, ChevronRight,
-  Database, Code, BarChart, Video, CheckCircle, Braces
+  Database, Code, BarChart, Video, CheckCircle, Braces, Zap
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { formatTime } from '../../utils/helpers';
@@ -156,13 +156,21 @@ const Dashboard = () => {
       path: '/decomposition',
       color: 'bg-yellow-500'
     },
-    { 
-      id: 'mockInterviews', 
-      name: 'Mock Interviews', 
-      icon: <Video size={20} />, 
+    {
+      id: 'mockInterviews',
+      name: 'Mock Interviews',
+      icon: <Video size={20} />,
       count: 5,
       path: '/mock-interview',
       color: 'bg-red-500'
+    },
+    {
+      id: 'adaptive',
+      name: 'Adaptive Practice',
+      icon: <Zap size={20} />,
+      count: 30,
+      path: '/adaptive',
+      color: 'bg-orange-500'
     }
   ];
   

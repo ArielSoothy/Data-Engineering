@@ -13,6 +13,7 @@ import Decomposition from './components/tabs/Decomposition';
 import MetaTechStack from './components/tabs/MetaTechStack';
 import MockInterview from './components/tabs/MockInterview';
 import MyProjects from './components/tabs/MyProjects';
+import AdaptivePractice from './components/tabs/AdaptivePractice';
 import { ApiTest } from './components/ApiTest';
 import { ApiDiagnostic } from './components/ApiDiagnostic';
 
@@ -51,6 +52,7 @@ function App() {
               <Route path="/python-basics" element={<PythonBasics />} />
               <Route path="/python-advanced" element={<PythonAdvanced />} />
               <Route path="/trivia" element={<Trivia />} />
+              <Route path="/adaptive" element={<AdaptivePractice />} />
               <Route path="/glossary" element={<Glossary />} />
               <Route path="/decomposition" element={<Decomposition />} />
               <Route path="/tech-stack" element={<MetaTechStack />} />

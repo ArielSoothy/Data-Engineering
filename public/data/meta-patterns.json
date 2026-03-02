@@ -1,0 +1,328 @@
+[
+  {
+    "id": 1,
+    "pattern_name": "MAU/DAU Calculation",
+    "description": "Count distinct active users per day or per month using timestamp truncation and COUNT DISTINCT. The foundation of all product health metrics at Meta.",
+    "schema": "user_events(user_id BIGINT, event_type VARCHAR, event_ts TIMESTAMP)",
+    "example_question": "Write a query that returns the Monthly Active Users (MAU) for each calendar month in 2024, along with the peak Daily Active Users (DAU) observed within that month.",
+    "difficulty": "Medium",
+    "category": "sql",
+    "tags": [
+      "aggregation",
+      "window functions",
+      "metrics",
+      "MAU",
+      "DAU"
+    ]
+  },
+  {
+    "id": 2,
+    "pattern_name": "Funnel Analysis",
+    "description": "Measure conversion rates between sequential steps in a user journey (e.g., impression \u2192 click \u2192 signup \u2192 purchase). Requires counting users who reached each step and dividing by the prior step's count.",
+    "schema": "user_events(user_id BIGINT, event_type VARCHAR, event_ts TIMESTAMP)",
+    "example_question": "Given events 'page_view', 'add_to_cart', 'checkout_start', and 'purchase', calculate the conversion rate between each consecutive funnel step for users who entered the funnel in January 2024.",
+    "difficulty": "Hard",
+    "category": "sql",
+    "tags": [
+      "funnel",
+      "conversion",
+      "aggregation",
+      "CASE",
+      "product analytics"
+    ]
+  },
+  {
+    "id": 3,
+    "pattern_name": "Friend Graph Traversal",
+    "description": "Traverse a social graph stored as an edge list to find mutual friends, degrees of separation, or friend-of-friend recommendations. Uses self-joins or recursive CTEs.",
+    "schema": "friendships(user_id BIGINT, friend_id BIGINT)",
+    "example_question": "Find all pairs of users who are exactly 2 degrees of separation apart (i.e., share at least one mutual friend but are not direct friends themselves), and return the count of mutual friends for each pair.",
+    "difficulty": "Hard",
+    "category": "sql",
+    "tags": [
+      "graph",
+      "self-join",
+      "social network",
+      "mutual friends",
+      "CTE"
+    ]
+  },
+  {
+    "id": 4,
+    "pattern_name": "Ad Impression Deduplication",
+    "description": "Identify and remove duplicate ad impression records that arise from delivery system retries, double-counting in aggregation pipelines, or log replay. Uses ROW_NUMBER or DISTINCT on a composite dedup key.",
+    "schema": "ad_impressions(impression_id VARCHAR, user_id BIGINT, ad_id BIGINT, campaign_id BIGINT, impression_ts TIMESTAMP, revenue DECIMAL)",
+    "example_question": "The ad_impressions table contains duplicate rows caused by a pipeline replay. Deduplicate impressions using impression_id as the primary key, keeping the earliest record when duplicates exist, and return the total deduplicated revenue per campaign.",
+    "difficulty": "Medium",
+    "category": "sql",
+    "tags": [
+      "deduplication",
+      "window functions",
+      "ROW_NUMBER",
+      "data quality",
+      "ads"
+    ]
+  },
+  {
+    "id": 5,
+    "pattern_name": "Session Analysis (Sessionization)",
+    "description": "Group a stream of timestamped user events into discrete sessions where inactivity exceeding a threshold (commonly 30 minutes) marks a session boundary. Uses LAG + running SUM to assign session IDs.",
+    "schema": "user_events(user_id BIGINT, event_type VARCHAR, event_ts TIMESTAMP)",
+    "example_question": "Sessionize user_events using a 30-minute inactivity timeout. Return each session's user_id, session number (per user), session start and end timestamps, total duration in minutes, and number of events.",
+    "difficulty": "Hard",
+    "category": "sql",
+    "tags": [
+      "sessionization",
+      "LAG",
+      "window functions",
+      "time series",
+      "user behavior"
+    ]
+  },
+  {
+    "id": 6,
+    "pattern_name": "Cohort Retention Analysis",
+    "description": "Group users by their signup period (cohort) and measure what fraction remain active at fixed intervals after signup (Day 1, Day 7, Day 30). Core metric for evaluating product stickiness.",
+    "schema": "signups(user_id BIGINT, signup_date DATE), user_events(user_id BIGINT, event_ts TIMESTAMP)",
+    "example_question": "Build a cohort retention table showing, for each weekly signup cohort in Q1 2024, the retention rates at Day 1, Day 7, and Day 30 after signup.",
+    "difficulty": "Hard",
+    "category": "sql",
+    "tags": [
+      "cohort",
+      "retention",
+      "D7",
+      "D30",
+      "window functions",
+      "product analytics"
+    ]
+  },
+  {
+    "id": 7,
+    "pattern_name": "Revenue Attribution (First/Last Touch)",
+    "description": "Assign credit for a conversion to the advertising touchpoints that preceded it. First-touch gives full credit to the earliest campaign interaction; last-touch gives full credit to the most recent one before conversion.",
+    "schema": "ad_clicks(user_id BIGINT, campaign_id BIGINT, click_ts TIMESTAMP), conversions(user_id BIGINT, conversion_ts TIMESTAMP, revenue DECIMAL)",
+    "example_question": "For each conversion, identify the first-touch and last-touch campaign. Return the total attributed revenue per campaign under both models and the difference between them.",
+    "difficulty": "Hard",
+    "category": "sql",
+    "tags": [
+      "attribution",
+      "first touch",
+      "last touch",
+      "window functions",
+      "ads",
+      "marketing"
+    ]
+  },
+  {
+    "id": 8,
+    "pattern_name": "Feed Ranking Score Calculation",
+    "description": "Compute a composite engagement score for content items to determine News Feed ranking order. Typically a weighted sum of interaction signals (likes, comments, shares, watch time) normalized by content age.",
+    "schema": "posts(post_id BIGINT, user_id BIGINT, created_at TIMESTAMP), post_interactions(post_id BIGINT, user_id BIGINT, interaction_type VARCHAR, interaction_ts TIMESTAMP)",
+    "example_question": "Calculate a ranking score for each post in the last 7 days using the formula: (likes * 1 + comments * 3 + shares * 5) / (hours_since_post + 2)^1.5. Return the top 100 posts ordered by score descending.",
+    "difficulty": "Hard",
+    "category": "sql",
+    "tags": [
+      "ranking",
+      "feed",
+      "engagement",
+      "weighted score",
+      "window functions"
+    ]
+  },
+  {
+    "id": 9,
+    "pattern_name": "A/B Test Analysis",
+    "description": "Compare metric distributions between control and treatment groups in an experiment, compute the difference in means, and assess statistical significance using a z-test or t-test approximation in SQL.",
+    "schema": "experiment_assignments(user_id BIGINT, experiment_id VARCHAR, variant VARCHAR, assigned_at TIMESTAMP), user_events(user_id BIGINT, event_type VARCHAR, event_ts TIMESTAMP)",
+    "example_question": "For experiment 'feed_ranking_v2', compute the average number of sessions per user per day for control vs. treatment variants over a 14-day observation window. Report the absolute lift, relative lift, and whether the result is significant at p < 0.05 using a z-test approximation.",
+    "difficulty": "Hard",
+    "category": "sql",
+    "tags": [
+      "A/B test",
+      "experimentation",
+      "statistics",
+      "z-test",
+      "metrics"
+    ]
+  },
+  {
+    "id": 10,
+    "pattern_name": "Data Pipeline SLA Monitoring",
+    "description": "Track pipeline run history to detect SLA breaches: jobs that ran longer than expected, finished later than their deadline, or failed to run at all within a scheduled window.",
+    "schema": "pipeline_runs(run_id BIGINT, pipeline_name VARCHAR, started_at TIMESTAMP, finished_at TIMESTAMP, status VARCHAR, expected_duration_minutes INT, sla_deadline TIMESTAMP)",
+    "example_question": "Identify all pipeline runs in the last 30 days that breached their SLA, either by exceeding expected_duration_minutes or finishing after sla_deadline. Return the pipeline name, breach type, overage amount, and the previous successful run time for context.",
+    "difficulty": "Medium",
+    "category": "sql",
+    "tags": [
+      "SLA",
+      "monitoring",
+      "data quality",
+      "pipeline",
+      "operations"
+    ]
+  },
+  {
+    "id": 11,
+    "pattern_name": "Time Series Anomaly Detection",
+    "description": "Detect anomalous data points in a metric time series by comparing each value against a rolling baseline. Values beyond N standard deviations from the rolling mean are flagged as anomalies.",
+    "schema": "daily_metrics(metric_date DATE, metric_name VARCHAR, metric_value DOUBLE)",
+    "example_question": "Using a 28-day rolling window, flag daily metric values that deviate by more than 3 standard deviations from the rolling mean. Return the date, metric name, actual value, rolling mean, rolling std, and the z-score.",
+    "difficulty": "Hard",
+    "category": "python",
+    "tags": [
+      "anomaly detection",
+      "rolling window",
+      "z-score",
+      "time series",
+      "pandas"
+    ]
+  },
+  {
+    "id": 12,
+    "pattern_name": "Graph-Based Friend-of-Friend Recommendation",
+    "description": "Recommend new connections to a user by finding users who are 2 hops away in the friendship graph (friends of friends who are not already direct friends), ranked by the number of mutual friends shared.",
+    "schema": "friendships(user_id BIGINT, friend_id BIGINT)",
+    "example_question": "For user 12345, generate a ranked list of recommended friends (people-you-may-know) by finding all users reachable in exactly 2 hops who are not already friends with user 12345, ordered by descending mutual friend count.",
+    "difficulty": "Hard",
+    "category": "sql",
+    "tags": [
+      "graph",
+      "recommendation",
+      "friend-of-friend",
+      "social network",
+      "ranking"
+    ]
+  },
+  {
+    "id": 13,
+    "pattern_name": "Hierarchical Aggregation",
+    "description": "Roll up metrics through a geographic or organizational hierarchy (e.g., city \u2192 region \u2192 country \u2192 global) using GROUP BY ROLLUP or GROUPING SETS to produce all levels in a single pass.",
+    "schema": "user_events(user_id BIGINT, event_ts TIMESTAMP), users(user_id BIGINT, city VARCHAR, region VARCHAR, country VARCHAR)",
+    "example_question": "Compute daily active users at the city, region, and country level simultaneously for January 2024 using a single query. Include subtotals at each hierarchy level and indicate which rows are subtotals.",
+    "difficulty": "Medium",
+    "category": "sql",
+    "tags": [
+      "ROLLUP",
+      "GROUPING SETS",
+      "hierarchy",
+      "aggregation",
+      "geographic"
+    ]
+  },
+  {
+    "id": 14,
+    "pattern_name": "Slowly Changing Dimensions (SCD Type 2)",
+    "description": "Track historical changes to user attributes (e.g., country, subscription tier) by maintaining a versioned dimension table with valid_from and valid_to timestamps. Query point-in-time attribute values using range joins.",
+    "schema": "user_attributes_history(user_id BIGINT, attribute_name VARCHAR, attribute_value VARCHAR, valid_from TIMESTAMP, valid_to TIMESTAMP)",
+    "example_question": "Determine each user's subscription tier at the time of their first purchase. The user_attributes_history table tracks tier changes with valid_from/valid_to ranges; the purchases table records (user_id, purchase_ts, amount).",
+    "difficulty": "Hard",
+    "category": "sql",
+    "tags": [
+      "SCD",
+      "slowly changing dimensions",
+      "temporal data",
+      "point-in-time",
+      "data modeling"
+    ]
+  },
+  {
+    "id": 15,
+    "pattern_name": "Late-Arriving Data Handling",
+    "description": "Design a pipeline strategy that correctly incorporates events that arrive after the processing window has closed. Involves reprocessing logic, watermarking, or upsert patterns to update already-published metrics.",
+    "schema": "user_events(user_id BIGINT, event_ts TIMESTAMP, processed_ts TIMESTAMP, event_type VARCHAR)",
+    "example_question": "Your daily DAU pipeline runs at midnight but events for a given day can arrive up to 3 days late. Design a strategy to detect and incorporate late-arriving events into already-published daily DAU metrics without double-counting users.",
+    "difficulty": "Hard",
+    "category": "system_design",
+    "tags": [
+      "late data",
+      "watermark",
+      "reprocessing",
+      "streaming",
+      "data quality",
+      "idempotent"
+    ]
+  },
+  {
+    "id": 16,
+    "pattern_name": "Dead Letter Queue Pattern",
+    "description": "Route records that fail validation or processing to a separate dead letter queue (DLQ) for inspection and potential reprocessing. Prevents bad records from blocking the main pipeline while preserving them for debugging.",
+    "schema": "pipeline_events(event_id VARCHAR, payload JSON, received_ts TIMESTAMP), dlq_events(event_id VARCHAR, payload JSON, failure_reason VARCHAR, failed_ts TIMESTAMP, retry_count INT)",
+    "example_question": "Design the DLQ handling logic for an event ingestion pipeline: events that fail schema validation or have null required fields should be written to dlq_events with a failure_reason. Describe the retry strategy and when records should be permanently abandoned.",
+    "difficulty": "Medium",
+    "category": "system_design",
+    "tags": [
+      "DLQ",
+      "error handling",
+      "pipeline",
+      "Kafka",
+      "fault tolerance"
+    ]
+  },
+  {
+    "id": 17,
+    "pattern_name": "Idempotent ETL Operations",
+    "description": "Design ETL jobs so that re-running them produces the same result as running them once, preventing duplicates or incorrect aggregates when jobs are retried due to failures.",
+    "schema": "raw_events(event_id VARCHAR, user_id BIGINT, event_ts TIMESTAMP), aggregated_daily(date DATE, user_id BIGINT, event_count BIGINT, last_updated TIMESTAMP)",
+    "example_question": "Rewrite a daily aggregation job that currently appends to a target table so that it becomes idempotent: re-running for any given date should produce exactly the same output as the first run, with no duplicates.",
+    "difficulty": "Medium",
+    "category": "system_design",
+    "tags": [
+      "idempotent",
+      "ETL",
+      "MERGE",
+      "UPSERT",
+      "data pipeline",
+      "reliability"
+    ]
+  },
+  {
+    "id": 18,
+    "pattern_name": "Partitioning Strategy for user_events at Scale",
+    "description": "Choose an appropriate partitioning scheme for a multi-trillion row user_events table to optimize query performance and storage costs. Considerations include partition pruning, data skew, and compaction strategies.",
+    "schema": "user_events(user_id BIGINT, event_type VARCHAR, event_ts TIMESTAMP, properties MAP<VARCHAR,VARCHAR>)",
+    "example_question": "The user_events table has 5TB of new data per day and is queried 95% of the time with a date filter. Propose a partitioning and clustering strategy, explain the trade-offs of partitioning by event_ts date vs. by user_id hash, and describe how you would handle hot partitions.",
+    "difficulty": "Hard",
+    "category": "system_design",
+    "tags": [
+      "partitioning",
+      "clustering",
+      "scalability",
+      "Hive",
+      "Iceberg",
+      "data skew"
+    ]
+  },
+  {
+    "id": 19,
+    "pattern_name": "Data Lineage Tracking",
+    "description": "Record and query the provenance of data artifacts: which upstream tables and pipeline jobs produced each downstream table, enabling impact analysis when a source changes and root-cause analysis of data quality issues.",
+    "schema": "lineage_edges(source_table VARCHAR, target_table VARCHAR, pipeline_job VARCHAR, run_id VARCHAR, run_ts TIMESTAMP), table_catalog(table_name VARCHAR, owner VARCHAR, sla_tier VARCHAR)",
+    "example_question": "A source table 'raw_user_events' has been identified as having corrupted data for January 15. Write a query to find all downstream tables that were derived from raw_user_events for that date's pipeline run, ordered by their distance from the source in the lineage graph.",
+    "difficulty": "Hard",
+    "category": "system_design",
+    "tags": [
+      "data lineage",
+      "provenance",
+      "impact analysis",
+      "graph",
+      "data governance"
+    ]
+  },
+  {
+    "id": 20,
+    "pattern_name": "Schema Evolution Handling",
+    "description": "Manage changes to table schemas over time (adding columns, changing types, removing columns) without breaking downstream consumers. Involves backward/forward compatibility strategies, schema registry usage, and migration patterns.",
+    "schema": "events_v1(event_id VARCHAR, user_id BIGINT, event_ts TIMESTAMP), events_v2(event_id VARCHAR, user_id BIGINT, event_ts TIMESTAMP, country_code VARCHAR, app_version VARCHAR)",
+    "example_question": "Your team wants to add two new columns (country_code, app_version) to a 50TB Iceberg table that is read by 20 downstream pipelines. Describe the end-to-end migration plan including: how to backfill historical data, how to ensure downstream pipelines continue working during the transition, and how to validate completeness after migration.",
+    "difficulty": "Hard",
+    "category": "system_design",
+    "tags": [
+      "schema evolution",
+      "Iceberg",
+      "Avro",
+      "schema registry",
+      "migration",
+      "backward compatibility"
+    ]
+  }
+]
