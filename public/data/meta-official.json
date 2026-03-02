@@ -1,0 +1,14 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "Paste your first Meta official question here",
+      "category": "behavioral",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Paste the answer or expected talking points here",
+      "pseudoCode": "",
+      "aiApproach": ""
+    }
+  ]
+}

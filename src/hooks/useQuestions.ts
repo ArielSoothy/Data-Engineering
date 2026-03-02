@@ -75,6 +75,8 @@ export const useQuestions = (category: string) => {
         return { progressKey: 'azureServices', filePath: '/data-stack.json' };
       case 'mock-interviews':
         return { progressKey: 'mockInterviews', filePath: '/mock-interviews.json' };
+      case 'meta-official':
+        return { progressKey: 'metaOfficial', filePath: '/meta-official.json' };
       default:
         return { progressKey: 'sqlBasics', filePath: '/sql-basics.json' };
     }

@@ -34,10 +34,6 @@ export function getActiveProvider(): AIProvider {
   if (envProvider && VALID_PROVIDERS.includes(envProvider as AIProvider)) {
     return envProvider as AIProvider;
   }
-  // In dev mode, default to claude-cli when no preference has been stored
-  if (import.meta.env.DEV) {
-    return 'claude-cli';
-  }
   return 'groq';
 }
 

@@ -14,6 +14,7 @@ import MetaTechStack from './components/tabs/MetaTechStack';
 import MockInterview from './components/tabs/MockInterview';
 import MyProjects from './components/tabs/MyProjects';
 import AdaptivePractice from './components/tabs/AdaptivePractice';
+import MetaOfficial from './components/tabs/MetaOfficial';
 import { ApiTest } from './components/ApiTest';
 import { ApiDiagnostic } from './components/ApiDiagnostic';
 
@@ -58,6 +59,7 @@ function App() {
               <Route path="/tech-stack" element={<MetaTechStack />} />
               <Route path="/mock-interview" element={<MockInterview />} />
               <Route path="/my-projects" element={<MyProjects />} />
+              <Route path="/meta-official" element={<MetaOfficial />} />
               <Route path="/api-test" element={<ApiTest />} />
               <Route path="/api-diagnostic" element={<ApiDiagnostic />} />
               <Route path="*" element={<Navigate to="/" replace />} />

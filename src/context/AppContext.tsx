@@ -17,6 +17,7 @@ export interface CategoryProgress {
   azureServices: QuestionProgress[];
   mockInterviews: QuestionProgress[];
   adaptive: QuestionProgress[];
+  metaOfficial: QuestionProgress[];
 }
 
 export interface TimerSession {
@@ -63,7 +64,8 @@ const AppContext = createContext<AppContextType>({
     decompositionScenarios: [],
     azureServices: [],
     mockInterviews: [],
-    adaptive: []
+    adaptive: [],
+    metaOfficial: []
   },
   updateProgress: () => {},
   currentSession: null,
@@ -94,7 +96,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       decompositionScenarios: [],
       azureServices: [],
       mockInterviews: [],
-      adaptive: []
+      adaptive: [],
+      metaOfficial: []
     };
   });
   
@@ -170,12 +173,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   // Calculate total progress percentage
   const getTotalProgress = (): number => {
-    const totalQuestions = 40 + 20 + 25 + 15 + 10 + 5 + 30; // Based on specified counts in requirements
-    
-    const completedCount = Object.values(progress).reduce((total, category) => {
+    const totalQuestions = 40 + 20 + 25 + 15 + 10 + 5 + 30; // Fixed categories only; metaOfficial excluded (user-defined count)
+
+    const completedCount = Object.entries(progress).reduce((total, [key, category]) => {
+      if (key === 'metaOfficial') return total; // excluded: count is user-defined
       return total + category.filter((q: QuestionProgress) => q.completed).length;
     }, 0);
-    
+
     return totalQuestions > 0 ? Math.round((completedCount / totalQuestions) * 100) : 0;
   };
   
@@ -189,7 +193,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       decompositionScenarios: 10,
       azureServices: 15,
       mockInterviews: 5,
-      adaptive: 30
+      adaptive: 30,
+      metaOfficial: 50 // placeholder; actual count depends on how many questions user pastes
     };
     
     const completed = progress[category].filter(q => q.completed).length;
@@ -209,7 +214,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       decompositionScenarios: 20,
       azureServices: 8,
       mockInterviews: 30,
-      adaptive: 8
+      adaptive: 8,
+      metaOfficial: 10
     };
     
     let totalMinutes = 0;
