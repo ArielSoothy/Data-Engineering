@@ -3,8 +3,8 @@ import { Search, Filter, Clock, SortAsc, SortDesc, RotateCcw } from 'lucide-reac
 import QuestionCard from '../QuestionCard';
 import useQuestions from '../../hooks/useQuestions';
 import { useTimer } from '../../hooks/useTimer';
-import { formatTime } from '../../utils/helpers';
-import { Button } from '../ui';
+import { formatTime, DIFFICULTY_ORDER } from '../../utils/helpers';
+import { Button, ProgressBar, Spinner } from '../ui';
 
 const SQLBasics = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,9 +41,8 @@ const SQLBasics = () => {
     if (sortBy === 'id') {
       return sortDirection === 'asc' ? a.id - b.id : b.id - a.id;
     } else if (sortBy === 'difficulty') {
-      const difficultyOrder = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
-      const aValue = difficultyOrder[a.difficulty as keyof typeof difficultyOrder] || 0;
-      const bValue = difficultyOrder[b.difficulty as keyof typeof difficultyOrder] || 0;
+      const aValue = DIFFICULTY_ORDER[a.difficulty] || 0;
+      const bValue = DIFFICULTY_ORDER[b.difficulty] || 0;
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     } else { // time
       return sortDirection === 'asc' ? a.timeEstimate - b.timeEstimate : b.timeEstimate - a.timeEstimate;
@@ -87,12 +86,7 @@ const SQLBasics = () => {
               <div className="text-sm text-gray-500 dark:text-gray-400">Completion</div>
               <div className="text-sm font-medium">{completedCount}/{totalQuestions}</div>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full dark:bg-blue-500"
-                style={{ width: `${completionPercentage}%` }}
-              ></div>
-            </div>
+            <ProgressBar value={completionPercentage} />
           </div>
         </div>
         
@@ -141,12 +135,7 @@ const SQLBasics = () => {
               />
             </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700 mt-2">
-            <div 
-              className="bg-blue-600 h-1.5 rounded-full dark:bg-blue-500 transition-all duration-1000"
-              style={{ width: `${timer.progress}%` }}
-            ></div>
-          </div>
+          <ProgressBar value={timer.progress} size="sm" className="mt-2" />
         </div>
         
         <div className="card flex flex-col justify-center">
@@ -261,7 +250,7 @@ const SQLBasics = () => {
       {/* Questions list */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 dark:border-gray-600 border-t-blue-600 dark:border-t-blue-400"></div>
+          <Spinner />
           <p className="mt-2 text-gray-600 dark:text-gray-400">Loading questions...</p>
         </div>
       ) : error ? (

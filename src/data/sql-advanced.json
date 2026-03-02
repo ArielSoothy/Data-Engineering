@@ -179,6 +179,60 @@
       "answer": "Implement specialized queries for time-based aggregation, gap filling, moving calculations, and anomaly detection in temporal data.",
       "pseudoCode": "-- Hourly aggregation with moving averages\nSELECT \n  sensor_id,\n  DATE_TRUNC('hour', reading_timestamp) as hour_bucket,\n  AVG(temperature) as avg_temperature,\n  -- 3-hour moving average\n  AVG(temperature) OVER (\n    PARTITION BY sensor_id \n    ORDER BY DATE_TRUNC('hour', reading_timestamp) \n    ROWS BETWEEN 2 PRECEDING AND CURRENT ROW\n  ) as moving_avg_3hour\nFROM sensor_data\nWHERE reading_timestamp >= CURRENT_DATE - INTERVAL '7 days'\nGROUP BY sensor_id, DATE_TRUNC('hour', reading_timestamp)\nORDER BY sensor_id, hour_bucket;\n\n-- Gap filling for missing time intervals\nWITH TimeSeries AS (\n  -- Generate complete time series (every hour)\n  SELECT \n    s.sensor_id,\n    generate_series(\n      DATE_TRUNC('hour', CURRENT_TIMESTAMP - INTERVAL '7 days'),\n      DATE_TRUNC('hour', CURRENT_TIMESTAMP),\n      INTERVAL '1 hour'\n    ) as time_bucket\n  FROM (SELECT DISTINCT sensor_id FROM sensor_data) s\n),\nAggregatedData AS (\n  SELECT \n    sensor_id,\n    DATE_TRUNC('hour', reading_timestamp) as time_bucket,\n    AVG(temperature) as avg_temperature\n  FROM sensor_data\n  GROUP BY sensor_id, DATE_TRUNC('hour', reading_timestamp)\n)\nSELECT \n  ts.sensor_id,\n  ts.time_bucket,\n  COALESCE(ad.avg_temperature, \n           LAG(ad.avg_temperature) IGNORE NULLS OVER (\n             PARTITION BY ts.sensor_id ORDER BY ts.time_bucket\n           )) as temperature  -- Forward fill missing values\nFROM TimeSeries ts\nLEFT JOIN AggregatedData ad \n  ON ts.sensor_id = ad.sensor_id AND ts.time_bucket = ad.time_bucket\nORDER BY ts.sensor_id, ts.time_bucket;",
       "aiApproach": "Time series data requires specialized handling: regular intervals with gap-filling for missing data, time-weighted calculations for irregular intervals, smoothing techniques like moving averages, and pattern detection algorithms for anomalies and trends."
+    },
+    {
+      "id": 21,
+      "question": "Find the top 3 customers by total spend in each country. Use window functions.",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Use DENSE_RANK() partitioned by country and ordered by total spend descending. Aggregate spend first in a CTE, then apply the window function, then filter WHERE rank <= 3.",
+      "pseudoCode": "WITH CustomerSpend AS (\n  SELECT\n    customer_id,\n    country,\n    SUM(order_amount) AS total_spend\n  FROM orders\n  GROUP BY customer_id, country\n),\nRanked AS (\n  SELECT\n    customer_id,\n    country,\n    total_spend,\n    DENSE_RANK() OVER (\n      PARTITION BY country\n      ORDER BY total_spend DESC\n    ) AS spend_rank\n  FROM CustomerSpend\n)\nSELECT\n  country,\n  customer_id,\n  total_spend,\n  spend_rank\nFROM Ranked\nWHERE spend_rank <= 3\nORDER BY country, spend_rank;",
+      "aiApproach": "DENSE_RANK is preferred over RANK here because ties at rank 2 should not skip rank 3 — both tied customers should appear and rank 3 should still be included. ROW_NUMBER would arbitrarily break ties and might exclude a customer. For Presto/Hive at scale, ensure the orders table is partitioned by order_date so the full table scan is minimized."
+    },
+    {
+      "id": 22,
+      "question": "Calculate 7-day rolling retention by signup cohort. Users table: user_id, signup_date. Events table: user_id, event_date.",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Identify each cohort by signup_date. For each cohort, count how many users had any event within 7 days of their signup. Divide by cohort size to get retention rate. Use a LEFT JOIN from cohorts to events with a date range condition.",
+      "pseudoCode": "WITH Cohorts AS (\n  SELECT\n    user_id,\n    signup_date AS cohort_date\n  FROM users\n),\nRetained AS (\n  SELECT\n    c.cohort_date,\n    c.user_id,\n    CASE\n      WHEN MIN(e.event_date) BETWEEN c.cohort_date AND c.cohort_date + INTERVAL '7' DAY\n      THEN 1 ELSE 0\n    END AS is_retained\n  FROM Cohorts c\n  LEFT JOIN events e ON c.user_id = e.user_id\n  GROUP BY c.cohort_date, c.user_id\n)\nSELECT\n  cohort_date,\n  COUNT(*) AS cohort_size,\n  SUM(is_retained) AS retained_users,\n  ROUND(100.0 * SUM(is_retained) / COUNT(*), 2) AS retention_rate_pct\nFROM Retained\nGROUP BY cohort_date\nORDER BY cohort_date;",
+      "aiApproach": "At Meta scale with billions of users, this query on unpartitioned tables would be extremely costly. Partition both tables by date. Consider pre-computing cohort membership in a staging table. For rolling multi-day retention (D1, D7, D30), use CASE statements for each retention window in the same query to avoid multiple passes over the data."
+    },
+    {
+      "id": 23,
+      "question": "Deduplicate streaming events: events(event_id, user_id, event_type, created_at). Keep only the latest version of each event_id.",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Use ROW_NUMBER() partitioned by event_id and ordered by created_at DESC. Filter to row_num = 1 in the outer query. For production pipelines, prefer INSERT OVERWRITE on partitioned tables with idempotent writes over ad-hoc deduplication.",
+      "pseudoCode": "-- Deduplication using ROW_NUMBER\nWITH Deduplicated AS (\n  SELECT\n    event_id,\n    user_id,\n    event_type,\n    created_at,\n    ROW_NUMBER() OVER (\n      PARTITION BY event_id\n      ORDER BY created_at DESC\n    ) AS rn\n  FROM events\n)\nSELECT\n  event_id,\n  user_id,\n  event_type,\n  created_at\nFROM Deduplicated\nWHERE rn = 1;\n\n-- Production alternative: QUALIFY clause (Presto/BigQuery)\nSELECT\n  event_id,\n  user_id,\n  event_type,\n  created_at\nFROM events\nQUALIFY ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY created_at DESC) = 1;",
+      "aiApproach": "The QUALIFY clause (supported in Presto, BigQuery, Snowflake) eliminates the need for a CTE, making the query more concise. At petabyte scale, deduplication should happen at ingestion time using idempotent pipeline design — write-time deduplication is far cheaper than read-time. If using dbt, the unique_key config on incremental models handles this automatically."
+    },
+    {
+      "id": 24,
+      "question": "Sessionize user events with a 30-minute inactivity timeout. Output: user_id, session_id, session_start, session_end, event_count.",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Use LAG() to compute time gap between consecutive events per user. Flag a new session when gap > 30 minutes or it is the user's first event. Use SUM() of the session flags as a window function to create a session number per user. Aggregate by user + session number.",
+      "pseudoCode": "WITH EventsWithGap AS (\n  SELECT\n    user_id,\n    event_timestamp,\n    CASE\n      WHEN LAG(event_timestamp) OVER (PARTITION BY user_id ORDER BY event_timestamp) IS NULL\n        OR DATE_DIFF('minute',\n             LAG(event_timestamp) OVER (PARTITION BY user_id ORDER BY event_timestamp),\n             event_timestamp) > 30\n      THEN 1\n      ELSE 0\n    END AS is_new_session\n  FROM user_events\n),\nSessionNumbered AS (\n  SELECT\n    user_id,\n    event_timestamp,\n    SUM(is_new_session) OVER (\n      PARTITION BY user_id\n      ORDER BY event_timestamp\n      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n    ) AS session_num\n  FROM EventsWithGap\n)\nSELECT\n  user_id,\n  CONCAT(CAST(user_id AS VARCHAR), '-', CAST(session_num AS VARCHAR)) AS session_id,\n  MIN(event_timestamp) AS session_start,\n  MAX(event_timestamp) AS session_end,\n  COUNT(*) AS event_count\nFROM SessionNumbered\nGROUP BY user_id, session_num\nORDER BY user_id, session_num;",
+      "aiApproach": "This pattern — flag session boundaries with LAG, then use a running SUM to assign session IDs — is a core sessionization technique used throughout Meta's analytics stack. For Hive/Presto, ensure the table is sorted by user_id and event_timestamp to minimize shuffle. In production, sessionization is often done at write time in the stream processor rather than at query time."
+    },
+    {
+      "id": 25,
+      "question": "For each user, find their first purchase and the time gap to their second purchase. Users with only one purchase should show NULL for the gap.",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Use ROW_NUMBER() to rank purchases per user by purchase_date. Then use conditional aggregation or a self-join to get purchase 1 and purchase 2. Calculate the date difference between them. Users with only one purchase will have no second purchase row, resulting in NULL for the gap.",
+      "pseudoCode": "WITH RankedPurchases AS (\n  SELECT\n    user_id,\n    purchase_date,\n    purchase_amount,\n    ROW_NUMBER() OVER (\n      PARTITION BY user_id\n      ORDER BY purchase_date ASC\n    ) AS purchase_rank\n  FROM purchases\n)\nSELECT\n  p1.user_id,\n  p1.purchase_date AS first_purchase_date,\n  p1.purchase_amount AS first_purchase_amount,\n  p2.purchase_date AS second_purchase_date,\n  DATE_DIFF('day', p1.purchase_date, p2.purchase_date) AS days_to_second_purchase\nFROM RankedPurchases p1\nLEFT JOIN RankedPurchases p2\n  ON p1.user_id = p2.user_id\n  AND p2.purchase_rank = 2\nWHERE p1.purchase_rank = 1\nORDER BY p1.user_id;",
+      "aiApproach": "The LEFT JOIN ensures users with only one purchase still appear in the result with NULL for second purchase columns. An alternative using LEAD() is more concise: LEAD(purchase_date, 1) OVER (PARTITION BY user_id ORDER BY purchase_date) gives the next purchase date directly without a self-join, which is significantly more efficient on large tables."
+    },
+    {
+      "id": 26,
+      "question": "Calculate cumulative revenue per store that resets at the start of each month. Table: daily_sales(date, store_id, revenue).",
+      "difficulty": "Hard",
+      "timeEstimate": 12,
+      "answer": "Use SUM() as a window function with PARTITION BY store_id and the month extracted from the date. The partition boundary resets the running total at each new month. ORDER BY date within the partition gives the cumulative sum up to each day.",
+      "pseudoCode": "SELECT\n  date,\n  store_id,\n  revenue,\n  SUM(revenue) OVER (\n    PARTITION BY store_id, DATE_TRUNC('month', date)\n    ORDER BY date\n    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n  ) AS cumulative_monthly_revenue\nFROM daily_sales\nORDER BY store_id, date;\n\n-- Alternative with explicit month column for clarity\nWITH WithMonth AS (\n  SELECT\n    date,\n    store_id,\n    revenue,\n    DATE_TRUNC('month', date) AS month_start\n  FROM daily_sales\n)\nSELECT\n  date,\n  store_id,\n  revenue,\n  month_start,\n  SUM(revenue) OVER (\n    PARTITION BY store_id, month_start\n    ORDER BY date\n    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n  ) AS cumulative_monthly_revenue\nFROM WithMonth\nORDER BY store_id, date;",
+      "aiApproach": "The key insight is that adding DATE_TRUNC('month', date) to the PARTITION BY clause creates a natural reset boundary. When the month changes, the window function starts a new partition and the running total resets to zero. This pattern generalizes to any reset boundary — weekly, quarterly, or fiscal year. At Meta scale, ensure the table is partitioned by date so the query engine can prune irrelevant partitions."
     }
   ]
 }

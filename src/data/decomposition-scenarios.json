@@ -2,123 +2,133 @@
   "scenarios": [
     {
       "id": 1,
-      "title": "Designing a Real-time Analytics Pipeline",
-      "description": "You need to design a system to ingest, process, and visualize clickstream data from a high-traffic e-commerce website. The system should handle peak loads of 10,000 events per second and provide real-time dashboards with a maximum delay of 5 seconds.",
+      "title": "Instagram Reels Analytics Pipeline",
+      "description": "Design a pipeline that tracks Reels views, shares, likes, and completion rates at Meta scale (500M daily active users). Must support: real-time dashboards (< 5 min latency), historical trend analysis, and A/B test measurement.",
       "difficulty": "Hard",
       "timeEstimate": 25,
       "systemComponents": [
-        "Data Ingestion Layer",
-        "Stream Processing",
-        "Storage Solution",
-        "Analytics Engine",
-        "Visualization Layer"
+        "Event Ingestion Layer (Scribe/Kafka)",
+        "Stream Processing (Spark Streaming or Flink)",
+        "Raw Storage Layer (Data Lake, partitioned by date/hour)",
+        "Aggregation Layer (Presto/Hive serving tables)",
+        "Real-time Dashboard (< 5 min latency)",
+        "A/B Test Experimentation Framework"
       ],
       "keyConsiderations": [
-        "Scalability for traffic spikes",
-        "Fault tolerance",
-        "Schema evolution handling",
-        "Cost optimization",
-        "Data latency requirements"
+        "Exactly-once semantics for view counts (prevent double-counting)",
+        "Completion rate requires start and end events to be matched",
+        "Late-arriving events (user finishes watching after connectivity gap)",
+        "Deduplication of events from at-least-once delivery systems",
+        "Partitioning strategy for both real-time and historical queries",
+        "A/B test assignment must be joined at query time, not baked in at ingestion"
       ],
-      "solutionApproach": "A lambda architecture would be suitable, with: (1) Azure Event Hubs for ingestion, (2) Azure Stream Analytics for real-time processing, (3) Azure Data Lake Storage for raw data, (4) Azure Synapse Analytics for batch processing, (5) Power BI for dashboards with DirectQuery.",
-      "pseudoCode": "// Azure Stream Analytics Query\nSELECT\n  userId,\n  productId,\n  eventType,\n  TUMBLING(MINUTE, 1) as timeWindow,\n  COUNT(*) as eventCount\nINTO outputPowerBI\nFROM inputEventHub\nGROUP BY\n  userId,\n  productId,\n  eventType,\n  TUMBLING(MINUTE, 1)",
-      "aiApproach": "Consider using anomaly detection algorithms directly in Stream Analytics to identify unusual patterns in real-time. This avoids the need to process all data in a separate step and can trigger immediate alerts."
+      "solutionApproach": "Events flow from Reels clients into Scribe (Meta's logging infrastructure). A Spark Streaming job reads from Scribe every 60 seconds, applies deduplication using event_id, validates the schema, and writes micro-batches to Hive tables partitioned by event_date and event_hour. Completion rate is computed by joining view_start and view_end events on (user_id, reel_id, session_id) within a 4-hour window to handle gaps. A separate hourly batch pipeline computes daily aggregates for historical analysis. A/B test variants are stored in a separate experiment assignment table and joined at query time in Presto. For real-time dashboards, a pre-aggregated summary table (updated every 5 minutes) is served via a fast-path query layer.",
+      "pseudoCode": "-- Real-time aggregation query (runs every 5 min on Presto)\nSELECT\n  reel_id,\n  creator_id,\n  DATE_TRUNC('hour', event_timestamp) AS event_hour,\n  COUNT(DISTINCT CASE WHEN event_type = 'view_start' THEN user_id END) AS unique_viewers,\n  COUNT(CASE WHEN event_type = 'like' THEN 1 END) AS total_likes,\n  COUNT(CASE WHEN event_type = 'share' THEN 1 END) AS total_shares,\n  -- Completion rate: users who reached >= 90% of video\n  COUNT(DISTINCT CASE WHEN event_type = 'view_complete' THEN user_id END) * 1.0\n    / NULLIF(COUNT(DISTINCT CASE WHEN event_type = 'view_start' THEN user_id END), 0)\n    AS completion_rate\nFROM reel_events\nWHERE event_date = CURRENT_DATE\n  AND event_hour >= DATE_TRUNC('hour', NOW()) - INTERVAL '1' HOUR\nGROUP BY 1, 2, 3;\n\n-- Deduplication at ingestion (Spark Streaming)\nval deduplicated = rawEvents\n  .withWatermark(\"event_timestamp\", \"10 minutes\")\n  .dropDuplicates(Seq(\"event_id\"))\n  .writeStream\n  .format(\"hive\")\n  .option(\"checkpointLocation\", \"/checkpoints/reels\")\n  .partitionBy(\"event_date\", \"event_hour\")\n  .start()",
+      "aiApproach": "The key engineering challenge is matching view_start and view_end events for completion rate while handling late arrivals and at-least-once delivery. Use watermarking in Spark Structured Streaming to bound the state store and prevent unbounded memory growth. For A/B tests, never bake the experiment variant into the raw events — always join from the experiment assignment table at query time to allow retroactive experiment re-analysis."
     },
     {
       "id": 2,
-      "title": "Building a Data Lake for Multiple Teams",
-      "description": "Your company has diverse data needs across marketing, finance, and product teams. Design a data lake architecture that provides a single source of truth while enabling team-specific analytics needs with appropriate governance.",
-      "difficulty": "Hard",
-      "timeEstimate": 30,
-      "systemComponents": [
-        "Raw Data Zone",
-        "Curated Data Zone",
-        "Team Workspaces",
-        "Governance Layer",
-        "Self-service Analytics"
-      ],
-      "keyConsiderations": [
-        "Data quality controls",
-        "Access management",
-        "Metadata management",
-        "Cost allocation",
-        "Integration with existing tools"
-      ],
-      "solutionApproach": "Implement a medallion architecture in Azure Data Lake Storage Gen2: (1) Bronze layer for raw data, (2) Silver layer for validated and cleansed data, (3) Gold layer for business aggregates, (4) Azure Purview for data governance, (5) Role-based access control for team-specific zones.",
-      "pseudoCode": "// Define the Azure Data Lake folder structure\n/data\n  /bronze\n    /source1/{YYYY}/{MM}/{DD}/raw_files\n    /source2/{YYYY}/{MM}/{DD}/raw_files\n  /silver\n    /customers/delta_table\n    /products/delta_table\n    /transactions/delta_table\n  /gold\n    /marketing/customer_segments\n    /finance/revenue_reports\n    /product/usage_metrics\n\n// Azure Databricks job for bronze to silver transformation\ndf = spark.read.format(\"json\").load(\"/data/bronze/source1/2023/05/23/*\")\ndf_clean = df.dropDuplicates().na.fill(...)\ndf_clean.write.format(\"delta\").mode(\"append\").save(\"/data/silver/customers/delta_table\")",
-      "aiApproach": "Implement a data contract approach between teams, where each team defines its data requirements as a 'contract' that other teams must fulfill when modifying shared datasets."
-    },
-    {
-      "id": 3,
-      "title": "Optimizing a Slow Data Warehouse",
-      "description": "A retail company's Azure Synapse Analytics (formerly SQL DW) instance is experiencing performance issues with month-end reporting queries taking 4+ hours. Redesign the system to bring reporting time under 30 minutes.",
-      "difficulty": "Medium",
-      "timeEstimate": 20,
-      "systemComponents": [
-        "Data Modeling",
-        "Partitioning Strategy",
-        "Indexing Approach",
-        "Query Optimization",
-        "Caching Layer"
-      ],
-      "keyConsiderations": [
-        "Distribution key selection",
-        "Partition alignment with queries",
-        "Statistics maintenance",
-        "Resource allocation",
-        "Query patterns analysis"
-      ],
-      "solutionApproach": "Optimize by: (1) Converting fact tables to columnstore indexes, (2) Implementing hash distribution on high-cardinality join keys, (3) Partitioning large tables by date aligned with common filters, (4) Creating materialized views for common aggregations, (5) Increasing DWU during reporting periods.",
-      "pseudoCode": "-- Optimize table distribution and storage\nCREATE TABLE FactSales\n(\n    SalesKey INT NOT NULL,\n    CustomerKey INT NOT NULL,\n    ProductKey INT NOT NULL,\n    DateKey INT NOT NULL,\n    Quantity INT,\n    UnitPrice DECIMAL(18,2),\n    TotalPrice DECIMAL(18,2)\n)\nWITH\n(\n    DISTRIBUTION = HASH(CustomerKey),\n    CLUSTERED COLUMNSTORE INDEX,\n    PARTITION(DateKey RANGE RIGHT FOR VALUES\n    (20230101, 20230201, 20230301, ...))\n);\n\n-- Create materialized view for common aggregate\nCREATE MATERIALIZED VIEW MV_MonthlySalesByProduct\nWITH (DISTRIBUTION = HASH(ProductKey))\nAS\nSELECT \n    ProductKey,\n    DATEPART(YEAR, d.Date) as Year,\n    DATEPART(MONTH, d.Date) as Month,\n    SUM(Quantity) as TotalQuantity,\n    SUM(TotalPrice) as TotalSales\nFROM FactSales s\nJOIN DimDate d ON s.DateKey = d.DateKey\nGROUP BY\n    ProductKey,\n    DATEPART(YEAR, d.Date),\n    DATEPART(MONTH, d.Date);",
-      "aiApproach": "Use dynamic resource allocation with Azure Automation to increase compute resources just before scheduled report runs and scale down afterward to optimize costs."
-    },
-    {
-      "id": 4,
-      "title": "Designing a Multi-Region Data Replication Strategy",
-      "description": "For a global financial application, design a data architecture that ensures data consistency, disaster recovery with RPO < 5 minutes, and optimized read performance for users across different geographic regions.",
+      "title": "Ad Impression Tracking System",
+      "description": "Build a real-time ad impression and click tracking system for Facebook Ads. Requirements: 10 billion impressions per day, < 15 min data freshness for billing, idempotent processing, handle late clicks (up to 24 hours after impression).",
       "difficulty": "Hard",
       "timeEstimate": 25,
       "systemComponents": [
-        "Primary Database",
-        "Regional Replicas",
-        "Synchronization Mechanism",
-        "Failover Process",
-        "Conflict Resolution"
+        "Impression Event Stream (Scribe/Kafka)",
+        "Click Event Stream (separate topic, joined to impressions)",
+        "Stream Processor (Flink or Spark Streaming)",
+        "Idempotent Write Layer (partitioned Hive with OVERWRITE semantics)",
+        "Billing Aggregation Pipeline (hourly batch)",
+        "Late Click Reconciliation Job (daily batch, looks back 24h)"
       ],
       "keyConsiderations": [
-        "Regulatory compliance",
-        "Data sovereignty",
-        "Latency requirements",
-        "Consistency model",
-        "Failover automation"
+        "Idempotency: re-running the pipeline must produce identical results (use event_id as dedup key)",
+        "Late clicks: clicks can arrive up to 24h after the impression — need a reconciliation strategy",
+        "Billing correctness: advertisers are billed on clicks, so missed or duplicate clicks have financial impact",
+        "Grain: one row per impression in the fact table, click columns nullable (NULL until clicked)",
+        "Partitioning: partition by impression_date, not click_date, to keep billing windows clean",
+        "Exactly-once delivery: stream processor must commit offsets only after successful write"
       ],
-      "solutionApproach": "Implement: (1) Azure SQL Database with auto-failover groups for primary redundancy, (2) Cosmos DB with multi-region writes for global transactions, (3) Azure Traffic Manager for intelligent routing, (4) Event-driven architecture with Event Grid for change notifications, (5) Azure Site Recovery for comprehensive DR.",
-      "pseudoCode": "// Cosmos DB configuration with multi-region writes\nCosmosClient client = new CosmosClient(\n    connectionString,\n    new CosmosClientOptions()\n    {\n        ApplicationRegion = Regions.WestUS,\n        EnableContentResponseOnWrite = false,\n        ConsistencyLevel = ConsistencyLevel.BoundedStaleness\n    });\n\n// Set up automatic failover priority\nDatabaseProperties dbProperties = new DatabaseProperties\n{\n    Id = \"FinancialData\",\n    // Configure multiple write regions\n    Regions = new List<string> { Regions.WestUS, Regions.EastUS, Regions.WestEurope },\n    // Set failover priorities\n    FailoverPolicies = new List<FailoverPolicy>\n    {\n        new FailoverPolicy(Regions.WestUS, 0), // Primary\n        new FailoverPolicy(Regions.EastUS, 1), // First failover\n        new FailoverPolicy(Regions.WestEurope, 2) // Second failover\n    }\n};\n\n// Handle conflict resolution\nContainerProperties containerProperties = new ContainerProperties\n{\n    Id = \"Transactions\",\n    PartitionKeyPath = \"/accountId\",\n    ConflictResolutionPolicy = new ConflictResolutionPolicy\n    {\n        Mode = ConflictResolutionMode.LastWriterWins,\n        ConflictResolutionPath = \"/lastModified\"\n    }\n};",
-      "aiApproach": "Implement a custom conflict resolution policy using Azure Functions to handle region-specific business logic rather than relying solely on timestamp-based resolution."
+      "solutionApproach": "Impression events stream into Scribe and are processed by Flink every minute, written to fact_ad_impressions partitioned by impression_date. The grain is one row per impression: (impression_id, ad_id, user_id, device_id, impression_timestamp, was_clicked=false, click_timestamp=null). A separate click stream processes click events within 5 minutes. For clicks arriving within the same micro-batch window, update the impression row inline. For late clicks (arriving up to 24h later), run a daily reconciliation job that scans the previous 2 days of impressions and joins to the clicks table — UPDATE was_clicked=true where a matching click is found. This ensures billing is always accurate within 24h. For idempotency: use UPSERT logic keyed on impression_id. The pipeline can be re-run safely.",
+      "pseudoCode": "-- Fact table DDL\nCREATE TABLE fact_ad_impressions (\n  impression_id     BIGINT,\n  ad_id             INT,\n  campaign_id       INT,\n  advertiser_id     INT,\n  user_id           BIGINT,\n  device_type       VARCHAR(20),\n  impression_date   DATE,\n  impression_ts     TIMESTAMP,\n  was_clicked       BOOLEAN DEFAULT FALSE,\n  click_ts          TIMESTAMP\n)\nPARTITIONED BY (impression_date)\nSTORED AS ORC;\n\n-- Late click reconciliation (runs daily)\nINSERT OVERWRITE TABLE fact_ad_impressions\nPARTITION (impression_date)\nSELECT\n  i.impression_id,\n  i.ad_id,\n  i.campaign_id,\n  i.advertiser_id,\n  i.user_id,\n  i.device_type,\n  i.impression_date,\n  i.impression_ts,\n  CASE WHEN c.impression_id IS NOT NULL THEN TRUE ELSE i.was_clicked END AS was_clicked,\n  COALESCE(c.click_ts, i.click_ts) AS click_ts\nFROM fact_ad_impressions i\nLEFT JOIN fact_ad_clicks c\n  ON i.impression_id = c.impression_id\nWHERE i.impression_date >= CURRENT_DATE - INTERVAL '2' DAY;\n\n-- Billing aggregate query\nSELECT\n  advertiser_id,\n  impression_date,\n  COUNT(*) AS total_impressions,\n  SUM(CASE WHEN was_clicked THEN 1 ELSE 0 END) AS total_clicks,\n  SUM(CASE WHEN was_clicked THEN 1 ELSE 0 END) * 1.0 / COUNT(*) AS ctr\nFROM fact_ad_impressions\nWHERE impression_date = CURRENT_DATE - INTERVAL '1' DAY\nGROUP BY advertiser_id, impression_date;",
+      "aiApproach": "The hardest part of this system is the late click reconciliation. Two strategies: (1) UPDATE the impression row when a late click arrives — requires a mutable storage format (Delta Lake, Hudi) which adds complexity. (2) Keep impressions and clicks in separate tables and join at query time for billing — simpler pipeline but slower billing queries. For Meta's scale, strategy 2 with a daily reconciliation rollup is standard: the billing query reads from a pre-aggregated daily table that is recomputed with the 24h lookback window."
+    },
+    {
+      "id": 3,
+      "title": "Data Quality Monitoring Framework",
+      "description": "Design a data quality monitoring framework for a pipeline ingesting 1PB/day. Must detect: schema drift, volume anomalies, null rate changes, and statistical distribution shifts. Alert within 10 minutes of detecting issues.",
+      "difficulty": "Hard",
+      "timeEstimate": 25,
+      "systemComponents": [
+        "Schema Registry (for tracking schema versions)",
+        "Profiling Job (runs after each pipeline batch, computes metrics)",
+        "Metrics Store (time-series DB: row count, null rates, min/max/p50/p95 per column)",
+        "Anomaly Detection Layer (threshold-based + statistical)",
+        "Alerting System (PagerDuty / internal alerting)",
+        "Data Quality Dashboard (trend visualization per table/column)"
+      ],
+      "keyConsiderations": [
+        "Schema drift: new columns added, columns removed, type changes — compare current schema to registered schema",
+        "Volume anomalies: row counts should be within expected range (e.g., 3-sigma from rolling 30-day average)",
+        "Null rate changes: sudden spike in NULL rate for a critical column indicates upstream bug",
+        "Distribution shifts: use KL divergence or chi-square test on sampled data to detect categorical distribution changes",
+        "Alert fatigue: too many alerts is as bad as no alerts — set per-column thresholds with criticality levels",
+        "10-minute detection SLA: profiling must complete within the SLA window after data lands"
+      ],
+      "solutionApproach": "After each pipeline batch writes to the warehouse, trigger a profiling job that: (1) Reads the schema from the catalog and compares to the registered baseline — alert on any column type change or removal, (2) Computes table statistics: row count, null rate per column, min/max/avg for numeric columns, cardinality for categorical columns, (3) Writes these metrics to a time-series metrics store, (4) Runs anomaly detection: for volume, flag if row count is outside mean +/- 3 standard deviations of the past 30 days. For null rates, flag if the current rate is > 2x the rolling average. For distributions, run a chi-square test on a 1% sample for high-cardinality categoricals. Alerts are routed to PagerDuty for critical tables and to Slack for non-critical. Each alert includes: table name, column, current value, expected range, and a link to the trend chart.",
+      "pseudoCode": "-- Profiling query (runs after each pipeline batch)\nINSERT INTO data_quality_metrics\nSELECT\n  CURRENT_TIMESTAMP AS check_timestamp,\n  'fact_ad_impressions' AS table_name,\n  'impression_date' AS partition_date,\n  COUNT(*) AS row_count,\n  -- Null rates per critical column\n  AVG(CASE WHEN user_id IS NULL THEN 1.0 ELSE 0.0 END) AS user_id_null_rate,\n  AVG(CASE WHEN ad_id IS NULL THEN 1.0 ELSE 0.0 END) AS ad_id_null_rate,\n  AVG(CASE WHEN impression_ts IS NULL THEN 1.0 ELSE 0.0 END) AS ts_null_rate,\n  -- Volume stats\n  MIN(impression_ts) AS min_ts,\n  MAX(impression_ts) AS max_ts\nFROM fact_ad_impressions\nWHERE impression_date = CURRENT_DATE;\n\n-- Anomaly detection query\nWITH RecentMetrics AS (\n  SELECT\n    row_count,\n    AVG(row_count) OVER (ORDER BY check_timestamp ROWS BETWEEN 30 PRECEDING AND 1 PRECEDING) AS rolling_avg,\n    STDDEV(row_count) OVER (ORDER BY check_timestamp ROWS BETWEEN 30 PRECEDING AND 1 PRECEDING) AS rolling_std\n  FROM data_quality_metrics\n  WHERE table_name = 'fact_ad_impressions'\n)\nSELECT\n  CASE\n    WHEN ABS(row_count - rolling_avg) > 3 * rolling_std THEN 'CRITICAL: Volume anomaly'\n    ELSE 'OK'\n  END AS volume_status\nFROM RecentMetrics\nORDER BY check_timestamp DESC\nLIMIT 1;",
+      "aiApproach": "At 1PB/day, running a full table scan for every quality check is expensive. Use two strategies: (1) For partition-level checks (row counts, null rates), query only the latest partition — never do a full table scan. (2) For distribution checks, use sampling (TABLESAMPLE BERNOULLI(1)) to check 1% of data in under a minute. For schema drift, compare the Hive metastore schema directly without reading data at all — this is nearly free. In dbt, the tests (not_null, unique, accepted_values) implement a subset of this automatically and should be your first layer of defense."
+    },
+    {
+      "id": 4,
+      "title": "User Identity Graph Pipeline",
+      "description": "Design a pipeline that builds and maintains a user identity graph connecting multiple user identifiers (device IDs, email hashes, phone number hashes, cookie IDs) to a canonical user ID. The graph must be updated daily with 3 billion edges.",
+      "difficulty": "Hard",
+      "timeEstimate": 30,
+      "systemComponents": [
+        "Edge Input Layer (daily batch of identifier pairs from various sources)",
+        "Graph Processing Engine (Spark GraphX or custom iterative SQL)",
+        "Connected Components Algorithm (union-find or BFS)",
+        "Canonical ID Assignment Layer",
+        "Output: identifier_to_canonical_id mapping table",
+        "Change Detection Layer (which IDs changed canonical assignment)"
+      ],
+      "keyConsiderations": [
+        "Graph is dynamic: new edges are added daily, existing edges may be invalidated",
+        "Connected components must be computed efficiently at 3B edges — cannot fit in memory on one node",
+        "Canonical ID must be stable: once assigned, the same real-world user should keep the same canonical ID across runs",
+        "Merges: two previously separate identity clusters may be joined by a new edge — handle merge without invalidating all downstream joins",
+        "Splits: an identifier pair may be invalidated — previously merged cluster may need to be split",
+        "Privacy: identifier inputs are hashed — no raw PII stored in the pipeline"
+      ],
+      "solutionApproach": "Build the graph pipeline in three stages. Stage 1: Ingest all identifier pairs for the day and union with the existing graph edges table. Stage 2: Run a distributed connected components algorithm using Spark GraphX or iterative SQL propagation — assign each connected component a component_id. Stage 3: Map component_id to canonical_user_id using a stable mapping table (first seen component_id becomes the canonical ID; on merge, the smaller canonical ID wins). Output: a fact_user_identity table with (identifier_type, identifier_hash, canonical_user_id, valid_from, valid_to). Run a change detection query to identify which canonical_user_ids changed and trigger downstream reprocessing for affected users.",
+      "pseudoCode": "-- Stage 1: Build edge list\nCREATE TABLE identity_edges AS\nSELECT identifier_a, identifier_b, edge_type, edge_date\nFROM new_edges_today\nUNION ALL\nSELECT identifier_a, identifier_b, edge_type, edge_date\nFROM identity_edges_historical\nWHERE is_valid = TRUE;\n\n-- Stage 2: Iterative label propagation (simplified)\n-- In production: use Spark GraphX ConnectedComponents\nWITH RECURSIVE ComponentPropagation AS (\n  -- Initialize: each node is its own component\n  SELECT identifier, identifier AS component_id\n  FROM all_identifiers\n  UNION ALL\n  -- Propagate: adopt the minimum component_id from neighbors\n  SELECT e.identifier_b, MIN(cp.component_id)\n  FROM ComponentPropagation cp\n  JOIN identity_edges e ON cp.identifier = e.identifier_a\n  GROUP BY e.identifier_b\n  HAVING MIN(cp.component_id) < MAX(cp.component_id) -- Only continue if there's a change\n)\nSELECT identifier, MIN(component_id) AS final_component\nFROM ComponentPropagation\nGROUP BY identifier;\n\n-- Stage 3: Map component to stable canonical ID\nSELECT\n  i.identifier,\n  COALESCE(m.canonical_user_id, i.component_id) AS canonical_user_id\nFROM computed_components i\nLEFT JOIN canonical_id_mapping m ON i.component_id = m.component_id;",
+      "aiApproach": "The connected components problem is the core algorithmic challenge. Recursive SQL works for small graphs but does not scale to 3B edges. In production, use Spark GraphX ConnectedComponents or implement iterative message passing: each node sends its current minimum label to all neighbors, and nodes update their label if they receive a smaller value. Iterate until convergence (typically 10-20 iterations for social graphs). For stability, maintain a component_to_canonical mapping table that is append-only — new components get new canonical IDs, merges use the lower canonical ID."
     },
     {
       "id": 5,
-      "title": "Migrating an On-Premises Data Warehouse to Azure",
-      "description": "A company wants to migrate its 15TB on-premises SQL Server data warehouse to Azure with minimal downtime. The solution should address performance, security, and cost optimization while enabling future scalability.",
+      "title": "dbt-Based Incremental Pipeline Migration",
+      "description": "You are migrating 50 legacy stored procedures (running as nightly jobs on SQL Server) to a dbt-based pipeline on Snowflake. The legacy system has no tests, no documentation, and complex nested dependencies. Design the migration strategy.",
       "difficulty": "Medium",
       "timeEstimate": 20,
       "systemComponents": [
-        "Migration Assessment",
-        "ETL/ELT Process",
-        "Target Architecture",
-        "Validation Strategy",
-        "Cutover Plan"
+        "Legacy System Audit (dependency mapping, row count baselines)",
+        "dbt Project Structure (staging, intermediate, marts layers)",
+        "Incremental Strategy Selection (per model)",
+        "Parallel Running Period (legacy + dbt in parallel for validation)",
+        "Cutover Plan",
+        "Test Coverage (dbt tests replacing manual QA)"
       ],
       "keyConsiderations": [
-        "Data transfer approach",
-        "Schema compatibility",
-        "Historical data handling",
-        "Business continuity",
-        "Cost management"
+        "Unknown dependencies: stored procedures may call each other in non-obvious ways — must map the full DAG before building dbt models",
+        "No test baseline: need to establish row count and business metric baselines from the legacy system before migration",
+        "Incremental vs. full refresh: identify which models can be incremental (saves cost) vs. which require full refresh",
+        "Cutover risk: business cannot tolerate missing data — need a parallel running validation period",
+        "Data type differences: SQL Server and Snowflake have different type systems — DATETIME vs TIMESTAMP_NTZ, etc.",
+        "Stakeholder communication: downstream BI tools and consumers must be notified of table rename/schema changes"
       ],
-      "solutionApproach": "Implement a phased migration: (1) Use Azure Data Migration Service for assessment, (2) Azure Data Factory for orchestration, (3) Stage migration to Azure Synapse Analytics, (4) Implement PolyBase for efficient loading, (5) Set up dual-write during transition, (6) Use Azure Monitor for performance validation.",
-      "pseudoCode": "// Azure Data Factory pipeline for incremental migration\n{\n    \"name\": \"IncrementalLoadPipeline\",\n    \"properties\": {\n        \"activities\": [\n            {\n                \"name\": \"GetChangeTracking\",\n                \"type\": \"Lookup\",\n                \"source\": {\n                    \"type\": \"SqlSource\",\n                    \"sqlReaderQuery\": \"SELECT MAX(LastModifiedDate) as HighWatermark FROM SourceTable WHERE LastModifiedDate > @{pipeline().parameters.LastLoadDate}\"\n                }\n            },\n            {\n                \"name\": \"CopyIncrementalData\",\n                \"type\": \"Copy\",\n                \"source\": {\n                    \"type\": \"SqlSource\",\n                    \"sqlReaderQuery\": \"SELECT * FROM SourceTable WHERE LastModifiedDate > @{pipeline().parameters.LastLoadDate} AND LastModifiedDate <= @{activity('GetChangeTracking').output.firstRow.HighWatermark}\"\n                },\n                \"sink\": {\n                    \"type\": \"SqlDWSink\",\n                    \"preCopyScript\": \"TRUNCATE TABLE StagingTable\",\n                    \"writeBatchSize\": 1000000,\n                    \"sqlWriterStoredProcedureName\": \"sp_UpsertData\"\n                }\n            },\n            {\n                \"name\": \"UpdateLoadDate\",\n                \"type\": \"SqlServerStoredProcedure\",\n                \"storedProcedureName\": \"sp_UpdateLastLoadDate\",\n                \"storedProcedureParameters\": {\n                    \"LastLoadDate\": {\n                        \"value\": \"@{activity('GetChangeTracking').output.firstRow.HighWatermark}\",\n                        \"type\": \"DateTime\"\n                    }\n                }\n            }\n        ]\n    }\n}",
-      "aiApproach": "Consider a 'lift and improve' approach instead of 'lift and shift', using the migration as an opportunity to redesign problematic schemas and implement modern data patterns like slowly changing dimensions."
+      "solutionApproach": "Phase 1 — Audit (Week 1-2): Reverse-engineer the dependency DAG from stored procedure code using static analysis. Document inputs, outputs, and business logic for each procedure. Capture row count baselines and key business metrics from the current system. Phase 2 — Build dbt project (Weeks 3-6): Create staging models that read from the raw source (replicate the raw layer in Snowflake). Build intermediate models for complex transformations. Build mart models that match the legacy output schemas. Apply incremental materialization where the source has a reliable updated_at column. Phase 3 — Parallel running (Weeks 7-8): Run both legacy SQL Server and dbt pipelines simultaneously. Compare row counts, key aggregates, and sample records daily. Build an automated reconciliation query. Phase 4 — Cutover (Week 9): Switch BI tools to the Snowflake dbt mart tables. Decommission the legacy SQL Server jobs. Monitor for 2 weeks before final sign-off.",
+      "pseudoCode": "-- dbt model: stg_orders.sql (staging layer)\n{{ config(\n  materialized='incremental',\n  unique_key='order_id',\n  on_schema_change='sync_all_columns'\n) }}\n\nSELECT\n  order_id,\n  customer_id,\n  -- Normalize SQL Server DATETIME to Snowflake TIMESTAMP_NTZ\n  CONVERT_TIMEZONE('UTC', order_date::TIMESTAMP_NTZ) AS order_date,\n  order_amount,\n  status,\n  CURRENT_TIMESTAMP AS dbt_loaded_at\nFROM {{ source('sql_server_raw', 'orders') }}\n{% if is_incremental() %}\n  WHERE order_date > (SELECT MAX(order_date) FROM {{ this }})\n{% endif %}\n\n-- Reconciliation query (run daily during parallel period)\nSELECT\n  'row_count' AS metric,\n  (SELECT COUNT(*) FROM legacy_sql_server.dbo.fact_orders) AS legacy_value,\n  (SELECT COUNT(*) FROM snowflake_dbt.marts.fact_orders) AS dbt_value,\n  ABS((SELECT COUNT(*) FROM legacy_sql_server.dbo.fact_orders)\n    - (SELECT COUNT(*) FROM snowflake_dbt.marts.fact_orders)) AS diff\nUNION ALL\nSELECT\n  'total_revenue' AS metric,\n  (SELECT SUM(order_amount) FROM legacy_sql_server.dbo.fact_orders) AS legacy_value,\n  (SELECT SUM(order_amount) FROM snowflake_dbt.marts.fact_orders) AS dbt_value,\n  ABS((SELECT SUM(order_amount) FROM legacy_sql_server.dbo.fact_orders)\n    - (SELECT SUM(order_amount) FROM snowflake_dbt.marts.fact_orders)) AS diff;",
+      "aiApproach": "The parallel running period is the most critical risk mitigation step. Never do a hard cutover without at least 2 weeks of side-by-side validation. For the incremental strategy, prefer unique_key-based MERGE (dbt's default for Snowflake incremental models) over append-only — this handles late-arriving updates without requiring full refreshes. The hardest part is usually the data type normalization — SQL Server DATETIME is in local time with no timezone, while Snowflake TIMESTAMP_NTZ expects UTC. Build a macro to handle this conversion consistently across all staging models."
     }
   ]
 }

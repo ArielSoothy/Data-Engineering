@@ -2,120 +2,275 @@
   "mockInterviews": [
     {
       "id": 1,
-      "title": "SQL Fundamentals Mock Interview",
-      "duration": 25,
+      "title": "Meta SQL: Window Functions & Cohort Analysis",
+      "duration": 45,
       "questions": [
         {
           "id": 1,
-          "question": "Can you explain the difference between a primary key and a foreign key?",
-          "expectedAnswer": "A primary key uniquely identifies each record in a table and must contain unique, non-null values. A foreign key is a field in one table that refers to the primary key in another table, establishing a relationship between the tables.",
-          "difficulty": "Easy",
-          "category": "SQL Basics",
+          "question": "Write a query to calculate 7-day rolling retention by signup cohort (users who came back within 7 days of first visit)",
+          "expectedAnswer": "First identify each user's first event date using MIN(event_date) grouped by user_id. Then join back to events to find users who have any event within 7 days of their cohort date. Calculate retention rate as retained users / cohort size per cohort day. Use a CTE approach: first_events CTE for cohort dates, then LEFT JOIN to events with a date range condition (BETWEEN cohort_date AND cohort_date + INTERVAL '7' DAY), then aggregate by cohort_date with COUNT(DISTINCT retained users) / COUNT(DISTINCT cohort users).",
+          "difficulty": "Hard",
+          "category": "SQL",
           "followUpQuestions": [
-            "Can a table have multiple primary keys?",
-            "What happens if we try to delete a record that's referenced by a foreign key?"
+            "How would this perform on 10 billion rows?",
+            "How would you handle late-arriving data?",
+            "What index or partition strategy would you use?"
           ]
         },
         {
           "id": 2,
-          "question": "How would you optimize a slow-performing SQL query?",
-          "expectedAnswer": "I would: 1) Check the execution plan to identify bottlenecks, 2) Ensure proper indexing on columns used in WHERE, JOIN, and ORDER BY clauses, 3) Rewrite subqueries as joins where possible, 4) Consider table partitioning for large tables, 5) Review and normalize the database schema if needed, 6) Use appropriate JOIN types and optimize JOIN conditions.",
-          "difficulty": "Medium",
-          "category": "SQL Advanced",
+          "question": "Given a events table with user_id, event_time, event_type — write a sessionization query that groups events within 30-minute windows",
+          "expectedAnswer": "Use LAG() to compute the time gap between consecutive events per user. Flag a new session start when the gap exceeds 30 minutes or it is the first event for that user. Use SUM() of the session_start flags as a window function to assign a session number per user. Then aggregate by user_id and session_id to get session_start (MIN of event timestamps), session_end (MAX), and event_count (COUNT). The session_id can be a composite of user_id + session number.",
+          "difficulty": "Hard",
+          "category": "SQL",
           "followUpQuestions": [
-            "How would you choose which columns to index?",
-            "What's the trade-off with having too many indexes?"
+            "How does this query perform on a partitioned Hive table with 10 billion rows?",
+            "How would you handle late-arriving events that belong to a past session?",
+            "What if the inactivity threshold varies by user segment?"
           ]
         },
         {
           "id": 3,
-          "question": "Design a database schema for a simple order management system.",
-          "expectedAnswer": "I would create tables for: 1) Customers (customer_id PK, name, contact info), 2) Products (product_id PK, name, description, price), 3) Orders (order_id PK, customer_id FK, order_date, status), 4) OrderItems (order_id FK, product_id FK, quantity, unit_price). This handles the basic relationships while maintaining normalization.",
-          "difficulty": "Medium",
-          "category": "Data Modeling",
+          "question": "Find the top 3 users by total spend per country, breaking ties by most recent transaction",
+          "expectedAnswer": "Use a CTE to aggregate total spend per user per country with SUM(amount). Then apply ROW_NUMBER() OVER (PARTITION BY country ORDER BY total_spend DESC, MAX(created_at) DESC) to rank users within each country. Filter WHERE rank <= 3. ROW_NUMBER is preferred over RANK here to get exactly 3 per country. The tie-breaking by most recent transaction ensures deterministic ordering.",
+          "difficulty": "Hard",
+          "category": "SQL",
           "followUpQuestions": [
-            "How would you handle product inventory?",
-            "What indexing strategy would you implement for this schema?"
+            "What if you wanted DENSE_RANK instead — how does the output differ?",
+            "How would you optimize this on a table with 1 billion transactions?",
+            "What partition strategy would you use for the transactions table?"
+          ]
+        },
+        {
+          "id": 4,
+          "question": "Given a raw events stream with duplicate events (same user_id + event_id), deduplicate keeping the latest record per event_id",
+          "expectedAnswer": "Use ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY created_at DESC) to rank events within each event_id group. Wrap in a CTE and select WHERE row_num = 1 to keep the latest record. For Presto/Hive at scale, the ROW_NUMBER approach is cleaner and allows the optimizer to prune partitions. The QUALIFY clause (supported in Presto, BigQuery, Snowflake) can eliminate the CTE for a more concise query. In production, prefer idempotent pipeline design so deduplication happens at write time.",
+          "difficulty": "Medium",
+          "category": "SQL",
+          "followUpQuestions": [
+            "At petabyte scale, what's the cost of ROW_NUMBER on an unpartitioned table?",
+            "How would you make the pipeline idempotent so this deduplication is never needed?",
+            "What if two events have identical event_id and created_at — how do you break ties?"
           ]
         }
       ]
     },
     {
       "id": 2,
-      "title": "Python Data Processing Mock Interview",
-      "duration": 30,
+      "title": "Meta Data Modeling: Instagram Feed Analytics",
+      "duration": 45,
       "questions": [
         {
           "id": 1,
-          "question": "How would you handle a large CSV file that doesn't fit into memory?",
-          "expectedAnswer": "I would use Python's built-in csv module with file iterators or pandas' read_csv with the 'chunksize' parameter to process the file in chunks. Each chunk would be processed independently and results accumulated or written to an output file incrementally. This allows processing arbitrarily large files with constant memory usage.",
-          "difficulty": "Medium",
-          "category": "Python Basics",
+          "question": "Design a fact table for Instagram post impressions at Meta scale — what's the grain? What dimensions?",
+          "expectedAnswer": "The grain is one row per impression. Fact table: fact_post_impressions(impression_id, post_id, user_id, device_id, impression_timestamp, content_type, source). Dimension tables: dim_posts(post_id, creator_id, post_type, created_at), dim_users(user_id, signup_date, country, age_bucket), dim_devices(device_id, device_type, os, app_version). Partition fact table by impression_date for query performance. At Meta scale (billions of impressions/day), pre-aggregate to daily summaries for common queries.",
+          "difficulty": "Hard",
+          "category": "Data Modeling",
           "followUpQuestions": [
-            "What chunk size would you choose and why?",
-            "How would you parallelize this processing?"
+            "What if a post can belong to multiple campaigns?",
+            "How do you handle deletes in an immutable event stream?",
+            "What's the tradeoff between daily partitioning vs monthly?"
           ]
         },
         {
           "id": 2,
-          "question": "Explain how you would perform a data quality assessment on a new dataset.",
-          "expectedAnswer": "I would: 1) Check for missing values and decide on imputation strategy, 2) Identify outliers using statistical methods or visualization, 3) Validate data types and ranges, 4) Check for duplicate records, 5) Verify referential integrity across related datasets, 6) Perform distribution analysis to understand data patterns, 7) Validate against business rules and expected values.",
-          "difficulty": "Medium",
-          "category": "Data Processing",
+          "question": "How would you handle creator profile changes over time (SCD Type 2)?",
+          "expectedAnswer": "In dim_creators, instead of updating the existing row, insert a new row with the updated profile data and set valid_from to today. Set the previous row's valid_to to today - 1 day. The impression fact table rows remain unchanged — they still point to the creator_id which now has a date range covering the historical period. Queries needing the profile at time of impression join dim_creators on creator_id AND impression_date BETWEEN valid_from AND valid_to. This preserves historical accuracy without touching the fact table. In dbt, use snapshot strategy with check_cols or timestamp strategy.",
+          "difficulty": "Hard",
+          "category": "Data Modeling",
           "followUpQuestions": [
-            "How would you automate this process for daily data loads?",
-            "What metrics would you track to monitor data quality over time?"
+            "When would you choose SCD Type 1 over Type 2?",
+            "How does dbt handle SCD Type 2 — what snapshot strategy would you use?",
+            "What is the performance impact of the date-range join on a billion-row fact table?"
           ]
         },
         {
           "id": 3,
-          "question": "Write a function to detect and handle outliers in a numerical dataset.",
-          "expectedAnswer": "I would implement the IQR method: calculate Q1 (25th percentile) and Q3 (75th percentile), then define outliers as values < Q1 - 1.5*IQR or > Q3 + 1.5*IQR. Depending on requirements, outliers could be removed, capped at boundaries, or replaced with median/mean values.",
-          "difficulty": "Medium",
-          "category": "Python Advanced",
+          "question": "The product team wants to analyze 'reach vs engagement' by content type, country, and time — design the model",
+          "expectedAnswer": "Build two aggregate tables: agg_daily_reach (grain: content_type + country + date, metrics: unique_viewers, total_impressions) and agg_daily_engagement (grain: content_type + country + date, metrics: likes, comments, shares, saves, avg_time_spent). Join these on the shared dimensions for the analysis. For reach, use COUNT(DISTINCT user_id) which requires HyperLogLog approximation at Meta scale. For engagement rate, calculate as (likes + comments + shares) / unique_viewers. Pre-aggregate daily to avoid expensive DISTINCT operations at query time.",
+          "difficulty": "Hard",
+          "category": "Data Modeling",
           "followUpQuestions": [
-            "What other methods could you use to detect outliers?",
-            "How would this approach need to change for different types of distributions?"
+            "How accurate is HyperLogLog for reach estimation?",
+            "How would you handle users who span multiple countries?",
+            "What if the product team wants real-time reach numbers?"
+          ]
+        },
+        {
+          "id": 4,
+          "question": "How would you make this model incremental? What's the idempotency key?",
+          "expectedAnswer": "The idempotency key for the fact table is impression_id — each impression is unique and immutable. For incremental loads, use the impression_timestamp to select only new records since the last load: WHERE impression_timestamp > (SELECT MAX(impression_timestamp) FROM target). In dbt, configure the model with materialized='incremental', unique_key='impression_id', and an is_incremental() block. For the aggregate tables, use INSERT OVERWRITE on the date partition — this makes the pipeline idempotent because re-running for the same date produces identical results. The MERGE pattern (dbt's default for Snowflake incremental) handles late arrivals gracefully.",
+          "difficulty": "Hard",
+          "category": "Data Modeling",
+          "followUpQuestions": [
+            "What happens if the source has late-arriving events?",
+            "How do you handle backfills without duplicating data?",
+            "What's the difference between append-only and merge incremental strategies?"
           ]
         }
       ]
     },
     {
       "id": 3,
-      "title": "Azure Services & Architecture Mock Interview",
-      "duration": 30,
+      "title": "Meta Pipeline Design: Ads Impression Pipeline",
+      "duration": 45,
       "questions": [
         {
           "id": 1,
-          "question": "Compare Azure Data Factory and Azure Databricks. When would you choose one over the other?",
-          "expectedAnswer": "Azure Data Factory is an ETL service for creating data pipelines with a code-free experience, best for orchestration and simple transformations. Azure Databricks is a Spark-based analytics platform ideal for complex transformations, ML, and interactive data analysis. I'd use ADF for orchestration and simple ETL workflows, and Databricks for complex transformations, machine learning, or when Spark's distributed computing is needed.",
-          "difficulty": "Medium",
-          "category": "Azure Services",
+          "question": "Design a pipeline that processes 1 trillion ad impressions per day — walk me through the architecture",
+          "expectedAnswer": "Events flow from ad serving into Scribe (Meta's logging infrastructure). A Flink streaming job reads from Scribe, applies deduplication using impression_id, validates the schema, enriches with dimension data (ad metadata, user segments), and writes micro-batches to Hive tables partitioned by impression_date and hour. A separate hourly batch pipeline computes billing aggregates for advertisers. A daily reconciliation job handles late-arriving clicks (up to 24h after impression). For exactly-once semantics: use idempotent writes with impression_id as the dedup key, and commit Flink checkpoints only after successful writes.",
+          "difficulty": "Hard",
+          "category": "System Design",
           "followUpQuestions": [
-            "How would you integrate these two services?",
-            "What are the cost considerations for each?"
+            "What if the upstream Scribe logs are delayed?",
+            "How do you handle schema evolution in the pipeline?",
+            "Walk me through your monitoring/alerting strategy"
           ]
         },
         {
           "id": 2,
-          "question": "Design a data architecture for a retail company that needs real-time inventory management across 500 stores.",
-          "expectedAnswer": "I would design: 1) Store systems using Azure IoT Hub or Event Hubs to capture inventory changes, 2) Azure Stream Analytics for real-time processing, 3) Azure Cosmos DB with multi-region writes for the operational data store, 4) Azure Synapse Analytics for historical analysis, 5) Power BI for dashboards. This architecture provides real-time inventory visibility while supporting historical analysis.",
+          "question": "How do you guarantee exactly-once delivery in a distributed pipeline?",
+          "expectedAnswer": "True exactly-once is impossible in a distributed system (per FLP impossibility), but effectively-once can be achieved through idempotent processing. Three strategies: (1) Idempotent writes — use a deterministic key (impression_id) and UPSERT/MERGE semantics so re-processing the same event is a no-op. (2) Transactional commits — Flink's two-phase commit protocol ensures the offset advance and data write happen atomically. (3) Deduplication at read time — if at-least-once delivery is unavoidable, deduplicate downstream using ROW_NUMBER() PARTITION BY event_id. At Meta's scale, strategy 1 (idempotent writes) is preferred because it's simpler to reason about and doesn't require distributed transactions.",
           "difficulty": "Hard",
           "category": "System Design",
           "followUpQuestions": [
-            "How would you handle offline scenarios at the stores?",
-            "How would you scale this solution to handle seasonal traffic spikes?"
+            "What's the performance cost of UPSERT vs INSERT at 1 trillion rows?",
+            "How does Flink's checkpointing mechanism work?",
+            "What happens if the dedup key has clock skew?"
           ]
         },
         {
           "id": 3,
-          "question": "Explain the concept of data partitioning in Azure Synapse Analytics and best practices for choosing a partition key.",
-          "expectedAnswer": "Data partitioning in Synapse Analytics horizontally divides tables into smaller segments to improve query performance and manage data lifecycles. Best practices for choosing a partition key include: 1) Select a column with low-to-medium cardinality, 2) Pick columns frequently used in WHERE clauses, especially date columns, 3) Ensure even data distribution across partitions, 4) Limit the number of partitions to avoid overhead (typically <1000), 5) Align with the table's distribution key for optimal joins.",
-          "difficulty": "Medium",
-          "category": "Azure Services",
+          "question": "The pipeline is 4 hours late — what's your incident response?",
+          "expectedAnswer": "Step 1: Assess impact — which downstream consumers are affected (billing? dashboards? ML features?). Step 2: Identify the bottleneck — check Flink job metrics (backpressure, checkpoint failures, task manager restarts), Scribe lag, and sink write latency. Step 3: Communicate — notify stakeholders with ETA and impact scope. Step 4: Fix — if it's a resource issue, scale up Flink parallelism. If it's a data issue (poison record), skip the bad partition and backfill later. If it's an infrastructure issue, failover to the secondary cluster. Step 5: Post-mortem — document root cause, add monitoring for earlier detection, and update runbooks.",
+          "difficulty": "Hard",
+          "category": "System Design",
           "followUpQuestions": [
-            "How does partitioning differ from distribution in Synapse?",
-            "How would you implement partition switching for data lifecycle management?"
+            "How do you prevent this from happening again?",
+            "What monitoring would have caught this earlier?",
+            "How do you handle the backfill of the 4 missing hours?"
+          ]
+        },
+        {
+          "id": 4,
+          "question": "How would you partition the impressions data for optimal Presto query performance?",
+          "expectedAnswer": "Primary partition: impression_date (DATE) — most queries filter by date range, and this allows partition pruning to scan only relevant days. Secondary partition: hour (INT, 0-23) — for intra-day queries and SLA monitoring. Within each partition, sort by advertiser_id for billing queries or user_id for targeting queries (choose based on dominant query pattern). Use ORC or Parquet columnar format with compression (Zstandard). For a 1 trillion row/day table, each hourly partition contains ~42 billion rows — consider sub-partitioning by country or advertiser_id bucket if queries consistently filter on those dimensions.",
+          "difficulty": "Hard",
+          "category": "System Design",
+          "followUpQuestions": [
+            "What's the tradeoff of too many partitions?",
+            "How do you handle small files from micro-batch writes?",
+            "When would you use bucketing vs partitioning?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Meta Product Sense: Measuring Feature Success",
+      "duration": 45,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Meta launches a new feature that lets users react to Stories with audio. How do you measure success?",
+          "expectedAnswer": "Define success from multiple angles. Adoption: % of DAU who send at least one audio reaction in first 30 days. Usage: average audio reactions sent per user per week, average duration of audio reactions. Quality: % of audio reactions that are listened to by the recipient (completion rate). Retention impact: 30-day retention of audio reaction users vs. non-users (controlling for selection bias with propensity matching). Guardrail metrics: overall Stories engagement (should not cannibalize text/emoji reactions), report rate (audio could be used for harassment). North star: if audio reactions increase meaningful interactions between close friends, 'meaningful social interactions' metric should improve. Run A/B test with holdout group for 4-6 weeks.",
+          "difficulty": "Medium",
+          "category": "Product Sense",
+          "followUpQuestions": [
+            "How do you separate novelty effect from real signal?",
+            "What's your minimum detectable effect for this experiment?",
+            "How long would you run the test?"
+          ]
+        },
+        {
+          "id": 2,
+          "question": "You run an A/B test on Feed ranking — control shows +5% CTR but -3% session length. What do you recommend?",
+          "expectedAnswer": "This is a classic engagement quality tradeoff. Higher CTR with lower session length suggests the new ranking is showing more clickbait — users click more but leave sooner. Recommendation: do NOT ship based on CTR alone. Analyze deeper: (1) What content types are getting more clicks? If it's low-quality content, the ranking change is harmful. (2) Check long-term retention (7-day, 30-day) — session length is a better proxy for satisfaction than CTR. (3) Look at composition of clicks — are they meaningful interactions (comments, shares) or passive clicks? (4) Check downstream metrics: ad revenue per session (shorter sessions = less ad inventory). Decision framework: if CTR increase comes from quality content and retention is flat or up, consider shipping. If retention drops, reject the change.",
+          "difficulty": "Hard",
+          "category": "Product Sense",
+          "followUpQuestions": [
+            "What if the PM insists on shipping because CTR is the team's OKR?",
+            "How do you define 'quality' content in an objective, measurable way?",
+            "What other metrics would you check before making a decision?"
+          ]
+        },
+        {
+          "id": 3,
+          "question": "Define a North Star metric for Instagram Reels. What guardrail metrics would you track?",
+          "expectedAnswer": "North Star: Daily Active Reel Viewers (DARV) — users who watch at least one Reel per day. This captures both content supply (creators making Reels) and demand (users watching). Guardrail metrics: (1) Creator-side: daily active Reel creators, average Reels published per creator per week — ensures content supply isn't declining. (2) Quality: average completion rate (% of Reel watched), average watch time per Reel — ensures views are meaningful, not scroll-past. (3) Ecosystem health: ratio of Reels time to Feed/Stories time — ensure Reels isn't cannibalizing other surfaces in a way that harms overall engagement. (4) Revenue: ad impressions per Reel session, CPM — ensure monetization isn't degrading. (5) Safety: % of Reels flagged/removed for policy violations.",
+          "difficulty": "Medium",
+          "category": "Product Sense",
+          "followUpQuestions": [
+            "Why DARV over total Reel views?",
+            "What if DARV goes up but completion rate drops?",
+            "How do you balance creator growth vs viewer growth?"
+          ]
+        },
+        {
+          "id": 4,
+          "question": "The daily active users metric drops 10% on Sunday. Is this a problem?",
+          "expectedAnswer": "Not necessarily — this requires context. Step 1: Check historical pattern — is a Sunday dip normal? Compare to the past 4 Sundays and the same Sunday last year. If DAU consistently drops 8-12% on Sundays, a 10% drop is within normal range. Step 2: Check day-of-week seasonality across all metrics (sessions, time spent, etc.) — if all metrics show a consistent Sunday pattern, it's user behavior, not a product issue. Step 3: Segment analysis — does the dip affect all user segments equally? If it's concentrated in one country or demographic, investigate local factors (holidays, competitor events). Step 4: Only if the dip is anomalous compared to historical Sunday patterns should you treat it as an incident. The real signal is week-over-week same-day comparison, not day-over-day.",
+          "difficulty": "Medium",
+          "category": "Product Sense",
+          "followUpQuestions": [
+            "What if the dip is 25% instead of 10%?",
+            "How would you build automated anomaly detection for DAU?",
+            "What other metrics would you check to confirm it's not a real problem?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Meta Behavioral: E5 Ownership & Leadership",
+      "duration": 45,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Tell me about a time you identified a problem before anyone asked you to and drove the solution to completion",
+          "expectedAnswer": "Strong E5 answers demonstrate: identifying the problem independently (not just executing), building a case with data (not opinion), influencing peers and leadership, and measuring the outcome. Example structure: at Simplex, SSIS was used for all ETL but had no version control, no testing, and 6-hour deployment cycles. I noticed this was causing recurring production issues and proposed migrating to dbt. I built a POC with 3 high-priority models, showed it ran 40% faster, had full Git history, and could be deployed in minutes. Got buy-in from the engineering lead. Trained the team over 3 sprints. Result: 248 models in production, 97% incremental, deployment from 6 hours to 15 minutes.",
+          "difficulty": "Medium",
+          "category": "Behavioral",
+          "followUpQuestions": [
+            "What would you do differently?",
+            "How did you measure the impact?",
+            "What would you have done if you hadn't gotten buy-in?"
+          ]
+        },
+        {
+          "id": 2,
+          "question": "Describe a situation where you had to convince skeptical engineers to adopt a new tool or approach",
+          "expectedAnswer": "E5 ownership means influencing without authority. A strong answer shows: understanding the resistance (people fear change and unknown risk), addressing it with evidence (POC, metrics, gradual rollout), and following through post-adoption. Example: at Nuvei, I introduced dbt to a team that had been using SSIS for years. The resistance was real — SSIS was familiar, dbt was unknown, and the team worried about learning curve. I built a custom dbt materialization for SingleStore (their non-standard DB), which showed I was invested in making it work for their specific setup. Then I ran a hands-on workshop, pair-programmed the first 5 models with team members, and set up CI/CD so they could see tests passing. Within 2 months, the entire team was writing dbt models independently.",
+          "difficulty": "Medium",
+          "category": "Behavioral",
+          "followUpQuestions": [
+            "What if the team still refused after your POC?",
+            "How did you handle the person who was most resistant?",
+            "What metrics did you use to show the adoption was successful?"
+          ]
+        },
+        {
+          "id": 3,
+          "question": "Tell me about the most technically complex data system you've built. What were the hardest tradeoffs?",
+          "expectedAnswer": "A strong E5 answer goes deep on technical decisions and explicitly names the tradeoffs. Example: the observability dashboard serving 784K Azure DevOps work items at 200ms response time. The hard tradeoffs: (1) Cost vs latency — commercial tools cost $150K/yr, so I built a custom solution with 3-tier caching: frozen blobs for historical data, monthly partitions for recent data, live queries for today only. (2) Freshness vs performance — business wanted real-time but querying 784K items live was too slow. Solution: materialized views refreshed every 15 minutes for dashboards, with live queries available for drill-down. (3) Complexity vs maintainability — the 3-tier architecture is more complex than a single query, but each tier is independently testable and the system has been running in production with zero maintenance for 6 months.",
+          "difficulty": "Hard",
+          "category": "Behavioral",
+          "followUpQuestions": [
+            "What would break first if scale doubled?",
+            "How would you hand this system off to another engineer?",
+            "What monitoring did you put in place?"
+          ]
+        },
+        {
+          "id": 4,
+          "question": "Give me an example of when you unblocked an entire team by solving a technical problem",
+          "expectedAnswer": "E5 impact is measured by unblocking others, not just your own output. Example: during the Snowflake-to-Databricks acquisition validation, the acquiring company's team was stuck — they had 12.6M records to reconcile but no framework for cross-platform validation. I built a validation pipeline with defensive schema mapping (unmapped columns logged and excluded rather than failing), automated row count comparison, and statistical sampling for data accuracy checks. The key decision: I chose to validate in batches of 100K records rather than all at once, so the business team could start reviewing partial results while the full validation ran. This unblocked the M&A due diligence process by 2 weeks. The result: 99.8% accuracy confirmed, $0.005/day compute cost.",
+          "difficulty": "Hard",
+          "category": "Behavioral",
+          "followUpQuestions": [
+            "How did you prioritize which tables to validate first?",
+            "What would you have done if accuracy was only 95%?",
+            "How did you communicate progress to non-technical stakeholders?"
           ]
         }
       ]
