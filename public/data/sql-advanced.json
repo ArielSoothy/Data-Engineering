@@ -179,6 +179,96 @@
       "answer": "Implement specialized queries for time-based aggregation, gap filling, moving calculations, and anomaly detection in temporal data.",
       "pseudoCode": "-- Hourly aggregation with moving averages\nSELECT \n  sensor_id,\n  DATE_TRUNC('hour', reading_timestamp) as hour_bucket,\n  AVG(temperature) as avg_temperature,\n  -- 3-hour moving average\n  AVG(temperature) OVER (\n    PARTITION BY sensor_id \n    ORDER BY DATE_TRUNC('hour', reading_timestamp) \n    ROWS BETWEEN 2 PRECEDING AND CURRENT ROW\n  ) as moving_avg_3hour\nFROM sensor_data\nWHERE reading_timestamp >= CURRENT_DATE - INTERVAL '7 days'\nGROUP BY sensor_id, DATE_TRUNC('hour', reading_timestamp)\nORDER BY sensor_id, hour_bucket;\n\n-- Gap filling for missing time intervals\nWITH TimeSeries AS (\n  -- Generate complete time series (every hour)\n  SELECT \n    s.sensor_id,\n    generate_series(\n      DATE_TRUNC('hour', CURRENT_TIMESTAMP - INTERVAL '7 days'),\n      DATE_TRUNC('hour', CURRENT_TIMESTAMP),\n      INTERVAL '1 hour'\n    ) as time_bucket\n  FROM (SELECT DISTINCT sensor_id FROM sensor_data) s\n),\nAggregatedData AS (\n  SELECT \n    sensor_id,\n    DATE_TRUNC('hour', reading_timestamp) as time_bucket,\n    AVG(temperature) as avg_temperature\n  FROM sensor_data\n  GROUP BY sensor_id, DATE_TRUNC('hour', reading_timestamp)\n)\nSELECT \n  ts.sensor_id,\n  ts.time_bucket,\n  COALESCE(ad.avg_temperature, \n           LAG(ad.avg_temperature) IGNORE NULLS OVER (\n             PARTITION BY ts.sensor_id ORDER BY ts.time_bucket\n           )) as temperature  -- Forward fill missing values\nFROM TimeSeries ts\nLEFT JOIN AggregatedData ad \n  ON ts.sensor_id = ad.sensor_id AND ts.time_bucket = ad.time_bucket\nORDER BY ts.sensor_id, ts.time_bucket;",
       "aiApproach": "Time series data requires specialized handling: regular intervals with gap-filling for missing data, time-weighted calculations for irregular intervals, smoothing techniques like moving averages, and pattern detection algorithms for anomalies and trends."
+    },
+    {
+      "id": 21,
+      "question": "Count distinct users who performed any action per month (Monthly Active Users) from a user_events table with columns user_id, event_type, event_ts.",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Truncate the timestamp to month granularity using DATE_TRUNC or equivalent, then COUNT DISTINCT user_id within each month partition. This is a foundational MAU metric used across all of Meta's product dashboards.",
+      "pseudoCode": "SELECT\n    DATE_TRUNC('month', event_ts) AS activity_month,\n    COUNT(DISTINCT user_id)       AS monthly_active_users\nFROM user_events\nGROUP BY DATE_TRUNC('month', event_ts)\nORDER BY activity_month;",
+      "aiApproach": "MAU queries are deceptively simple but have common pitfalls: ensure you deduplicate at the right grain. If you need to also break down by event_type, move the DISTINCT inside a filtered subquery or use a CASE inside COUNT(DISTINCT CASE WHEN ...). Always confirm timezone handling on event_ts."
+    },
+    {
+      "id": 22,
+      "question": "Calculate the number of days between a user's first and last post using a posts table with columns user_id, post_id, created_at.",
+      "difficulty": "Easy",
+      "timeEstimate": 6,
+      "answer": "Aggregate MIN and MAX of created_at per user_id, then take the difference in days using DATEDIFF or equivalent. Users with only one post will show 0 days.",
+      "pseudoCode": "SELECT\n    user_id,\n    MIN(created_at)                        AS first_post_date,\n    MAX(created_at)                        AS last_post_date,\n    DATEDIFF('day', MIN(created_at), MAX(created_at)) AS days_between\nFROM posts\nGROUP BY user_id\nORDER BY days_between DESC;",
+      "aiApproach": "This is a simple aggregation question but interviewers may follow up asking you to filter for users with at least N posts, or to exclude internal/test accounts. Always clarify whether you need all users or only those with more than one post before coding."
+    },
+    {
+      "id": 23,
+      "question": "Calculate Day-7 retention rate: the fraction of users who were active on day 7 after signup, grouped by signup cohort. Tables: user_events(user_id, event_ts), signups(user_id, signup_date).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "answer": "Join signups to user_events filtering for events that fall exactly on the 7th day after signup_date, then divide the retained count by the total cohort size. Use DATE_TRUNC on signup_date to group into weekly or monthly cohorts.",
+      "pseudoCode": "WITH cohorts AS (\n    SELECT\n        user_id,\n        DATE_TRUNC('week', signup_date) AS cohort_week,\n        signup_date\n    FROM signups\n),\nday7_active AS (\n    SELECT DISTINCT\n        s.user_id,\n        s.cohort_week\n    FROM cohorts s\n    JOIN user_events e\n      ON  e.user_id = s.user_id\n      AND DATE(e.event_ts) = DATE_ADD(s.signup_date, INTERVAL 7 DAY)\n)\nSELECT\n    c.cohort_week,\n    COUNT(DISTINCT c.user_id)                         AS cohort_size,\n    COUNT(DISTINCT d.user_id)                         AS retained_day7,\n    ROUND(\n        COUNT(DISTINCT d.user_id) * 100.0\n        / NULLIF(COUNT(DISTINCT c.user_id), 0), 2\n    )                                                  AS day7_retention_pct\nFROM cohorts c\nLEFT JOIN day7_active d\n  ON  c.user_id = d.user_id\n AND c.cohort_week = d.cohort_week\nGROUP BY c.cohort_week\nORDER BY c.cohort_week;",
+      "aiApproach": "Cohort retention is one of the most frequently tested Meta analytics patterns. The key decision is how to define 'active on day 7': exactly day 7 vs. within a window (days 6-8). Using NULLIF in the denominator guards against division-by-zero for empty cohorts. For large datasets, pre-aggregating cohort sizes before the join reduces shuffle."
+    },
+    {
+      "id": 24,
+      "question": "Compute a running total of daily ad revenue using window functions. Table: ad_impressions(date, revenue).",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "answer": "Use SUM() as a window function ordered by date with the default frame (UNBOUNDED PRECEDING to CURRENT ROW) to accumulate revenue across all preceding days including the current one.",
+      "pseudoCode": "SELECT\n    date,\n    revenue,\n    SUM(revenue) OVER (\n        ORDER BY date\n        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n    ) AS cumulative_revenue\nFROM ad_impressions\nORDER BY date;",
+      "aiApproach": "Being explicit about the ROWS BETWEEN clause is good practice even though it matches the default for ORDER BY windows, because RANGE BETWEEN (the true default) can behave differently when there are duplicate dates. If multiple rows share the same date, decide whether to sum them first with a GROUP BY before applying the window function."
+    },
+    {
+      "id": 25,
+      "question": "Pivot event counts into separate columns per day: show counts of 'like', 'comment', and 'share' events as separate columns. Table: user_events(user_id, event_type, event_ts).",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "answer": "Use conditional aggregation with CASE WHEN inside SUM() or COUNT() to pivot each event type into its own column, grouped by the date portion of event_ts.",
+      "pseudoCode": "SELECT\n    DATE(event_ts)                                                    AS event_date,\n    COUNT(CASE WHEN event_type = 'like'    THEN 1 END)               AS like_count,\n    COUNT(CASE WHEN event_type = 'comment' THEN 1 END)               AS comment_count,\n    COUNT(CASE WHEN event_type = 'share'   THEN 1 END)               AS share_count,\n    COUNT(*)                                                          AS total_events\nFROM user_events\nGROUP BY DATE(event_ts)\nORDER BY event_date;",
+      "aiApproach": "Conditional aggregation is the most portable pivot technique across SQL dialects. Mention to the interviewer that in Presto/Trino (Meta's primary SQL engine) there is no native PIVOT syntax, making this CASE-based approach the standard. If the list of event types is dynamic, you would need to generate the SQL dynamically or use MAP aggregation."
+    },
+    {
+      "id": 26,
+      "question": "Rank users by post count within their region, within their country, using DENSE_RANK. Tables: users(user_id, country, region), posts(user_id, post_id).",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "answer": "Join users to an aggregated post count, then apply DENSE_RANK twice with different PARTITION BY scopes: once partitioned by (country, region) for region-level rank and once partitioned by country alone for country-level rank.",
+      "pseudoCode": "WITH post_counts AS (\n    SELECT\n        u.user_id,\n        u.country,\n        u.region,\n        COUNT(p.post_id) AS post_count\n    FROM users u\n    LEFT JOIN posts p ON u.user_id = p.user_id\n    GROUP BY u.user_id, u.country, u.region\n)\nSELECT\n    user_id,\n    country,\n    region,\n    post_count,\n    DENSE_RANK() OVER (\n        PARTITION BY country, region\n        ORDER BY post_count DESC\n    ) AS rank_in_region,\n    DENSE_RANK() OVER (\n        PARTITION BY country\n        ORDER BY post_count DESC\n    ) AS rank_in_country\nFROM post_counts\nORDER BY country, region, rank_in_region;",
+      "aiApproach": "Multi-level ranking questions test whether you understand that window functions can co-exist with different PARTITION BY clauses in the same SELECT. Using LEFT JOIN ensures users with zero posts are included. DENSE_RANK is preferred over RANK here so that rank numbers within each region remain compact and comparable across regions of different sizes."
+    },
+    {
+      "id": 27,
+      "question": "Group user events into sessions where a session ends after a 30-minute gap. Return session_id, user_id, session_start, session_end, and event_count. Table: user_events(user_id, event_type, event_ts).",
+      "difficulty": "Hard",
+      "timeEstimate": 20,
+      "answer": "Use LAG to detect gaps between consecutive events per user, flag the start of each new session when the gap exceeds 30 minutes, then assign session IDs with a running SUM of those flags and aggregate session boundaries.",
+      "pseudoCode": "WITH event_gaps AS (\n    SELECT\n        user_id,\n        event_ts,\n        LAG(event_ts) OVER (\n            PARTITION BY user_id\n            ORDER BY event_ts\n        ) AS prev_event_ts,\n        CASE\n            WHEN LAG(event_ts) OVER (\n                PARTITION BY user_id ORDER BY event_ts\n            ) IS NULL\n              OR TIMESTAMPDIFF(\n                MINUTE,\n                LAG(event_ts) OVER (\n                    PARTITION BY user_id ORDER BY event_ts\n                ),\n                event_ts\n            ) > 30\n            THEN 1\n            ELSE 0\n        END AS is_session_start\n    FROM user_events\n),\nsession_ids AS (\n    SELECT\n        user_id,\n        event_ts,\n        SUM(is_session_start) OVER (\n            PARTITION BY user_id\n            ORDER BY event_ts\n            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n        ) AS session_id\n    FROM event_gaps\n)\nSELECT\n    user_id,\n    session_id,\n    MIN(event_ts) AS session_start,\n    MAX(event_ts) AS session_end,\n    COUNT(*)      AS event_count\nFROM session_ids\nGROUP BY user_id, session_id\nORDER BY user_id, session_start;",
+      "aiApproach": "Sessionization is a classic Meta data engineering interview problem. The key insight is the two-step pattern: first detect new session boundaries using LAG, then accumulate a running count of boundaries to create session IDs. Walk the interviewer through each CTE before writing code. Clarify whether the session_id needs to be globally unique or only unique per user."
+    },
+    {
+      "id": 28,
+      "question": "Find dates that are missing from a sequence of daily revenue records. Table: daily_revenue(date, revenue).",
+      "difficulty": "Medium",
+      "timeEstimate": 12,
+      "answer": "Generate a complete date spine between the min and max dates in the table using a recursive CTE or a pre-existing calendar table, then LEFT JOIN to daily_revenue and filter for rows where revenue IS NULL.",
+      "pseudoCode": "-- Generate a full date spine with a recursive CTE\nWITH RECURSIVE date_spine AS (\n    SELECT MIN(date) AS calendar_date FROM daily_revenue\n    UNION ALL\n    SELECT DATE_ADD(calendar_date, INTERVAL 1 DAY)\n    FROM date_spine\n    WHERE calendar_date < (SELECT MAX(date) FROM daily_revenue)\n)\nSELECT\n    ds.calendar_date AS missing_date\nFROM date_spine ds\nLEFT JOIN daily_revenue dr\n    ON ds.calendar_date = dr.date\nWHERE dr.date IS NULL\nORDER BY missing_date;",
+      "aiApproach": "The date spine pattern is the canonical approach to detecting gaps in time series data. In Presto/Trino, you can use SEQUENCE(min_date, max_date, INTERVAL '1' DAY) with UNNEST instead of a recursive CTE, which is more efficient. Always confirm with the interviewer the expected date range\u2014using the table's own MIN/MAX can hide gaps at the boundaries."
+    },
+    {
+      "id": 29,
+      "question": "Implement first-touch and last-touch attribution: determine which ad campaign receives credit for each conversion. Tables: ad_clicks(user_id, campaign_id, click_ts), conversions(user_id, conversion_ts).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "answer": "For each conversion, filter ad_clicks to only clicks that occurred before the conversion timestamp, then use FIRST_VALUE and LAST_VALUE window functions (or MIN/MAX with ROW_NUMBER) to identify the first and last campaign touched prior to conversion.",
+      "pseudoCode": "WITH clicks_before_conversion AS (\n    SELECT\n        c.user_id,\n        c.conversion_ts,\n        ac.campaign_id,\n        ac.click_ts,\n        ROW_NUMBER() OVER (\n            PARTITION BY c.user_id, c.conversion_ts\n            ORDER BY ac.click_ts ASC\n        ) AS first_touch_rank,\n        ROW_NUMBER() OVER (\n            PARTITION BY c.user_id, c.conversion_ts\n            ORDER BY ac.click_ts DESC\n        ) AS last_touch_rank\n    FROM conversions c\n    JOIN ad_clicks ac\n      ON  ac.user_id = c.user_id\n      AND ac.click_ts < c.conversion_ts\n)\nSELECT\n    user_id,\n    conversion_ts,\n    MAX(CASE WHEN first_touch_rank = 1 THEN campaign_id END) AS first_touch_campaign,\n    MAX(CASE WHEN last_touch_rank  = 1 THEN campaign_id END) AS last_touch_campaign\nFROM clicks_before_conversion\nGROUP BY user_id, conversion_ts\nORDER BY user_id, conversion_ts;",
+      "aiApproach": "Attribution is a real Meta Ads analytics problem. The critical constraint is that only clicks before the conversion timestamp are eligible. A common mistake is using a simple LEFT JOIN without the time filter, which incorrectly attributes post-conversion clicks. Discuss with the interviewer whether to include same-second clicks and how to handle users with no prior ad clicks."
+    },
+    {
+      "id": 30,
+      "question": "Find pairs of users who share at least 3 mutual friends. Table: friendships(user_id, friend_id), where each friendship is stored once (user_id < friend_id).",
+      "difficulty": "Hard",
+      "timeEstimate": 20,
+      "answer": "Self-join the friendships table to find common friends for each pair of users, count the mutual connections, and filter for pairs with at least 3. Use UNION to normalize the directed friendship edges before joining.",
+      "pseudoCode": "-- Normalize edges so each friendship appears in both directions\nWITH all_edges AS (\n    SELECT user_id, friend_id FROM friendships\n    UNION ALL\n    SELECT friend_id AS user_id, user_id AS friend_id FROM friendships\n),\nmutual_counts AS (\n    SELECT\n        a.user_id  AS user_a,\n        b.user_id  AS user_b,\n        COUNT(*)   AS mutual_friend_count\n    FROM all_edges a\n    JOIN all_edges b\n      ON  a.friend_id = b.friend_id   -- same friend\n      AND a.user_id   < b.user_id     -- avoid duplicates and self-pairs\n    GROUP BY a.user_id, b.user_id\n)\nSELECT\n    user_a,\n    user_b,\n    mutual_friend_count\nFROM mutual_counts\nWHERE mutual_friend_count >= 3\nORDER BY mutual_friend_count DESC;",
+      "aiApproach": "This is a graph problem expressed in SQL. The key insight is normalizing directed edges with UNION ALL so you can find shared neighbors via a self-join on the friend side. The a.user_id < b.user_id predicate eliminates both duplicate pairs and self-pairs. For very large friendship graphs (Meta scale), this query is expensive\u2014interviewers may ask you to discuss approximate algorithms like locality-sensitive hashing or pre-computed mutual-friend counts."
     }
   ]
 }

@@ -8,7 +8,13 @@
       "tags": ["SQL", "Data Modeling", "Behavioral"],
       "metrics": "248 dbt models · 41 Airflow DAGs · Custom Snowflake operators",
       "headline": "Built and owned a production dbt platform from scratch",
-      "starStory": "Built Simplex's entire data transformation layer — 248 dbt models, 41 Airflow DAGs, and custom Snowflake MERGE operators. Owned the full pipeline from raw ingestion to BI-ready marts."
+      "starStory": "Built Simplex's entire data transformation layer — 248 dbt models, 41 Airflow DAGs, and custom Snowflake MERGE operators. Owned the full pipeline from raw ingestion to BI-ready marts.",
+      "star": {
+        "situation": "Simplex had no centralized data transformation layer. Raw data landed from multiple sources with no standardized pipeline, making analytics unreliable and slow to deliver.",
+        "task": "Build and own the entire data engineering stack end-to-end — from raw ingestion through transformation to BI-ready mart delivery — with no existing team or codebase to inherit.",
+        "action": "Designed the full architecture from scratch: 248 dbt models organized into staging, intermediate, and mart layers; 41 Airflow DAGs for orchestration; custom Snowflake MERGE operators for idempotent incremental loads. Established coding standards and reviewed all new models.",
+        "result": "Delivered a production-grade data platform that powered analytics across the company for 3 years. Zero critical data incidents in production ownership. Team went from ad-hoc SQL to a governed, testable, documented transformation layer."
+      }
     },
     {
       "id": "nuvei",
@@ -18,7 +24,13 @@
       "tags": ["SQL", "Data Modeling", "Behavioral"],
       "metrics": "Custom dbt materialization for SingleStore · 45 SSIS packages · Trained full team",
       "headline": "Built custom dbt materialization for SingleStore — never done before",
-      "starStory": "SingleStore wasn't supported by dbt. Wrote a custom materialization from scratch, trained the team on it, and migrated 45 SSIS packages to the new pattern."
+      "starStory": "SingleStore wasn't supported by dbt. Wrote a custom materialization from scratch, trained the team on it, and migrated 45 SSIS packages to the new pattern.",
+      "star": {
+        "situation": "Nuvei was migrating from SQL Server/SSIS to SingleStore for faster analytics, but dbt — the team's chosen transformation tool — had no native SingleStore support. The entire migration was blocked.",
+        "task": "Enable the data team to use dbt on SingleStore without vendor support, and lead the migration of 45 legacy SSIS packages to the new pattern.",
+        "action": "Engineered a custom dbt materialization plugin for SingleStore from scratch. Handled edge cases including schema changes, incremental loads, and unique key constraints. Wrote documentation, held knowledge-transfer sessions, and personally reviewed the migration of 45 SSIS packages.",
+        "result": "The team now runs dbt natively on SingleStore. 45 SSIS packages migrated. Migration timeline maintained. The custom materialization pattern became the standard approach for SingleStore + dbt and was shared externally with the community."
+      }
     },
     {
       "id": "poc",
@@ -28,7 +40,13 @@
       "tags": ["SQL", "Product Sense"],
       "metrics": "12.6M records validated · 99.8% accuracy · Snowflake vs Databricks",
       "headline": "Cross-platform data validation at 12.6M records with 99.8% accuracy",
-      "starStory": "Validated 12.6M records between Snowflake and Databricks for a platform migration decision. Achieved 99.8% row-level accuracy — the remaining 0.2% was explainable edge cases."
+      "starStory": "Validated 12.6M records between Snowflake and Databricks for a platform migration decision. Achieved 99.8% row-level accuracy — the remaining 0.2% was explainable edge cases.",
+      "star": {
+        "situation": "The company was evaluating Snowflake vs Databricks for a major platform migration. The decision was stalled because leadership couldn't confirm data parity between the two systems, creating weeks of uncertainty.",
+        "task": "Design and execute a rigorous validation framework to compare 12.6M records across both platforms and give leadership the confidence to commit to a migration direction.",
+        "action": "Built a row-level validation framework that compared records across systems, flagged discrepancies, and categorized the root cause of each mismatch. Investigated the 0.2% discrepancy and proved each case was an explainable edge case (timezone normalization, float precision). Presented findings with statistical confidence to leadership.",
+        "result": "99.8% row-level accuracy confirmed. Leadership made the migration decision within one sprint. Saved several weeks of stalled decision-making. The validation framework became reusable for future platform comparisons."
+      }
     },
     {
       "id": "verdict-ai",
@@ -38,7 +56,13 @@
       "tags": ["Behavioral", "System Design"],
       "metrics": "76K LOC · 8 AI providers · SSE streaming · Solo build in 3 weeks",
       "headline": "76K line multi-AI platform solo in 3 weeks with 8 providers",
-      "starStory": "Built a production AI routing platform solo in 3 weeks — 76,000 lines of code, 8 AI providers (OpenAI, Anthropic, Gemini, etc.), SSE streaming, real-time routing. Shipped to production."
+      "starStory": "Built a production AI routing platform solo in 3 weeks — 76,000 lines of code, 8 AI providers (OpenAI, Anthropic, Gemini, etc.), SSE streaming, real-time routing. Shipped to production.",
+      "star": {
+        "situation": "Teams building AI features were forced to hardcode individual providers, leading to vendor lock-in, brittle integrations, and no ability to route traffic between models based on cost, latency, or capability.",
+        "task": "Build a production-grade multi-provider AI routing platform solo under a 3-week deadline, supporting at least 8 providers with real-time streaming.",
+        "action": "Architected and built the full system solo: provider abstraction layer, SSE streaming for real-time responses, admin routing rules UI, authentication, logging, and monitoring. 76,000 lines of code across frontend and backend. Made daily architecture decisions, shipped iteratively, and handled all debugging alone.",
+        "result": "Shipped to production in exactly 3 weeks. Platform handles live traffic with 8 AI providers. Demonstrated extreme ownership, velocity, and the ability to make sound architectural decisions under pressure — all solo."
+      }
     },
     {
       "id": "observability",
@@ -48,7 +72,13 @@
       "tags": ["System Design", "Product Sense", "Behavioral"],
       "metrics": "784K work items · 200ms load · $0 vs $150K/yr commercial tools",
       "headline": "$0 alternative to $150K/yr observability tools — 784K items at 200ms",
-      "starStory": "Replaced $150K/yr commercial observability tools with a custom dashboard. Handles 784,000 work items with 200ms load time. Saved the company $150K/yr."
+      "starStory": "Replaced $150K/yr commercial observability tools with a custom dashboard. Handles 784,000 work items with 200ms load time. Saved the company $150K/yr.",
+      "star": {
+        "situation": "The company was spending $150K/yr on commercial observability tools that were slow to load 784K work items and couldn't be customized to the team's specific alerting and aggregation needs.",
+        "task": "Build a replacement observability dashboard that handles the full data volume at better performance, for zero cost.",
+        "action": "Designed and built a custom dashboard from the ground up. Optimized query patterns for 784K-item loads, implemented real-time aggregation, built custom alerting rules, and created a configuration layer so teams could define their own views without code changes.",
+        "result": "784,000 work items now load in 200ms. Commercial tools fully replaced. $150K/yr in tool costs eliminated. Teams have more control over their monitoring than they ever had with the commercial solution."
+      }
     },
     {
       "id": "ai-course",
@@ -58,7 +88,13 @@
       "tags": ["Product Sense", "Behavioral"],
       "metrics": "DistilBERT 98% precision · CNN Explorer 9K LOC · MIMIC-III healthcare ML",
       "headline": "DistilBERT 98% precision, CNN Explorer, MIMIC-III healthcare ML",
-      "starStory": "Built DistilBERT fine-tuned model (98% precision), a 9K LOC CNN Explorer in TensorFlow.js, and healthcare ML on MIMIC-III dataset. Demonstrated ML fundamentals and applied AI."
+      "starStory": "Built DistilBERT fine-tuned model (98% precision), a 9K LOC CNN Explorer in TensorFlow.js, and healthcare ML on MIMIC-III dataset. Demonstrated ML fundamentals and applied AI.",
+      "star": {
+        "situation": "Wanted to move beyond theoretical ML knowledge and build real, measurable models across multiple domains — NLP, computer vision, and healthcare — to validate and upskill in applied AI.",
+        "task": "Build production-quality ML projects that demonstrate end-to-end skills: data preparation, model training, evaluation, and deployment across three distinct domains.",
+        "action": "Fine-tuned DistilBERT on a domain-specific NLP classification task; built a 9,000-line CNN Explorer in TensorFlow.js that lets users visually inspect convolutional filters and activations in the browser; trained models on the MIMIC-III clinical dataset for healthcare outcome prediction, handling de-identification and temporal features.",
+        "result": "98% precision on the NLP task. CNN Explorer used as a teaching tool. MIMIC-III work demonstrated domain-specific ML rigor. Proved ability to apply ML across NLP, CV, and healthcare with real measurable outcomes."
+      }
     }
   ],
   "mappings": [

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Shuffle, CheckCircle, XCircle, ArrowRight, RotateCcw, Target, Sparkles } from 'lucide-react';
 import { useQuestions } from '../../hooks/useQuestions';
 import { generateTriviaAnswers, type TriviaAnswer } from '../../services/triviaService';
-import { generateAITriviaQuestions } from '../../services/aiTriviaService';
+import { generateAITriviaQuestions, generateAITriviaQuestionsWeighted } from '../../services/aiTriviaService';
 import type { Question } from '../../hooks/useQuestions';
 
 interface TriviaQuestion extends Question {
@@ -23,6 +23,13 @@ const Trivia = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'All' | 'Easy' | 'Medium' | 'Hard'>('All');
   const [questionSource, setQuestionSource] = useState<'existing' | 'ai-generated'>('existing');
   const [scoreHistory, setScoreHistory] = useState<{ correct: boolean; difficulty: string; time: number }[]>([]);
+  const [endlessMode, setEndlessMode] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [topicAccuracy, setTopicAccuracy] = useState<Record<string, number>>(() => {
+    const stored = localStorage.getItem('trivia_topic_accuracy');
+    return stored ? JSON.parse(stored) : {};
+  });
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Load questions from all categories
   const { data: sqlBasics, loading: loadingSqlBasics } = useQuestions('sql-basics');
@@ -105,24 +112,50 @@ const Trivia = () => {
   // Handle answer selection
   const handleAnswerSelect = (answerId: string) => {
     if (selectedAnswer || showExplanation) return;
-    
+
     setSelectedAnswer(answerId);
     const currentQuestion = triviaQuestions[currentQuestionIndex];
     const selectedAnswerObj = currentQuestion.answers.find(a => a.id === answerId);
-    
-    if (selectedAnswerObj?.isCorrect) {
+    const isCorrectAnswer = selectedAnswerObj?.isCorrect ?? false;
+
+    if (isCorrectAnswer) {
       setScore(score + 1);
       setScoreHistory([...scoreHistory, { correct: true, difficulty: currentQuestion.difficulty || 'Medium', time: currentQuestion.timeEstimate || 5 }]);
+      setStreak(s => s + 1);
     } else {
       setScoreHistory([...scoreHistory, { correct: false, difficulty: currentQuestion.difficulty || 'Medium', time: currentQuestion.timeEstimate || 5 }]);
+      setStreak(0);
     }
-    
+
+    // Track topic accuracy for endless mode (keyed by difficulty since Question has no category field)
+    const topic = currentQuestion.difficulty?.toLowerCase() ?? 'general';
+    setTopicAccuracy(prev => {
+      const existing = prev[topic] ?? 0.5;
+      const updated = { ...prev, [topic]: (existing * 0.8) + (isCorrectAnswer ? 0.2 : 0) };
+      localStorage.setItem('trivia_topic_accuracy', JSON.stringify(updated));
+      return updated;
+    });
+
     setQuestionsAnswered(questionsAnswered + 1);
-    
+
     // Show explanation after a brief delay
     setTimeout(() => {
       setShowExplanation(true);
     }, 500);
+  };
+
+  // Load more questions in endless mode
+  const loadMoreQuestions = async () => {
+    if (isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const more = await generateAITriviaQuestionsWeighted(topicAccuracy, 10);
+      setTriviaQuestions(prev => [...prev, ...more]);
+    } catch (e) {
+      console.error('Failed to load more questions', e);
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   // Handle next question
@@ -131,6 +164,11 @@ const Trivia = () => {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
+
+      // In endless mode, preload more questions when near the end
+      if (endlessMode && currentQuestionIndex >= triviaQuestions.length - 3 && !isLoadingMore) {
+        loadMoreQuestions();
+      }
     }
   };
 
@@ -146,10 +184,13 @@ const Trivia = () => {
     setSelectedDifficulty('All');
     setQuestionSource('existing');
     setScoreHistory([]);
+    setEndlessMode(false);
+    setStreak(0);
+    setIsLoadingMore(false);
   };
 
   const currentQuestion = triviaQuestions[currentQuestionIndex];
-  const isGameComplete = currentQuestionIndex === triviaQuestions.length - 1 && showExplanation;
+  const isGameComplete = !endlessMode && currentQuestionIndex === triviaQuestions.length - 1 && showExplanation;
   const scorePercentage = questionsAnswered > 0 ? Math.round((score / questionsAnswered) * 100) : 0;
 
   // Only show loading for existing questions when data is still loading
@@ -235,11 +276,27 @@ const Trivia = () => {
                 <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                   <p className="text-sm text-purple-800 dark:text-purple-300">
                     <Sparkles className="inline h-4 w-4 mr-1" />
-                    AI will generate fresh questions tailored to Microsoft Data Engineer interviews, 
+                    AI will generate fresh questions tailored to Microsoft Data Engineer interviews,
                     including Azure, SQL, Python, and system design topics.
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Endless Mode Toggle */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700">
+                <div className="text-left">
+                  <div className="text-sm font-medium text-orange-900 dark:text-orange-300">Endless Mode</div>
+                  <div className="text-xs text-orange-700 dark:text-orange-400">Auto-loads more questions. Tracks weak topics.</div>
+                </div>
+                <button
+                  onClick={() => setEndlessMode(e => !e)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${endlessMode ? 'bg-orange-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${endlessMode ? 'translate-x-5' : ''}`} />
+                </button>
+              </div>
             </div>
 
             <button
@@ -370,12 +427,22 @@ const Trivia = () => {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Question {currentQuestionIndex + 1} of {triviaQuestions.length}
             </span>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Score: {score}/{questionsAnswered} ({scorePercentage}%)
-            </span>
+            <div className="flex items-center gap-3">
+              {streak > 2 && (
+                <span className="text-sm font-medium text-orange-500">
+                  🔥 {streak} streak
+                </span>
+              )}
+              {isLoadingMore && (
+                <span className="text-xs text-gray-400 dark:text-gray-500">Loading more...</span>
+              )}
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Score: {score}/{questionsAnswered} ({scorePercentage}%)
+              </span>
+            </div>
           </div>
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div 
+            <div
               className="bg-blue-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentQuestionIndex + 1) / triviaQuestions.length) * 100}%` }}
             ></div>
@@ -488,6 +555,21 @@ const Trivia = () => {
                 Next Question
                 <ArrowRight className="ml-2 h-5 w-5" />
               </button>
+            ) : endlessMode ? (
+              <div>
+                <button
+                  onClick={loadMoreQuestions}
+                  disabled={isLoadingMore}
+                  className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200"
+                >
+                  {isLoadingMore ? 'Loading...' : 'Load 10 More Questions'}
+                </button>
+                {Object.keys(topicAccuracy).length > 0 && (
+                  <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                    Focusing on your weak areas
+                  </div>
+                )}
+              </div>
             ) : (
               <p className="text-gray-600 dark:text-gray-400">
                 Challenge complete! Check your final score above.

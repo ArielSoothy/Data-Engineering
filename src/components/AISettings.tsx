@@ -46,10 +46,20 @@ const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
     badgeColor: 'yellow',
     keyPlaceholder: 'sk-ant-...',
     description: 'Claude Haiku — Anthropic, requires paid API key'
+  },
+  'claude-cli': {
+    label: 'Claude CLI',
+    badge: 'Local',
+    badgeColor: 'green',
+    keyPlaceholder: '(no key needed)',
+    description: 'Uses local claude CLI — free, no API key, dev only'
   }
 };
 
-const PROVIDERS: AIProvider[] = ['groq', 'gemini', 'claude'];
+const PROVIDERS: AIProvider[] = [
+  'groq', 'gemini', 'claude',
+  ...(import.meta.env.DEV ? ['claude-cli' as AIProvider] : [])
+];
 
 export const AISettings = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -61,7 +71,8 @@ export const AISettings = () => {
     groq: !!getProviderApiKey('groq'),
     claude: !!getProviderApiKey('claude'),
     gemini: !!getProviderApiKey('gemini'),
-  }));
+    'claude-cli': true
+  } as Record<AIProvider, boolean>));
 
   // Load the key for the currently selected provider whenever it changes
   useEffect(() => {
@@ -83,7 +94,7 @@ export const AISettings = () => {
 
   const currentProvider = getActiveProvider();
   const currentKey = getProviderApiKey(currentProvider);
-  const isConfigured = !!currentKey;
+  const isConfigured = currentProvider === 'claude-cli' || !!currentKey;
   const selectedMeta = PROVIDER_META[selectedProvider];
 
   return (
@@ -155,44 +166,52 @@ export const AISettings = () => {
 
           {/* API key input */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {selectedMeta.label} API Key
-              </label>
-              {selectedMeta.keyLink && (
-                <a
-                  href={selectedMeta.keyLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  {selectedMeta.keyLinkLabel}
-                </a>
-              )}
-            </div>
-            <div className="relative">
-              <input
-                type={showKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={e => setApiKey(e.target.value)}
-                placeholder={selectedMeta.keyPlaceholder}
-                className="w-full pr-10 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                           bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                           text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowKey(prev => !prev)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-transparent dark:hover:bg-transparent border-none"
-                aria-label={showKey ? 'Hide key' : 'Show key'}
-                icon={showKey ? <EyeOff size={16} /> : <Eye size={16} />}
-              />
-            </div>
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              Stored only in your browser's localStorage — never sent anywhere except the provider's API.
-            </p>
+            {selectedProvider === 'claude-cli' ? (
+              <div className="rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-3 py-2 text-sm text-green-700 dark:text-green-400">
+                Uses local claude CLI — no key needed. Available in dev mode only.
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {selectedMeta.label} API Key
+                  </label>
+                  {selectedMeta.keyLink && (
+                    <a
+                      href={selectedMeta.keyLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {selectedMeta.keyLinkLabel}
+                    </a>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={apiKey}
+                    onChange={e => setApiKey(e.target.value)}
+                    placeholder={selectedMeta.keyPlaceholder}
+                    className="w-full pr-10 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                               bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                               text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowKey(prev => !prev)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-transparent dark:hover:bg-transparent border-none"
+                    aria-label={showKey ? 'Hide key' : 'Show key'}
+                    icon={showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  Stored only in your browser's localStorage — never sent anywhere except the provider's API.
+                </p>
+              </>
+            )}
           </div>
 
           {/* Save button */}

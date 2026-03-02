@@ -22,6 +22,8 @@ export const formatDateTime = (date: Date): string => {
 // Difficulty level helpers
 export type DifficultyLevel = 'Easy' | 'Medium' | 'Hard';
 
+export const DIFFICULTY_ORDER: Record<string, number> = { Easy: 1, Medium: 2, Hard: 3 };
+
 export const getDifficultyColor = (difficulty: DifficultyLevel): string => {
   switch (difficulty) {
     case 'Easy':

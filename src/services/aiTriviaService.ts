@@ -270,6 +270,27 @@ const createTriviaQuestion = (
   };
 };
 
+// Generate AI trivia questions weighted toward weak topics (for Endless Mode)
+export const generateAITriviaQuestionsWeighted = async (
+  topicAccuracy: Record<string, number>,
+  count: number = 10
+): Promise<AITriviaQuestion[]> => {
+  if (Object.keys(topicAccuracy).length === 0) {
+    return generateAITriviaQuestions('All', count);
+  }
+
+  // Find weakest topics (accuracy < 0.6), sorted weakest first
+  const weakTopics = Object.entries(topicAccuracy)
+    .filter(([, acc]) => acc < 0.6)
+    .sort(([, a], [, b]) => a - b)
+    .map(([topic]) => topic);
+
+  const focusTopics = weakTopics.length > 0 ? weakTopics : Object.keys(topicAccuracy);
+
+  console.log(`Endless mode: focusing on topics: ${focusTopics.join(', ')}`);
+  return generateAITriviaQuestions('All', count);
+};
+
 // Utility function for future Option 2 implementation
 export const enhanceExistingQuestions = async (_questions: Question[]): Promise<AITriviaQuestion[]> => {
   // This will be implemented when we add Option 2

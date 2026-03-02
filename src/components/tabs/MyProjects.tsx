@@ -1,10 +1,17 @@
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Briefcase, Star, Filter, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Briefcase, Star, Filter, X, Eye, EyeOff } from 'lucide-react';
 import { Badge, Button, Card } from '../ui';
 import projectsData from '../../data/my-projects.json';
 import interviewsData from '../../data/mock-interviews.json';
 
 // ── Types ────────────────────────────────────────────────────────────────────
+
+interface StarBreakdown {
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+}
 
 interface Project {
   id: string;
@@ -15,6 +22,7 @@ interface Project {
   metrics: string;
   headline: string;
   starStory: string;
+  star?: StarBreakdown;
 }
 
 interface Mapping {
@@ -132,17 +140,40 @@ interface ProjectDetailProps {
   onClose: () => void;
 }
 
+const STAR_LABELS: { key: keyof StarBreakdown; label: string; color: string }[] = [
+  { key: 'situation', label: 'S — Situation', color: 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700' },
+  { key: 'task',      label: 'T — Task',      color: 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700' },
+  { key: 'action',    label: 'A — Action',    color: 'text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700' },
+  { key: 'result',    label: 'R — Result',    color: 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' },
+];
+
 const ProjectDetail = ({ project, mappings, interviews, onClose }: ProjectDetailProps) => {
   const projectMappings = mappings.filter((m) => m.projectIds.includes(project.id));
+  const [practiceMode, setPracticeMode] = useState(false);
+  const [revealed, setRevealed] = useState<Set<keyof StarBreakdown>>(new Set());
+  const [activeTab, setActiveTab] = useState<'star' | 'questions'>('star');
+
+  const toggleReveal = (key: keyof StarBreakdown) => {
+    setRevealed((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  const resetPractice = () => {
+    setRevealed(new Set());
+    setPracticeMode(true);
+  };
 
   return (
     <div className="mt-4 rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/10 p-4">
-      {/* STAR story */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <Star size={14} className="text-amber-500 shrink-0 mt-0.5" />
           <span className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-            STAR Story
+            {project.shortName}
           </span>
         </div>
         <button
@@ -153,42 +184,131 @@ const ProjectDetail = ({ project, mappings, interviews, onClose }: ProjectDetail
           <X size={14} />
         </button>
       </div>
-      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
-        {project.starStory}
-      </p>
 
-      {/* Linked questions */}
-      {projectMappings.length > 0 && (
+      {/* Tabs */}
+      <div className="flex gap-1 mb-4 border-b border-amber-200 dark:border-amber-700">
+        <button
+          onClick={() => setActiveTab('star')}
+          className={`px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors ${
+            activeTab === 'star'
+              ? 'border-amber-500 text-amber-700 dark:text-amber-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          STAR Practice
+        </button>
+        {projectMappings.length > 0 && (
+          <button
+            onClick={() => setActiveTab('questions')}
+            className={`px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === 'questions'
+                ? 'border-amber-500 text-amber-700 dark:text-amber-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            Interview Questions ({projectMappings.length})
+          </button>
+        )}
+      </div>
+
+      {/* STAR Practice Tab */}
+      {activeTab === 'star' && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-            Answers {projectMappings.length} interview question{projectMappings.length !== 1 ? 's' : ''}
-          </p>
-          <div className="space-y-2">
-            {projectMappings.map((mapping) => {
-              const [roundId, questionId] = mapping.questionKey.split('-').map(Number);
-              const round = interviews.find((i) => i.id === roundId);
-              const question = round?.questions.find((q) => q.id === questionId);
-              if (!round || !question) return null;
-              return (
-                <div
-                  key={mapping.questionKey}
-                  className="flex items-start gap-2 text-xs bg-white dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700 p-2"
-                >
-                  <span className="font-mono text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
-                    R{roundId}Q{questionId}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-gray-700 dark:text-gray-300 leading-snug line-clamp-2">
-                      {question.question}
-                    </p>
-                    <p className="text-gray-400 dark:text-gray-500 mt-0.5 italic">
-                      {mapping.relevanceNote}
-                    </p>
-                  </div>
+          {project.star ? (
+            <>
+              {/* Practice mode toggle */}
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {practiceMode ? 'Click each section to reveal your answer' : 'Your STAR breakdown'}
+                </p>
+                <div className="flex gap-2">
+                  {practiceMode && (
+                    <button
+                      onClick={() => setRevealed(new Set(['situation', 'task', 'action', 'result']))}
+                      className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+                    >
+                      Reveal all
+                    </button>
+                  )}
+                  <button
+                    onClick={practiceMode ? () => setPracticeMode(false) : resetPractice}
+                    className="flex items-center gap-1 text-xs px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-800/40 transition-colors"
+                  >
+                    {practiceMode ? <EyeOff size={11} /> : <Eye size={11} />}
+                    {practiceMode ? 'Exit practice' : 'Practice mode'}
+                  </button>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+
+              <div className="space-y-2">
+                {STAR_LABELS.map(({ key, label, color }) => {
+                  const isRevealed = !practiceMode || revealed.has(key);
+                  return (
+                    <div
+                      key={key}
+                      className={`rounded border p-3 ${color} ${
+                        practiceMode && !revealed.has(key) ? 'cursor-pointer select-none' : ''
+                      }`}
+                      onClick={practiceMode && !revealed.has(key) ? () => toggleReveal(key) : undefined}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-80">{label}</span>
+                        {practiceMode && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleReveal(key); }}
+                            className="opacity-60 hover:opacity-100"
+                          >
+                            {revealed.has(key) ? <EyeOff size={12} /> : <Eye size={12} />}
+                          </button>
+                        )}
+                      </div>
+                      {isRevealed ? (
+                        <p className="text-sm leading-relaxed">
+                          {project.star![key]}
+                        </p>
+                      ) : (
+                        <p className="text-xs italic opacity-50">Click to reveal</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              {project.starStory}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Linked Questions Tab */}
+      {activeTab === 'questions' && projectMappings.length > 0 && (
+        <div className="space-y-2">
+          {projectMappings.map((mapping) => {
+            const [roundId, questionId] = mapping.questionKey.split('-').map(Number);
+            const round = interviews.find((i) => i.id === roundId);
+            const question = round?.questions.find((q) => q.id === questionId);
+            if (!round || !question) return null;
+            return (
+              <div
+                key={mapping.questionKey}
+                className="flex items-start gap-2 text-xs bg-white dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700 p-2"
+              >
+                <span className="font-mono text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                  R{roundId}Q{questionId}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-gray-700 dark:text-gray-300 leading-snug line-clamp-2">
+                    {question.question}
+                  </p>
+                  <p className="text-gray-400 dark:text-gray-500 mt-0.5 italic">
+                    {mapping.relevanceNote}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -149,8 +149,11 @@ const QuestionCard = ({
     } ${
       completed ? 'border-l-4 border-l-green-500 dark:border-l-green-400' : ''
     }`}>
-      {/* Question header */}
-      <div className="flex justify-between items-start">
+      {/* Question header — click anywhere to expand/collapse */}
+      <div
+        className="flex justify-between items-start cursor-pointer"
+        onClick={toggleExpanded}
+      >
         <div className="flex-grow">
           <div className="flex items-center mb-2">
             <Badge
@@ -169,9 +172,9 @@ const QuestionCard = ({
             {id}. {question}
           </h3>
         </div>
-        
-        {/* Action buttons */}
-        <div className="flex ml-4 space-x-2">
+
+        {/* Action buttons — stop propagation so clicks don't toggle expand */}
+        <div className="flex ml-4 space-x-2" onClick={(e) => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"

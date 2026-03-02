@@ -16,6 +16,7 @@ export interface CategoryProgress {
   decompositionScenarios: QuestionProgress[];
   azureServices: QuestionProgress[];
   mockInterviews: QuestionProgress[];
+  adaptive: QuestionProgress[];
 }
 
 export interface TimerSession {
@@ -61,7 +62,8 @@ const AppContext = createContext<AppContextType>({
     pythonAdvanced: [],
     decompositionScenarios: [],
     azureServices: [],
-    mockInterviews: []
+    mockInterviews: [],
+    adaptive: []
   },
   updateProgress: () => {},
   currentSession: null,
@@ -91,7 +93,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       pythonAdvanced: [],
       decompositionScenarios: [],
       azureServices: [],
-      mockInterviews: []
+      mockInterviews: [],
+      adaptive: []
     };
   });
   
@@ -167,7 +170,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   // Calculate total progress percentage
   const getTotalProgress = (): number => {
-    const totalQuestions = 40 + 20 + 25 + 15 + 10 + 5; // Based on specified counts in requirements
+    const totalQuestions = 40 + 20 + 25 + 15 + 10 + 5 + 30; // Based on specified counts in requirements
     
     const completedCount = Object.values(progress).reduce((total, category) => {
       return total + category.filter((q: QuestionProgress) => q.completed).length;
@@ -185,7 +188,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       pythonAdvanced: 15,
       decompositionScenarios: 10,
       azureServices: 15,
-      mockInterviews: 5
+      mockInterviews: 5,
+      adaptive: 30
     };
     
     const completed = progress[category].filter(q => q.completed).length;
@@ -204,7 +208,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       pythonAdvanced: 12,
       decompositionScenarios: 20,
       azureServices: 8,
-      mockInterviews: 30
+      mockInterviews: 30,
+      adaptive: 8
     };
     
     let totalMinutes = 0;
