@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import {
   LayoutDashboard, Database, Code, Braces, BarChart,
-  Cloud, Video, Book, Moon, Sun, Target, GraduationCap, Briefcase, Zap
+  Cloud, Video, Book, Moon, Sun, Target, GraduationCap, Briefcase, Zap, Building2
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
@@ -85,6 +85,12 @@ const TabNavigation = () => {
       label: 'My Projects',
       icon: <Briefcase size={20} />,
       path: '/my-projects'
+    },
+    {
+      id: 'meta-official',
+      label: 'Meta Official',
+      icon: <Building2 size={20} />,
+      path: '/meta-official'
     },
     {
       id: 'glossary',

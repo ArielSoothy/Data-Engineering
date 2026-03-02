@@ -1,6 +1,6 @@
 -- Mock Database for SQL Interview Questions
 -- Base tables setup
-CREATE TABLE departments (
+CREATE TABLE IF NOT EXISTS departments (
     department_id INTEGER PRIMARY KEY,
     department_name TEXT NOT NULL,
     location TEXT,
@@ -8,7 +8,7 @@ CREATE TABLE departments (
     manager_id INTEGER
 );
 
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
     employee_id INTEGER PRIMARY KEY,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE employees (
     FOREIGN KEY (manager_id) REFERENCES employees(employee_id)
 );
 
-CREATE TABLE payroll (
+CREATE TABLE IF NOT EXISTS payroll (
     payroll_id INTEGER PRIMARY KEY,
     employee_id INTEGER,
     salary DECIMAL(10,2),
@@ -32,7 +32,7 @@ CREATE TABLE payroll (
 );
 
 -- Salary reviews table for year-over-year comparisons
-CREATE TABLE salary_reviews (
+CREATE TABLE IF NOT EXISTS salary_reviews (
     review_id INTEGER PRIMARY KEY,
     employee_id INTEGER,
     review_date DATE,
@@ -42,7 +42,7 @@ CREATE TABLE salary_reviews (
 );
 
 -- Orders table for running sum examples
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     order_id INTEGER PRIMARY KEY,
     customer_id INTEGER,
     order_date DATE,
@@ -51,7 +51,7 @@ CREATE TABLE orders (
 );
 
 -- Order Items table for normalized order-product relationships
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
     order_item_id INTEGER PRIMARY KEY,
     order_id INTEGER,
     product_id INTEGER,
@@ -62,7 +62,7 @@ CREATE TABLE order_items (
 );
 
 -- Order summary table for denormalization examples
-CREATE TABLE order_summary (
+CREATE TABLE IF NOT EXISTS order_summary (
     order_id INTEGER,
     customer_name TEXT,
     product_name TEXT,
@@ -72,11 +72,12 @@ CREATE TABLE order_summary (
 );
 
 -- Clean orders table for deduplication examples
+DROP TABLE IF EXISTS orders_clean;
 CREATE TABLE orders_clean AS
 SELECT DISTINCT * FROM orders;
 
 -- Customers table
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
     customer_id INTEGER PRIMARY KEY,
     first_name TEXT,
     last_name TEXT,
@@ -85,11 +86,12 @@ CREATE TABLE customers (
 );
 
 -- Employees clean table (for deduplication examples)
+DROP TABLE IF EXISTS employees_clean;
 CREATE TABLE employees_clean AS
 SELECT DISTINCT * FROM employees;
 
 -- Sales data for percentage calculations
-CREATE TABLE sales_data (
+CREATE TABLE IF NOT EXISTS sales_data (
     sale_id INTEGER PRIMARY KEY,
     salesperson_id INTEGER,
     customer_id INTEGER,
@@ -101,7 +103,7 @@ CREATE TABLE sales_data (
 );
 
 -- Stock prices table for trend analysis
-CREATE TABLE stock_prices (
+CREATE TABLE IF NOT EXISTS stock_prices (
     price_id INTEGER PRIMARY KEY,
     stock_symbol TEXT,
     date_recorded DATE,
@@ -110,7 +112,7 @@ CREATE TABLE stock_prices (
 );
 
 -- Products table
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     product_id INTEGER PRIMARY KEY,
     product_name TEXT,
     category TEXT,
@@ -119,7 +121,7 @@ CREATE TABLE products (
 );
 
 -- Projects table
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
     project_id INTEGER PRIMARY KEY,
     project_name TEXT NOT NULL,
     start_date DATE,
@@ -131,7 +133,7 @@ CREATE TABLE projects (
 );
 
 -- Transactions table
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     transaction_id INTEGER PRIMARY KEY,
     account_id INTEGER,
     transaction_date DATE,
@@ -142,7 +144,7 @@ CREATE TABLE transactions (
 );
 
 -- Log events table
-CREATE TABLE log_events (
+CREATE TABLE IF NOT EXISTS log_events (
     log_id INTEGER PRIMARY KEY,
     event_timestamp TIMESTAMP,
     level TEXT, -- 'INFO', 'WARNING', 'ERROR', etc.
@@ -152,14 +154,14 @@ CREATE TABLE log_events (
 );
 
 -- Generic practice tables
-CREATE TABLE table1 (
+CREATE TABLE IF NOT EXISTS table1 (
     id INTEGER PRIMARY KEY,
     column1 INTEGER,
     column2 TEXT,
     column3 DATE
 );
 
-CREATE TABLE table2 (
+CREATE TABLE IF NOT EXISTS table2 (
     id INTEGER PRIMARY KEY,
     column1 INTEGER,
     column2 TEXT,
@@ -168,7 +170,7 @@ CREATE TABLE table2 (
     FOREIGN KEY (table1_id) REFERENCES table1(id)
 );
 
-CREATE TABLE table3 (
+CREATE TABLE IF NOT EXISTS table3 (
     id INTEGER PRIMARY KEY,
     column1 TEXT,
     column2 INTEGER,
