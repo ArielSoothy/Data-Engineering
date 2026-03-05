@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
+import { pullProgress, pushProgressDebounced } from '../services/progressSync';
 
 // Define types
 export interface QuestionProgress {
@@ -230,14 +231,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return totalMinutes;
   };
   
+  // Pull cloud progress on first mount
+  const hasPulled = useRef(false);
+  useEffect(() => {
+    if (hasPulled.current) return;
+    hasPulled.current = true;
+    pullProgress().then(restored => {
+      if (restored) {
+        // Reload state from localStorage (which pullProgress just updated)
+        const saved = localStorage.getItem('msInterviewProgress');
+        if (saved) setProgress(prev => ({ ...prev, ...JSON.parse(saved) }));
+        const savedPrefs = localStorage.getItem('msInterviewPreferences');
+        if (savedPrefs) setPreferences(prev => ({ ...prev, ...JSON.parse(savedPrefs) }));
+      }
+    }).catch(() => { /* offline — localStorage is fine */ });
+  }, []);
+
   // Save progress and preferences to localStorage when they change
   useEffect(() => {
     localStorage.setItem('msInterviewProgress', JSON.stringify(progress));
+    pushProgressDebounced();
   }, [progress]);
-  
+
   useEffect(() => {
     localStorage.setItem('msInterviewPreferences', JSON.stringify(preferences));
-    
+    pushProgressDebounced();
+
     // Apply dark mode to document
     if (preferences.darkMode) {
       document.documentElement.classList.add('dark');
