@@ -75,6 +75,10 @@ async function callProvider(
   }
 }
 
+/** Which provider actually served the last request */
+let _lastProvider: AIProvider | null = null;
+export function getLastUsedProvider(): AIProvider | null { return _lastProvider; }
+
 export async function generateFeedback(
   question: string,
   userAnswer: string,
@@ -84,12 +88,16 @@ export async function generateFeedback(
   const provider = getActiveProvider();
 
   try {
-    return await callProvider(provider, question, userAnswer, correctAnswer, pseudoCode);
+    const result = await callProvider(provider, question, userAnswer, correctAnswer, pseudoCode);
+    _lastProvider = provider;
+    return result;
   } catch (err) {
     // If primary provider fails and it wasn't already gemini, try gemini as fallback
     if (provider !== 'gemini') {
       try {
-        return await callProvider('gemini', question, userAnswer, correctAnswer, pseudoCode);
+        const result = await callProvider('gemini', question, userAnswer, correctAnswer, pseudoCode);
+        _lastProvider = 'gemini';
+        return result;
       } catch {
         // Gemini fallback also failed — rethrow original error
       }
@@ -205,25 +213,20 @@ export async function generateQuestionBreakdown(
   answer: string,
   pseudoCode?: string
 ): Promise<QuestionBreakdown> {
-  const prompt = `Given this interview question, return two clearly separated sections.
+  const prompt = `Explain this interview question concisely. Be direct — no filler.
 
 BREAKDOWN:
-Explain in simple terms:
-- What inputs go in (type, format, edge cases)
-- What the output looks like
-- The key rules/constraints in plain language
-- One concrete example in your own words
+1-2 sentences: What is this asking? (plain English, no jargon)
+Then 2-3 bullet points: key rules/constraints the interviewer expects you to know.
 
 SOLUTION:
-Walk through the complete solution step by step. For each step:
-- Number it (Step 1, Step 2, ...)
-- Explain WHY this step is needed before saying what it does
-- Assume the reader has never solved this type of problem
-- Comment every line of any code to explain what it does and why
+Lead with the direct answer in 1-2 sentences.
+Then numbered steps (max 4-5) showing HOW, with a short code example if relevant.
+Keep total response under 300 words.
 
 Question: ${question}
 Answer: ${answer}
-${pseudoCode ? `Pseudo Code:\n${pseudoCode}` : ''}`;
+${pseudoCode ? `Code:\n${pseudoCode}` : ''}`;
 
   const raw = await generateFeedback(
     'Generate question breakdown and step-by-step solution',
