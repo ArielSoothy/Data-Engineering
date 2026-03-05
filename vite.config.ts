@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import { exec } from 'child_process'
+import { spawn } from 'child_process'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => {
@@ -30,19 +30,61 @@ export default defineConfig(({ command }) => {
           } catch {
             prompt = body;
           }
-          const child = exec('claude --output-format text', (error, stdout, stderr) => {
-            if (error) {
+
+          // Remove CLAUDECODE env to prevent "nested session" error (pattern from AICouncil)
+          // Remove ANTHROPIC_API_KEY so CLI uses subscription mode (free)
+          const cleanEnv = { ...process.env };
+          delete cleanEnv.CLAUDECODE;
+          delete cleanEnv.ANTHROPIC_API_KEY;
+
+          const child = spawn('npx', [
+            '@anthropic-ai/claude-code',
+            '-p', '-',
+            '--output-format', 'json',
+          ], {
+            shell: '/bin/zsh',
+            timeout: 120000,
+            env: cleanEnv,
+          });
+
+          let stdout = '';
+          let stderr = '';
+
+          child.stdout.on('data', (data: Buffer) => { stdout += data.toString(); });
+          child.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+
+          child.on('error', (error: Error) => {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: error.message }));
+          });
+
+          child.on('close', (code: number | null) => {
+            if (code !== 0 && !stdout) {
               res.statusCode = 500;
-              res.end(stderr || error.message);
+              res.end(stderr || `Process exited with code ${code}`);
               return;
             }
+
+            // Parse JSON response from CLI
+            let text = stdout;
+            try {
+              const parsed = JSON.parse(stdout);
+              if (parsed.is_error || parsed.type === 'error') {
+                res.statusCode = 500;
+                res.end(parsed.error || parsed.result || 'CLI error');
+                return;
+              }
+              text = parsed.result || stdout;
+            } catch {
+              // Not JSON — use raw stdout
+            }
+
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-            res.end(stdout);
+            res.end(text);
           });
-          if (child.stdin) {
-            child.stdin.write(prompt);
-            child.stdin.end();
-          }
+
+          child.stdin.write(prompt);
+          child.stdin.end();
         });
       });
     }

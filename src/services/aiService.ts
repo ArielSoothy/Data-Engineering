@@ -54,14 +54,13 @@ export function setProviderApiKey(provider: AIProvider, key: string): void {
   }
 }
 
-export async function generateFeedback(
+async function callProvider(
+  provider: AIProvider,
   question: string,
   userAnswer: string,
   correctAnswer: string,
   pseudoCode?: string
 ): Promise<string> {
-  const provider = getActiveProvider();
-
   switch (provider) {
     case 'groq':
       return groqProvider.generateFeedback(question, userAnswer, correctAnswer, pseudoCode);
@@ -71,10 +70,31 @@ export async function generateFeedback(
       return geminiProvider.generateFeedback(question, userAnswer, correctAnswer, pseudoCode);
     case 'claude-cli':
       return claudeCliProvider.generateFeedback(question, userAnswer, correctAnswer, pseudoCode);
-    default: {
-      const _exhaustive: never = provider;
-      throw new Error(`Unknown provider: ${_exhaustive}`);
+    default:
+      throw new Error(`Unknown provider: ${provider}`);
+  }
+}
+
+export async function generateFeedback(
+  question: string,
+  userAnswer: string,
+  correctAnswer: string,
+  pseudoCode?: string
+): Promise<string> {
+  const provider = getActiveProvider();
+
+  try {
+    return await callProvider(provider, question, userAnswer, correctAnswer, pseudoCode);
+  } catch (err) {
+    // If primary provider fails and it wasn't already gemini, try gemini as fallback
+    if (provider !== 'gemini') {
+      try {
+        return await callProvider('gemini', question, userAnswer, correctAnswer, pseudoCode);
+      } catch {
+        // Gemini fallback also failed — rethrow original error
+      }
     }
+    throw err;
   }
 }
 
