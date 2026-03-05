@@ -308,21 +308,14 @@ export default function QuickDrill() {
           <p className="text-xs font-bold tracking-[0.25em] text-gray-500 dark:text-gray-400 uppercase mb-4">
             SESSION DONE
           </p>
-          <p className="text-6xl font-extrabold text-gray-900 dark:text-gray-50 leading-none">
+          <p className={`text-6xl font-extrabold leading-none ${pct >= 80 ? 'text-green-500 dark:text-green-400' : pct >= 50 ? 'text-yellow-500 dark:text-yellow-400' : 'text-red-500 dark:text-red-400'}`}>
             {pct}%
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-            {sessionStats.correct} correct / {sessionStats.seen} total
-          </p>
-          <p
-            className={`text-sm mt-2 ${
-              sessionStats.wrong > 0
-                ? 'text-red-500 dark:text-red-400'
-                : 'text-green-500 dark:text-green-400'
-            }`}
-          >
-            {sessionStats.wrong > 0 ? `${sessionStats.wrong} to review` : 'Clean run!'}
-          </p>
+          <div className="flex justify-center gap-6 mt-4 text-sm">
+            <span className="text-green-500 dark:text-green-400 font-bold">{sessionStats.correct} correct</span>
+            <span className="text-red-500 dark:text-red-400 font-bold">{sessionStats.wrong} wrong</span>
+            <span className="text-gray-400">{sessionStats.seen} cards</span>
+          </div>
           <div className="mt-6">
             <Button variant="secondary" size="lg" onClick={() => setMode('menu')}>
               Back to Menu
@@ -345,11 +338,14 @@ export default function QuickDrill() {
         &larr;
       </button>
       <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-        {currentIndex + 1}/{deck.length}
+        {currentIndex + 1} of {deck.length}
       </span>
-      <span className="text-sm font-bold text-green-500 dark:text-green-400">
-        {sessionStats.correct}/{sessionStats.seen}
-      </span>
+      <div className="flex items-center gap-2 text-sm font-bold">
+        <span className="text-green-500 dark:text-green-400">{sessionStats.correct}&#10003;</span>
+        {sessionStats.wrong > 0 && (
+          <span className="text-red-500 dark:text-red-400">{sessionStats.wrong}&#10007;</span>
+        )}
+      </div>
     </div>
   );
 
