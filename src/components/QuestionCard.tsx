@@ -9,7 +9,7 @@ import type { Database } from 'sql.js';
 import initSqlJs from 'sql.js';
 import { PracticeChat } from './PracticeChat';
 import { Badge, Button, Spinner } from './ui';
-import { generateQuestionBreakdown, generateFeedback } from '../services/aiService';
+import { generateQuestionBreakdown, generateFeedback, getLastUsedProvider } from '../services/aiService';
 import type { QuestionBreakdown } from '../services/aiService';
 
 interface QuestionCardProps {
@@ -46,6 +46,8 @@ const QuestionCard = ({
   const [userAnswer, setUserAnswer] = useState('');
   const [aiFeedback, setAiFeedback] = useState('');
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackProvider, setFeedbackProvider] = useState<string | null>(null);
+  const [breakdownProvider, setBreakdownProvider] = useState<string | null>(null);
   const pyodideRef = useRef<any>(null);
   const sqlRef = useRef<Database | null>(null);
 
@@ -143,6 +145,7 @@ const QuestionCard = ({
     try {
       const result = await generateQuestionBreakdown(question, answer, pseudoCode);
       setBreakdown(result);
+      setBreakdownProvider(getLastUsedProvider());
     } catch (err: any) {
       setBreakdownError(err?.message ?? 'Failed to generate explanation. Please try again.');
     } finally {
@@ -157,6 +160,7 @@ const QuestionCard = ({
     try {
       const result = await generateFeedback(question, userAnswer, answer, pseudoCode);
       setAiFeedback(result);
+      setFeedbackProvider(getLastUsedProvider());
     } catch {
       setAiFeedback('Failed to get feedback. Please try again.');
     } finally {
@@ -270,6 +274,9 @@ const QuestionCard = ({
                 <div className="flex items-center gap-2 mb-2">
                   <Brain size={16} className="text-blue-600 dark:text-blue-400" />
                   <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">AI Feedback</span>
+                  {feedbackProvider && (
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-200 dark:bg-blue-800 text-blue-700 dark:text-blue-300 ml-auto">{feedbackProvider}</span>
+                  )}
                 </div>
                 <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
                   {aiFeedback}
@@ -372,6 +379,13 @@ const QuestionCard = ({
 
                 {breakdown && !breakdownLoading && (
                   <div className="flex flex-col gap-6">
+                    {breakdownProvider && (
+                      <div className="flex justify-end">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                          via {breakdownProvider}
+                        </span>
+                      </div>
+                    )}
                     {/* Section 1: Question breakdown */}
                     <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-4">
                       <h4 className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-3">
