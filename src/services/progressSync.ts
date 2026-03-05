@@ -9,7 +9,15 @@ const SYNC_KEYS = [
   'daily_plan_streak',
 ];
 
-function getDeviceId(): string {
+export function getSyncCode(): string | null {
+  return localStorage.getItem(DEVICE_ID_KEY);
+}
+
+export function setSyncCode(code: string) {
+  localStorage.setItem(DEVICE_ID_KEY, code.trim().toLowerCase());
+}
+
+function getOrCreateDeviceId(): string {
   let id = localStorage.getItem(DEVICE_ID_KEY);
   if (!id) {
     id = crypto.randomUUID();
@@ -41,7 +49,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 export async function pushProgress(): Promise<void> {
   const supabase = createClient();
-  const deviceId = getDeviceId();
+  const deviceId = getOrCreateDeviceId();
   const data = gatherLocalData();
 
   const { error } = await supabase
@@ -58,7 +66,7 @@ export function pushProgressDebounced(): void {
 
 export async function pullProgress(): Promise<boolean> {
   const supabase = createClient();
-  const deviceId = getDeviceId();
+  const deviceId = getOrCreateDeviceId();
 
   const { data: row, error } = await supabase
     .from('user_progress')
