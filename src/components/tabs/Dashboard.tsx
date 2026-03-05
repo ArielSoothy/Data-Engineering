@@ -1,6 +1,7 @@
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Calendar, Clock, ChevronRight, Database, Code, Braces,
+  Calendar, Clock, ChevronRight, ChevronLeft, Database, Code, Braces,
   CheckCircle, Zap, Flame,
   BookOpen, Timer, ArrowRight, Circle, Smartphone, Star, Target
 } from 'lucide-react';
@@ -14,8 +15,18 @@ import type { CategoryProgress } from '../../context/AppContext';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { getCategoryProgress, getTotalProgress } = useAppContext();
-  const { currentDay, daysRemaining, todayPlan, phase, completedTasks, streak, toggleTask, todayProgress } = useDailyPlan();
+  const { currentDay, daysRemaining, allPlans, phase, completedTasks, streak, toggleTask } = useDailyPlan();
   const isOnline = useOnlineStatus();
+  const [viewDay, setViewDay] = useState<number | null>(null);
+
+  const displayDay = viewDay ?? currentDay;
+  const viewingToday = viewDay === null || viewDay === currentDay;
+  const viewPlan = allPlans.find(p => p.day === displayDay) ?? null;
+  const viewProgress = useMemo(() => {
+    if (!viewPlan) return 0;
+    const done = viewPlan.tasks.filter(t => completedTasks[t.id]).length;
+    return viewPlan.tasks.length > 0 ? Math.round((done / viewPlan.tasks.length) * 100) : 0;
+  }, [viewPlan, completedTasks]);
 
   const categories: { id: keyof CategoryProgress; name: string; icon: React.ReactNode; path: string; color: string }[] = [
     { id: 'sqlBasics', name: 'SQL Basics', icon: <Database size={16} />, path: '/sql-basics', color: 'blue' },
@@ -100,64 +111,99 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Today's Plan + Quick Launch */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Today's Plan */}
-          {todayPlan ? (
-            <Card title={todayPlan.title} subtitle={`Day ${todayPlan.day} — ${todayPlan.phase}`}
-              headerAction={<span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{todayProgress}%</span>}>
-              <ProgressBar value={todayProgress} color="blue" size="sm" className="mb-4" />
-              <div className="space-y-2">
-                {todayPlan.tasks.map(task => (
-                  <div
-                    key={task.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer
-                      ${completedTasks[task.id]
-                        ? 'bg-green-50 dark:bg-green-900/20'
-                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    onClick={() => toggleTask(task.id)}
-                  >
-                    <button className="shrink-0" onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}>
-                      {completedTasks[task.id]
-                        ? <CheckCircle size={20} className="text-green-500" />
-                        : <Circle size={20} className="text-gray-300 dark:text-gray-600" />}
-                    </button>
-                    <span className={`flex-1 text-sm ${completedTasks[task.id] ? 'line-through text-gray-400' : ''}`}>
-                      {task.label}
+          {/* Daily Plan with day navigation */}
+          <Card>
+            {/* Day navigator */}
+            <div className="flex items-center justify-between mb-3">
+              <button
+                onClick={() => setViewDay(Math.max(1, displayDay - 1))}
+                disabled={displayDay <= 1}
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div className="text-center">
+                <div className="flex items-center gap-2 justify-center">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Day {displayDay}
+                  </h3>
+                  {viewingToday && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded">
+                      Today
                     </span>
-                    <div className="flex items-center gap-1.5">
-                      {task.mobile && <Smartphone size={14} className="text-gray-400" />}
-                      {task.extra && <Star size={14} className="text-yellow-400" />}
-                      {task.route && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate(task.route!); }}
-                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
-                        >
-                          <ArrowRight size={14} className="text-gray-400" />
-                        </button>
-                      )}
+                  )}
+                </div>
+                {viewPlan && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{viewPlan.phase} — {viewPlan.title}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setViewDay(Math.min(26, displayDay + 1))}
+                disabled={displayDay >= 26}
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+
+            {/* Jump to today */}
+            {!viewingToday && currentDay >= 1 && currentDay <= 26 && (
+              <button
+                onClick={() => setViewDay(null)}
+                className="w-full text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mb-3"
+              >
+                Jump to today (Day {currentDay})
+              </button>
+            )}
+
+            {viewPlan ? (
+              <>
+                <ProgressBar value={viewProgress} color="blue" size="sm" className="mb-4" />
+                <div className="space-y-2">
+                  {viewPlan.tasks.map(task => (
+                    <div
+                      key={task.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer
+                        ${completedTasks[task.id]
+                          ? 'bg-green-50 dark:bg-green-900/20'
+                          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                      onClick={() => toggleTask(task.id)}
+                    >
+                      <button className="shrink-0" onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}>
+                        {completedTasks[task.id]
+                          ? <CheckCircle size={20} className="text-green-500" />
+                          : <Circle size={20} className="text-gray-300 dark:text-gray-600" />}
+                      </button>
+                      <span className={`flex-1 text-sm ${completedTasks[task.id] ? 'line-through text-gray-400' : ''}`}>
+                        {task.label}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {task.mobile && <Smartphone size={14} className="text-gray-400" />}
+                        {task.extra && <Star size={14} className="text-yellow-400" />}
+                        {task.route && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(task.route!); }}
+                            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+                          >
+                            <ArrowRight size={14} className="text-gray-400" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
-                <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile-friendly</span>
-                <span className="flex items-center gap-1"><Star size={12} /> Bonus</span>
-              </div>
-            </Card>
-          ) : (
-            <Card>
+                  ))}
+                </div>
+                <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                  <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile-friendly</span>
+                  <span className="flex items-center gap-1"><Star size={12} /> Bonus</span>
+                </div>
+              </>
+            ) : (
               <div className="text-center py-8">
                 <Calendar size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-                <h3 className="text-lg font-semibold mb-2">
-                  {currentDay < 1 ? 'Your 26-day plan starts soon' : 'Plan complete!'}
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  {currentDay < 1
-                    ? `Starts ${daysRemaining - 25} days from now`
-                    : 'You have completed all 26 days. Good luck at Meta!'}
-                </p>
+                <p className="text-gray-500 dark:text-gray-400">No plan for this day</p>
               </div>
-            </Card>
-          )}
+            )}
+          </Card>
 
           {/* Quick Launch */}
           <div>
