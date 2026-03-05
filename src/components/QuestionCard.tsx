@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Clock, Check, Play, MessageSquare, BookOpen } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, Check, Play, MessageSquare, BookOpen, Brain, Send } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import type { CategoryProgress } from '../context/AppContext';
 import { formatTime } from '../utils/helpers';
@@ -9,7 +9,7 @@ import type { Database } from 'sql.js';
 import initSqlJs from 'sql.js';
 import { PracticeChat } from './PracticeChat';
 import { Badge, Button, Spinner } from './ui';
-import { generateQuestionBreakdown } from '../services/aiService';
+import { generateQuestionBreakdown, generateFeedback } from '../services/aiService';
 import type { QuestionBreakdown } from '../services/aiService';
 
 interface QuestionCardProps {
@@ -43,12 +43,13 @@ const QuestionCard = ({
   const [editorContent, setEditorContent] = useState(pseudoCode || '');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [aiFeedback, setAiFeedback] = useState('');
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
   const pyodideRef = useRef<any>(null);
   const sqlRef = useRef<Database | null>(null);
-  
-  // We'll determine language directly where needed
-  
-  const { updateProgress } = useAppContext();
+
+  const { updateProgress, preferences } = useAppContext();
   
   // Initialize runtime engines
   useEffect(() => {
@@ -149,6 +150,20 @@ const QuestionCard = ({
     }
   };
 
+  const checkAnswer = async () => {
+    if (!userAnswer.trim()) return;
+    setFeedbackLoading(true);
+    setAiFeedback('');
+    try {
+      const result = await generateFeedback(question, userAnswer, answer, pseudoCode);
+      setAiFeedback(result);
+    } catch {
+      setAiFeedback('Failed to get feedback. Please try again.');
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'explain' && !breakdown && !breakdownLoading) {
       fetchBreakdown();
@@ -226,6 +241,43 @@ const QuestionCard = ({
       {/* Expanded content */}
       {expanded && (
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Your Answer section */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Your Answer
+            </label>
+            <textarea
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              placeholder="Write your answer here..."
+              rows={3}
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-y"
+            />
+            <div className="flex items-center gap-2 mt-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={checkAnswer}
+                disabled={!userAnswer.trim() || feedbackLoading}
+                loading={feedbackLoading}
+                icon={<Send size={14} />}
+              >
+                Check Answer
+              </Button>
+            </div>
+            {aiFeedback && (
+              <div className="mt-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain size={16} className="text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">AI Feedback</span>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                  {aiFeedback}
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Tabs */}
           <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
             <Button
@@ -350,7 +402,7 @@ const QuestionCard = ({
                   <Editor
                     height="200px"
                     defaultLanguage={category.includes('sql') ? 'sql' : 'python'}
-                    theme={localStorage.getItem('msInterviewPreferences')?.includes('"darkMode":true') ? 'vs-dark' : 'light'}
+                    theme={preferences.darkMode ? 'vs-dark' : 'light'}
                     value={editorContent}
                     onChange={(value) => setEditorContent(value || '')}
                     options={{

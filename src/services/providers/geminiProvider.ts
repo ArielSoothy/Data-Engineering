@@ -21,21 +21,9 @@ export const generateFeedback = async (
   pseudoCode?: string
 ): Promise<string> => {
   const apiKey = getGeminiApiKey();
-
-  if (!apiKey) {
-    return generateMockFeedback(userAnswer, correctAnswer);
-  }
-
   const model = import.meta.env.VITE_GEMINI_MODEL || DEFAULT_MODEL;
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const geminiModel = genAI.getGenerativeModel({
-      model,
-      systemInstruction: CONTEXT_PROMPT
-    });
-
-    const prompt = `**INTERVIEW QUESTION:**
+  const prompt = `**INTERVIEW QUESTION:**
 ${question}
 
 **CANDIDATE'S ANSWER:**
@@ -54,26 +42,64 @@ ${pseudoCode ? `**REFERENCE CODE:**\n${pseudoCode}` : ''}
 
 Keep feedback practical and interview-focused (not academic).`;
 
-    const result = await geminiModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
+  // If we have a client-side API key, use the SDK directly
+  if (apiKey) {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const geminiModel = genAI.getGenerativeModel({
+        model,
+        systemInstruction: CONTEXT_PROMPT
+      });
+
+      const result = await geminiModel.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
+      });
+      const text = result.response.text();
+
+      if (!text) {
+        throw new Error('Unexpected empty response from Gemini API');
+      }
+
+      return text;
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes('API_KEY_INVALID') || msg.includes('PERMISSION_DENIED')) {
+        throw new Error('Invalid Gemini API key. Please check your key in AI Settings.');
+      } else if (msg.includes('RESOURCE_EXHAUSTED')) {
+        throw new Error('Gemini quota exceeded. Please try again later.');
+      }
+
+      // Unexpected errors → fall back to mock
+      return generateMockFeedback(userAnswer, correctAnswer);
+    }
+  }
+
+  // No client-side key — try the serverless proxy (Vercel)
+  try {
+    const res = await fetch('/api/geminiProxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        prompt,
+        system: CONTEXT_PROMPT,
+        maxOutputTokens: 800,
+        temperature: 0.3,
+      }),
     });
-    const text = result.response.text();
 
-    if (!text) {
-      throw new Error('Unexpected empty response from Gemini API');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Proxy returned ${res.status}`);
     }
 
-    return text;
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error);
-    if (msg.includes('API_KEY_INVALID') || msg.includes('PERMISSION_DENIED')) {
-      throw new Error('Invalid Gemini API key. Please check your key in AI Settings.');
-    } else if (msg.includes('RESOURCE_EXHAUSTED')) {
-      throw new Error('Gemini quota exceeded. Please try again later.');
-    }
-
-    // Unexpected errors → fall back to mock
+    const data = await res.json();
+    const text = data?.content?.[0]?.text;
+    if (text) return text;
+    throw new Error('Empty proxy response');
+  } catch {
+    // Proxy unavailable (e.g. local dev without proxy) — fall back to mock
     return generateMockFeedback(userAnswer, correctAnswer);
   }
 };

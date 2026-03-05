@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { pullProgress, pushProgressDebounced } from '../services/progressSync';
 
@@ -114,122 +114,79 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
   });
   
-  // Update progress for a specific question
-  const updateProgress = (category: keyof CategoryProgress, questionId: number, completed: boolean) => {
+  const updateProgress = useCallback((category: keyof CategoryProgress, questionId: number, completed: boolean) => {
     setProgress(prev => {
       const categoryQuestions = [...prev[category]];
       const existingIndex = categoryQuestions.findIndex(q => q.id === questionId);
-      
+
       if (existingIndex >= 0) {
-        // Update existing question
         categoryQuestions[existingIndex] = {
           ...categoryQuestions[existingIndex],
           completed,
           lastStudied: new Date()
         };
       } else {
-        // Add new question progress
         categoryQuestions.push({
           id: questionId,
           completed,
           lastStudied: new Date()
         });
       }
-      
-      return {
-        ...prev,
-        [category]: categoryQuestions
-      };
-    });
-  };
-  
-  // Timer session functions
-  const startSession = (category: string, questionIds: number[], duration: number) => {
-    setCurrentSession({
-      startTime: new Date(),
-      duration,
-      category,
-      questionIds
-    });
-  };
-  
-  const endSession = () => {
-    setCurrentSession(null);
-  };
-  
-  // Dark mode toggle
-  const toggleDarkMode = () => {
-    setPreferences(prev => ({
-      ...prev,
-      darkMode: !prev.darkMode
-    }));
-  };
-  
-  // Update user preferences
-  const updatePreferences = (prefs: Partial<UserPreferences>) => {
-    setPreferences(prev => ({
-      ...prev,
-      ...prefs
-    }));
-  };
-  
-  // Calculate total progress percentage
-  const getTotalProgress = (): number => {
-    const totalQuestions = 40 + 55 + 15 + 38 + 5 + 10 + 12 + 30; // Fixed categories only; metaOfficial excluded (user-defined count)
 
+      return { ...prev, [category]: categoryQuestions };
+    });
+  }, []);
+
+  const startSession = useCallback((category: string, questionIds: number[], duration: number) => {
+    setCurrentSession({ startTime: new Date(), duration, category, questionIds });
+  }, []);
+
+  const endSession = useCallback(() => {
+    setCurrentSession(null);
+  }, []);
+
+  const toggleDarkMode = useCallback(() => {
+    setPreferences(prev => ({ ...prev, darkMode: !prev.darkMode }));
+  }, []);
+
+  const updatePreferences = useCallback((prefs: Partial<UserPreferences>) => {
+    setPreferences(prev => ({ ...prev, ...prefs }));
+  }, []);
+
+  const getTotalProgress = useCallback((): number => {
+    const totalQuestions = 40 + 55 + 15 + 38 + 5 + 10 + 12 + 30;
     const completedCount = Object.entries(progress).reduce((total, [key, category]) => {
-      if (key === 'metaOfficial') return total; // excluded: count is user-defined
+      if (key === 'metaOfficial') return total;
       return total + category.filter((q: QuestionProgress) => q.completed).length;
     }, 0);
-
     return totalQuestions > 0 ? Math.round((completedCount / totalQuestions) * 100) : 0;
-  };
-  
-  // Calculate category progress percentage
-  const getCategoryProgress = (category: keyof CategoryProgress): number => {
+  }, [progress]);
+
+  const getCategoryProgress = useCallback((category: keyof CategoryProgress): number => {
     const categoryTotals: Record<keyof CategoryProgress, number> = {
-      sqlBasics: 40,
-      sqlAdvanced: 55,
-      pythonBasics: 15,
-      pythonAdvanced: 38,
-      decompositionScenarios: 5,
-      azureServices: 10,
-      mockInterviews: 12,
-      adaptive: 30,
-      metaOfficial: 50
+      sqlBasics: 40, sqlAdvanced: 55, pythonBasics: 15, pythonAdvanced: 38,
+      decompositionScenarios: 5, azureServices: 10, mockInterviews: 12,
+      adaptive: 30, metaOfficial: 50
     };
-    
     const completed = (progress[category] ?? []).filter(q => q.completed).length;
     const total = categoryTotals[category];
-    
     return total > 0 ? Math.round((completed / total) * 100) : 0;
-  };
-  
-  // Calculate estimated remaining study time
-  const getEstimatedTimeRemaining = (): number => {
-    // This is a simplified calculation based on average time per question
+  }, [progress]);
+
+  const getEstimatedTimeRemaining = useCallback((): number => {
     const categoryTimeEstimates: Record<keyof CategoryProgress, number> = {
-      sqlBasics: 5, // 5 min average per question
-      sqlAdvanced: 10,
-      pythonBasics: 6,
-      pythonAdvanced: 12,
-      decompositionScenarios: 20,
-      azureServices: 8,
-      mockInterviews: 30,
-      adaptive: 8,
-      metaOfficial: 10
+      sqlBasics: 5, sqlAdvanced: 10, pythonBasics: 6, pythonAdvanced: 12,
+      decompositionScenarios: 20, azureServices: 8, mockInterviews: 30,
+      adaptive: 8, metaOfficial: 10
     };
-    
     let totalMinutes = 0;
-    
     Object.entries(progress).forEach(([category, questions]) => {
       const cat = category as keyof CategoryProgress;
       const remaining = categoryTimeEstimates[cat] * (questions.filter((q: QuestionProgress) => !q.completed).length);
       totalMinutes += remaining;
     });
-    
     return totalMinutes;
-  };
+  }, [progress]);
   
   // Pull cloud progress on first mount
   const hasPulled = useRef(false);
@@ -265,7 +222,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [preferences]);
   
-  const contextValue: AppContextType = {
+  const contextValue = useMemo<AppContextType>(() => ({
     progress,
     updateProgress,
     currentSession,
@@ -277,7 +234,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     getTotalProgress,
     getCategoryProgress,
     getEstimatedTimeRemaining
-  };
+  }), [progress, currentSession, preferences, updateProgress, startSession, endSession, toggleDarkMode, updatePreferences, getTotalProgress, getCategoryProgress, getEstimatedTimeRemaining]);
   
   return (
     <AppContext.Provider value={contextValue}>
