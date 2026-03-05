@@ -180,13 +180,13 @@ CREATE TABLE IF NOT EXISTS table3 (
 );
 
 -- Sample data
-INSERT INTO departments (department_id, department_name, location, budget, manager_id) VALUES
+INSERT OR IGNORE INTO departments (department_id, department_name, location, budget, manager_id) VALUES
     (1, 'Engineering', 'Seattle', 1200000.00, NULL),
     (2, 'Sales', 'New York', 900000.00, NULL),
     (3, 'Marketing', 'San Francisco', 800000.00, NULL),
     (4, 'HR', 'Chicago', 500000.00, NULL);
 
-INSERT INTO employees (employee_id, first_name, last_name, email, department_id, salary, hire_date, manager_id, job_title) VALUES
+INSERT OR IGNORE INTO employees (employee_id, first_name, last_name, email, department_id, salary, hire_date, manager_id, job_title) VALUES
     (1, 'John', 'Smith', 'john.smith@company.com', 1, 100000.00, '2020-01-15', NULL, 'CTO'),
     (2, 'Alice', 'Johnson', 'alice.j@company.com', 1, 95000.00, '2020-02-01', 1, 'Sr. Developer'),
     (3, 'Bob', 'Wilson', 'bob.w@company.com', 2, 85000.00, '2020-03-15', NULL, 'Sales Director'),
@@ -204,14 +204,14 @@ UPDATE departments SET manager_id = 3 WHERE department_id = 2;
 UPDATE departments SET manager_id = 4 WHERE department_id = 3;
 UPDATE departments SET manager_id = 5 WHERE department_id = 4;
 
-INSERT INTO table1 (id, column1, column2, column3) VALUES
+INSERT OR IGNORE INTO table1 (id, column1, column2, column3) VALUES
     (1, 100, 'Value A', '2023-01-01'),
     (2, 200, 'Value B', '2023-02-01'),
     (3, 300, 'Value C', '2023-03-01'),
     (4, 400, 'Value D', '2023-04-01'),
     (5, 500, 'Value E', '2023-05-01');
 
-INSERT INTO table2 (id, column1, column2, column3, table1_id) VALUES
+INSERT OR IGNORE INTO table2 (id, column1, column2, column3, table1_id) VALUES
     (1, 10, 'First', 1000.50, 1),
     (2, 20, 'Second', 2000.75, 1),
     (3, 30, 'Third', 3000.25, 2),
@@ -219,7 +219,7 @@ INSERT INTO table2 (id, column1, column2, column3, table1_id) VALUES
     (5, 50, 'Fifth', 5000.50, 3),
     (6, 60, 'Sixth', 6000.75, 4);
 
-INSERT INTO table3 (id, column1, column2, column3, table2_id) VALUES
+INSERT OR IGNORE INTO table3 (id, column1, column2, column3, table2_id) VALUES
     (1, 'Row 1', 1000, true, 1),
     (2, 'Row 2', 2000, false, 2),
     (3, 'Row 3', 3000, true, 2),
@@ -229,7 +229,7 @@ INSERT INTO table3 (id, column1, column2, column3, table2_id) VALUES
     (7, 'Row 7', 7000, true, 6);
 
 -- Payroll history with some duplicate entries to simulate ETL errors
-INSERT INTO payroll (payroll_id, employee_id, salary, effective_date) VALUES
+INSERT OR IGNORE INTO payroll (payroll_id, employee_id, salary, effective_date) VALUES
     (1, 1, 95000.00, '2020-01-15'),
     (2, 1, 98000.00, '2021-01-15'),
     (3, 1, 100000.00, '2022-01-15'),
@@ -243,7 +243,7 @@ INSERT INTO payroll (payroll_id, employee_id, salary, effective_date) VALUES
     (11, 3, 85000.00, '2022-03-15');
 
 -- Salary reviews data
-INSERT INTO salary_reviews (review_id, employee_id, review_date, salary, performance_rating) VALUES
+INSERT OR IGNORE INTO salary_reviews (review_id, employee_id, review_date, salary, performance_rating) VALUES
     (1, 1, '2020-12-15', 95000.00, 4),
     (2, 1, '2021-12-15', 98000.00, 5),
     (3, 1, '2022-12-15', 100000.00, 5),
@@ -255,7 +255,7 @@ INSERT INTO salary_reviews (review_id, employee_id, review_date, salary, perform
     (9, 3, '2022-12-15', 85000.00, 4);
 
 -- Customer data
-INSERT INTO customers (customer_id, first_name, last_name, email, signup_date) VALUES
+INSERT OR IGNORE INTO customers (customer_id, first_name, last_name, email, signup_date) VALUES
     (1, 'Michael', 'Jones', 'michael.j@example.com', '2020-01-10'),
     (2, 'Sarah', 'Williams', 'sarah.w@example.com', '2020-02-15'),
     (3, 'David', 'Brown', 'david.b@example.com', '2020-03-20'),
@@ -263,7 +263,7 @@ INSERT INTO customers (customer_id, first_name, last_name, email, signup_date) V
     (5, 'Robert', 'Davis', 'robert.d@example.com', '2020-05-30');
 
 -- Orders data
-INSERT INTO orders (order_id, customer_id, order_date, amount, created_timestamp) VALUES
+INSERT OR IGNORE INTO orders (order_id, customer_id, order_date, amount, created_timestamp) VALUES
     (1, 1, '2023-01-15', 250.00, '2023-01-15 09:30:00'),
     (2, 2, '2023-01-20', 120.50, '2023-01-20 10:15:00'),
     (3, 3, '2023-02-05', 75.25, '2023-02-05 11:45:00'),
@@ -276,7 +276,7 @@ INSERT INTO orders (order_id, customer_id, order_date, amount, created_timestamp
     (10, 4, '2023-04-20', 95.75, '2023-04-20 10:05:00');
 
 -- Products data
-INSERT INTO products (product_id, product_name, category, price, inventory) VALUES
+INSERT OR IGNORE INTO products (product_id, product_name, category, price, inventory) VALUES
     (1, 'Laptop Pro', 'Electronics', 1200.00, 50),
     (2, 'Smartphone X', 'Electronics', 800.00, 100),
     (3, 'Office Chair', 'Furniture', 120.00, 30),
@@ -284,7 +284,7 @@ INSERT INTO products (product_id, product_name, category, price, inventory) VALU
     (5, 'Notebook', 'Stationery', 5.00, 500);
 
 -- Sales data
-INSERT INTO sales_data (sale_id, salesperson_id, customer_id, product_id, sale_date, sales_amount) VALUES
+INSERT OR IGNORE INTO sales_data (sale_id, salesperson_id, customer_id, product_id, sale_date, sales_amount) VALUES
     (1, 3, 1, 1, '2023-01-15', 1200.00),
     (2, 6, 2, 2, '2023-01-20', 800.00),
     (3, 10, 3, 3, '2023-02-05', 120.00),
@@ -297,7 +297,7 @@ INSERT INTO sales_data (sale_id, salesperson_id, customer_id, product_id, sale_d
     (10, 3, 4, 5, '2023-04-20', 5.00);
 
 -- Projects data
-INSERT INTO projects (project_id, project_name, start_date, end_date, budget, status, assigned_employee_id) VALUES
+INSERT OR IGNORE INTO projects (project_id, project_name, start_date, end_date, budget, status, assigned_employee_id) VALUES
     (1, 'Website Redesign', '2023-01-10', '2023-03-15', 50000.00, 'Completed', 2),
     (2, 'Mobile App Development', '2023-02-01', '2023-05-30', 120000.00, 'In Progress', 7),
     (3, 'Database Migration', '2023-01-15', '2023-04-20', 75000.00, 'Completed', 8),
@@ -310,7 +310,7 @@ INSERT INTO projects (project_id, project_name, start_date, end_date, budget, st
     (10, 'Sales Training Program', '2023-04-01', '2023-05-15', 15000.00, 'In Progress', 3);
 
 -- Transactions data
-INSERT INTO transactions (transaction_id, account_id, transaction_date, amount, transaction_type, description, created_timestamp) VALUES
+INSERT OR IGNORE INTO transactions (transaction_id, account_id, transaction_date, amount, transaction_type, description, created_timestamp) VALUES
     (1, 101, '2023-01-05', 500.00, 'DEPOSIT', 'Initial deposit', '2023-01-05 09:15:00'),
     (2, 102, '2023-01-10', 1000.00, 'DEPOSIT', 'Salary payment', '2023-01-10 10:30:00'),
     (3, 101, '2023-01-15', -200.00, 'WITHDRAWAL', 'ATM withdrawal', '2023-01-15 14:20:00'),
@@ -328,7 +328,7 @@ INSERT INTO transactions (transaction_id, account_id, transaction_date, amount, 
     (15, 102, '2023-03-15', -70.00, 'PAYMENT', 'Internet bill', '2023-03-15 10:05:00');
 
 -- Log events data
-INSERT INTO log_events (log_id, event_timestamp, level, source, message, user_id) VALUES
+INSERT OR IGNORE INTO log_events (log_id, event_timestamp, level, source, message, user_id) VALUES
     (1, '2023-01-15 08:30:15', 'INFO', 'Authentication Service', 'User login successful', 1),
     (2, '2023-01-15 09:45:22', 'WARNING', 'Payment Gateway', 'Payment attempt timeout', 3),
     (3, '2023-01-15 10:15:30', 'ERROR', 'Database Service', 'Connection pool exhausted', NULL),
@@ -346,7 +346,7 @@ INSERT INTO log_events (log_id, event_timestamp, level, source, message, user_id
     (15, '2023-01-16 13:50:40', 'INFO', 'Authentication Service', 'User login successful', 4);
 
 -- Order Items data
-INSERT INTO order_items (order_item_id, order_id, product_id, quantity, unit_price) VALUES
+INSERT OR IGNORE INTO order_items (order_item_id, order_id, product_id, quantity, unit_price) VALUES
     (1, 1, 1, 1, 1200.00),
     (2, 1, 5, 10, 5.00),
     (3, 2, 2, 1, 800.00),
@@ -362,7 +362,7 @@ INSERT INTO order_items (order_item_id, order_id, product_id, quantity, unit_pri
     (13, 10, 5, 20, 5.00);
 
 -- Order Summary data (denormalized)
-INSERT INTO order_summary (order_id, customer_name, product_name, quantity, price, total_amount) VALUES
+INSERT OR IGNORE INTO order_summary (order_id, customer_name, product_name, quantity, price, total_amount) VALUES
     (1, 'Michael Jones', 'Laptop Pro', 1, 1200.00, 1200.00),
     (1, 'Michael Jones', 'Notebook', 10, 5.00, 50.00),
     (2, 'Sarah Williams', 'Smartphone X', 1, 800.00, 800.00),
@@ -378,7 +378,7 @@ INSERT INTO order_summary (order_id, customer_name, product_name, quantity, pric
     (10, 'Jennifer Miller', 'Notebook', 20, 5.00, 100.00);
 
 -- Stock prices data
-INSERT INTO stock_prices (price_id, stock_symbol, date_recorded, stock_price, volume) VALUES
+INSERT OR IGNORE INTO stock_prices (price_id, stock_symbol, date_recorded, stock_price, volume) VALUES
     (1, 'ACME', '2023-01-01', 150.00, 1000000),
     (2, 'ACME', '2023-01-02', 152.50, 1200000),
     (3, 'ACME', '2023-01-03', 148.75, 900000),
