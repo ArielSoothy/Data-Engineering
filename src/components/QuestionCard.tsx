@@ -62,7 +62,7 @@ const QuestionCard = ({
       if (category.includes('sql') && !sqlRef.current) {
         try {
           const SQL = await initSqlJs({
-            locateFile: (file: string) => `https://sql.js.org/dist/${file}`
+            locateFile: (file: string) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/${file}`
           });
           sqlRef.current = new SQL.Database();
           
