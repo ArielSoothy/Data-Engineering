@@ -4,102 +4,89 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a React-based interactive learning platform for Data Engineering topics, designed specifically for Microsoft technical interview preparation. The app features SQL and Python exercises, practice questions, AI-powered feedback, and progress tracking.
+**DE Prep** — a React learning platform for Meta Data Engineer technical screen preparation (March 31, 2026). Covers SQL (PostgreSQL) and Python with 260+ questions, flashcards, timed mocks, adaptive practice, and a 26-day structured study plan.
 
-## Development Commands
+**Live:** https://data-engineering-nine.vercel.app
 
-### Essential Commands
-- `npm run dev` - Start development server (localhost:5173)
-- `npm run build` - Build for production (TypeScript compile + Vite build)
-- `npm run lint` - Run ESLint for code quality
-- `npm run preview` - Preview production build locally
-- `npm run deploy` - Deploy to GitHub Pages
+## Commands
 
-### Testing
-No test framework is currently configured. Check if tests need to be added before implementing new features.
+- `npm run dev` — Start dev server (localhost:5173)
+- `npm run build` — TypeScript compile + Vite build (`tsc -b && vite build`)
+- `npm run lint` — ESLint
+- `npm run preview` — Preview production build locally
 
-## Architecture Overview
+**Always run `npm run build` before considering work done.** Vercel auto-deploys on push to main.
 
-### Frontend Structure
-- **React 18** with TypeScript and Vite
-- **Routing**: Dynamic router selection (BrowserRouter for local, HashRouter for GitHub Pages)
-- **State Management**: React Context API (`src/context/AppContext.tsx`) for user progress, timer sessions, and preferences
-- **Styling**: Tailwind CSS with dark mode support
-- **Components**: Modular structure in `src/components/` with tab-based navigation
+## Architecture
 
-### Key Architectural Components
+### Stack
+React 18 + TypeScript, Vite, Tailwind CSS, PWA (vite-plugin-pwa). Deployed on Vercel with serverless API routes.
 
-#### Context System (`src/context/AppContext.tsx`)
-- Manages user progress across all categories (SQL, Python, Azure, etc.)
-- Handles timer sessions for practice
-- Manages user preferences (dark mode, timer settings)
-- Persists data to localStorage with automatic sync
+### Routing
+`src/App.tsx` — BrowserRouter (Vercel/local) or HashRouter (GitHub Pages, legacy). 15 tab routes, all defined here.
 
-#### AI Integration (`src/services/claudeApi.ts`)
-- Dual AI provider support: Claude (Anthropic) and Gemini (Google)
-- Provider selection via `VITE_AI_PROVIDER` environment variable
-- Fallback to mock feedback when API unavailable
-- Comprehensive error handling for API failures
+### State & Persistence
+- **AppContext** (`src/context/AppContext.tsx`) — Central state: question progress per category, timer sessions, preferences. Persists to localStorage (`msInterviewProgress`, `msInterviewPreferences`).
+- **Supabase cloud sync** (`src/services/progressSync.ts`) — Pulls on app load, debounced push on changes. Uses `user_progress` table with JSONB blob keyed by `device_id` (or user-chosen sync code). No auth required.
+- **Supabase client** (`src/lib/supabase/client.ts`) — Returns no-op stub when env vars missing, so the app works without Supabase.
+- **Quick Drill** has its own localStorage key: `quick_drill_progress`
+- **Daily Plan** has: `daily_plan_completion`, `daily_plan_streak`
 
-#### Serverless API Routes
-- **Claude Proxy** (`api/claudeProxy.ts`): Vercel/Netlify serverless function for Anthropic API
-- **Gemini Proxy** (`api/geminiProxy.ts`): Serverless function for Google Gemini API
-- Both support runtime API key configuration via headers
+### UI Components
+Factory components in `src/components/ui/` — **always use these** instead of creating custom buttons, cards, etc.:
+- `Button` (variants: primary/secondary/ghost/danger, sizes: sm/md/lg, loading state)
+- `Card`, `Badge`, `ProgressBar`, `Spinner`, `Section`
 
-#### Data Layer
-- JSON-based question banks in `src/data/` and `public/data/`
-- Categories: SQL basics/advanced, Python basics/advanced, Azure services, mock interviews
-- Progress tracking with completion status and timestamps
+All exported from `src/components/ui/index.ts`.
 
-### Deployment Architecture
+### AI Service Layer
+`src/services/aiService.ts` — Provider-agnostic interface. Four providers in `src/services/providers/`:
+- **groq** (default), **claude**, **gemini**, **claude-cli** (dev only)
+- Provider selected via localStorage `ai_provider` or `VITE_AI_PROVIDER` env var
+- Falls back to `mockFeedback.ts` when API unavailable (offline support)
 
-#### Multi-Platform Support
-- **GitHub Pages**: Automatic deployment via GitHub Actions, uses HashRouter
-- **Vercel**: Serverless functions for AI APIs, uses BrowserRouter
-- **Local Development**: Proxy setup for API routes
+### Serverless Functions
+`api/claudeProxy.ts` and `api/geminiProxy.ts` — Vercel serverless functions that proxy AI API calls (keeps keys server-side).
 
-#### Environment Configuration
-- Development: API calls routed to `localhost:3000/api/*`
-- Production: Relative paths `/api/*` for serverless functions
-- Base path automatically configured based on deployment target
+### Data Layer
+- **Static JSON** in `public/data/` — question banks loaded at runtime via fetch
+- **Embedded JSON** in `src/data/` — imported directly (daily plan, glossary, etc.)
+- `public/data/mock-db.sql` — Schema loaded into sql.js for in-browser SQL execution
+- sql.js WASM loaded from cdnjs.cloudflare.com CDN
 
-## Important Development Notes
+### Key Features
+| Feature | File(s) | Storage |
+|---------|---------|---------|
+| 26-day study plan | `src/data/dailyPlan.ts`, `src/hooks/useDailyPlan.ts` | `daily_plan_completion` |
+| Quick Drill (113 flashcards) | `src/components/tabs/QuickDrill.tsx` | `quick_drill_progress` |
+| Timed Assessment (50-min mock) | `src/components/tabs/TimedAssessment.tsx` | Session only |
+| Adaptive Practice (AI-generated) | `src/components/tabs/AdaptivePractice.tsx` | localStorage per subject |
+| Cross-device sync | `src/services/progressSync.ts`, `src/components/SyncModal.tsx` | Supabase `user_progress` |
+| PWA / offline | `vite.config.ts` (VitePWA plugin) | Service worker + CacheFirst for JSON |
 
-### Router Configuration
-The app automatically selects routing strategy based on deployment:
-```typescript
-const Router = isGitHubPages ? HashRouter : BrowserRouter;
-```
+### Navigation
+`src/components/TabNavigation.tsx` — Desktop: scrollable tab bar. Mobile: bottom nav (Home, Drill, Practice, Timed) + More drawer for remaining tabs.
 
-### AI Provider Configuration
-- Set `VITE_AI_PROVIDER=gemini` or `VITE_AI_PROVIDER=claude`
-- API keys: `GEMINI_API_KEY` or `CLAUDE_API_KEY` in environment
-- Models configurable via `VITE_GEMINI_MODEL` or `VITE_CLAUDE_MODEL`
+## Deployment
 
-### State Persistence
-- User progress automatically saved to localStorage
-- Timer sessions and preferences persist across sessions
-- Context provides methods for progress tracking and statistics
+**Vercel only** (GitHub Pages workflow removed). Auto-deploys on push to `main`.
 
-### Component Patterns
-- Tab-based navigation with responsive design
-- Question components support both practice and assessment modes
-- AI feedback integration with loading states and error handling
-
-## Code Quality Standards
-
-- TypeScript strict mode enabled
-- ESLint configuration for React and TypeScript
-- Tailwind CSS for consistent styling
-- Interface definitions for all major data structures
+`vercel.json` uses `installCommand: "rm -rf node_modules package-lock.json && npm install"` to avoid cross-platform rollup native module issues (macOS lockfile vs Linux build).
 
 ## Environment Variables
 
-### Required for AI Features
-- `GEMINI_API_KEY` or `CLAUDE_API_KEY` - API keys for AI feedback
-- `VITE_AI_PROVIDER` - Choose 'gemini' or 'claude'
+Set in `.env` (local) and Vercel dashboard (production):
 
-### Optional Configuration
-- `VITE_GEMINI_MODEL` - Gemini model (default: gemini-1.5-flash)
-- `VITE_CLAUDE_MODEL` - Claude model (default: claude-3-haiku-20240307)
-- `GITHUB_PAGES` - Set to 'true' for GitHub Pages builds
+| Variable | Purpose |
+|----------|---------|
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase public anon key |
+| `VITE_AI_PROVIDER` | AI provider: groq/claude/gemini |
+| `GEMINI_API_KEY` | Server-side Gemini key (serverless fn) |
+| `CLAUDE_API_KEY` | Server-side Claude key (serverless fn) |
+
+## Key Config
+
+- **Interview date:** `src/config.ts` — `INTERVIEW_DATE = new Date('2026-03-31')`
+- **Category totals:** `src/context/AppContext.tsx` — `categoryTotals` object (used for progress %)
+- **Supabase project:** `dslmwsdbkaciwljnxxjt` (ArielSoothy's Project, us-east-2)
