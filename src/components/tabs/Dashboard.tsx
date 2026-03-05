@@ -1,402 +1,301 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Calendar, Clock, BarChart2, Award, ChevronRight,
-  Database, Code, BarChart, Video, CheckCircle, Braces, Zap
+  Calendar, Clock, ChevronRight, Database, Code, Braces,
+  CheckCircle, Zap, Flame,
+  BookOpen, Timer, ArrowRight, Circle, Smartphone, Star, Target
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
-import { formatTime } from '../../utils/helpers';
+import { useDailyPlan } from '../../hooks/useDailyPlan';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import { Card, Badge, ProgressBar } from '../ui';
+import { STUDY_PHASES } from '../../data/dailyPlan';
+import type { CategoryProgress } from '../../context/AppContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { 
-    progress, 
-    getTotalProgress, 
-    getCategoryProgress,
-    getEstimatedTimeRemaining 
-  } = useAppContext();
-  
-  const [currentDate] = useState(new Date());
-  const [interviewDate] = useState(new Date(2025, 11, 17)); // Dec 17, 2025 - Updated for current year
-  const [daysRemaining, setDaysRemaining] = useState(0);
-  
-  // Calculate days remaining until interview
-  useEffect(() => {
-    const diffTime = interviewDate.getTime() - currentDate.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    setDaysRemaining(diffDays);
-  }, [currentDate, interviewDate]);
-  
-  // Define the study plan timeline
-  const timeline = [
-    {
-      day: 'Week 1',
-      date: 'Foundation',
-      title: 'SQL Fundamentals',
-      hours: 4,
-      focus: ['SQL Basics (Questions 1-20)'],
-      goal: 'Core SQL understanding',
-      sections: ['sql-basics'],
-      completed: getCategoryProgress('sqlBasics') >= 50 // 20/40 = 50%
-    },
-    {
-      day: 'Week 2',
-      date: 'Advanced',
-      title: 'SQL Mastery',
-      hours: 8,
-      focus: [
-        'SQL Basics (Questions 21-40)',
-        'SQL Advanced (Questions 1-15)',
-        'Start Python Basics'
-      ],
-      goal: 'SQL confidence + Python foundation',
-      sections: ['sql-basics', 'sql-advanced', 'python-basics'],
-      completed: 
-        getCategoryProgress('sqlBasics') === 100 && 
-        getCategoryProgress('sqlAdvanced') >= 75 && // 15/20 = 75%
-        getCategoryProgress('pythonBasics') >= 20 // Some progress
-    },
-    {
-      day: 'Sunday',
-      date: 'Dec 15',
-      title: 'Python + Problem Solving',
-      hours: 8,
-      focus: [
-        'Python Basics (Questions 1-25)',
-        'Python Advanced (Questions 1-15)',
-        'Problem Decomposition (5 scenarios)'
-      ],
-      goal: 'Python competency + system thinking',
-      sections: ['python-basics', 'python-advanced', 'decomposition'],
-      completed: 
-        getCategoryProgress('pythonBasics') === 100 &&
-        getCategoryProgress('pythonAdvanced') === 100 &&
-        getCategoryProgress('decompositionScenarios') >= 50 // 5/10 = 50%
-    },
-    {
-      day: 'Monday',
-      date: 'Dec 16',
-      title: 'Integration + Practice',
-      hours: 6,
-      focus: [
-        'Azure Services quick reference',
-        'Mock Interview simulator',
-        'Practice verbal explanations'
-      ],
-      goal: 'Interview readiness',
-      sections: ['azure-services', 'mock-interview'],
-      completed: 
-        getCategoryProgress('decompositionScenarios') === 100 &&
-        getCategoryProgress('mockInterviews') >= 60 // 3/5 = 60%
-    },
-    {
-      day: 'Tuesday Morning',
-      date: 'Dec 17',
-      title: 'Final Prep',
-      hours: 2,
-      focus: [
-        'Review weak areas',
-        'Confidence building',
-        'Relaxation before interview'
-      ],
-      goal: 'Confidence and readiness',
-      sections: [],
-      completed: getTotalProgress() === 100
-    }
+  const { getCategoryProgress, getTotalProgress } = useAppContext();
+  const { currentDay, daysRemaining, todayPlan, phase, completedTasks, streak, toggleTask, todayProgress } = useDailyPlan();
+  const isOnline = useOnlineStatus();
+
+  const categories: { id: keyof CategoryProgress; name: string; icon: React.ReactNode; path: string; color: string }[] = [
+    { id: 'sqlBasics', name: 'SQL Basics', icon: <Database size={16} />, path: '/sql-basics', color: 'blue' },
+    { id: 'sqlAdvanced', name: 'SQL Advanced', icon: <Database size={16} />, path: '/sql-advanced', color: 'purple' },
+    { id: 'pythonBasics', name: 'Python Basics', icon: <Code size={16} />, path: '/python-basics', color: 'green' },
+    { id: 'pythonAdvanced', name: 'Python Advanced', icon: <Braces size={16} />, path: '/python-advanced', color: 'green' },
+    { id: 'adaptive', name: 'Adaptive', icon: <Zap size={16} />, path: '/adaptive', color: 'yellow' },
   ];
-  
-  // Calculate current timeline day
-  const getCurrentTimelineDay = () => {
-    if (daysRemaining > 4) return -1; // Not started yet
-    if (daysRemaining <= 0) return 4; // Final day or past
-    return 4 - daysRemaining;
-  };
-  
-  const currentTimelineDay = getCurrentTimelineDay();
-  
-  // Progress summary by category
-  const categories = [
-    { 
-      id: 'sqlBasics', 
-      name: 'SQL Basics', 
-      icon: <Database size={20} />, 
-      count: 40,
-      path: '/sql-basics',
-      color: 'bg-blue-500'
-    },
-    { 
-      id: 'sqlAdvanced', 
-      name: 'SQL Advanced', 
-      icon: <Database size={20} />, 
-      count: 20,
-      path: '/sql-advanced',
-      color: 'bg-indigo-500'
-    },
-    { 
-      id: 'pythonBasics', 
-      name: 'Python Basics', 
-      icon: <Code size={20} />, 
-      count: 25,
-      path: '/python-basics',
-      color: 'bg-green-500'
-    },
-    { 
-      id: 'pythonAdvanced', 
-      name: 'Python Advanced', 
-      icon: <Braces size={20} />, 
-      count: 15,
-      path: '/python-advanced',
-      color: 'bg-emerald-500'
-    },
-    { 
-      id: 'decompositionScenarios', 
-      name: 'Problem Decomposition', 
-      icon: <BarChart size={20} />, 
-      count: 10,
-      path: '/decomposition',
-      color: 'bg-yellow-500'
-    },
-    {
-      id: 'mockInterviews',
-      name: 'Mock Interviews',
-      icon: <Video size={20} />,
-      count: 5,
-      path: '/mock-interview',
-      color: 'bg-red-500'
-    },
-    {
-      id: 'adaptive',
-      name: 'Adaptive Practice',
-      icon: <Zap size={20} />,
-      count: 30,
-      path: '/adaptive',
-      color: 'bg-orange-500'
-    }
-  ];
-  
+
+  // Detect weak spots: categories under 40%
+  const weakSpots = categories.filter(c => {
+    const pct = getCategoryProgress(c.id);
+    return pct > 0 && pct < 40;
+  });
+
+  // SQL and Python aggregate progress
+  const sqlPct = Math.round((getCategoryProgress('sqlBasics') + getCategoryProgress('sqlAdvanced')) / 2);
+  const pyPct = Math.round((getCategoryProgress('pythonBasics') + getCategoryProgress('pythonAdvanced')) / 2);
+
   return (
-    <div className="container mx-auto px-4 py-8 pb-36 md:pb-8">
+    <div className="container mx-auto px-4 py-6 pb-36 md:pb-8 max-w-5xl">
+      {/* Offline banner */}
+      {!isOnline && (
+        <div className="mb-4 px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm text-center">
+          You're offline — Quick Drill and cached content still work.
+        </div>
+      )}
+
+      {/* Countdown Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              {currentDay >= 1 && currentDay <= 26
+                ? `Day ${currentDay} of 26`
+                : currentDay < 1
+                  ? 'Getting Ready'
+                  : 'Interview Time!'}
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
+              {daysRemaining > 0
+                ? `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} to Meta`
+                : 'Today is the day!'}
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            {streak > 0 && (
+              <div className="flex items-center gap-1.5 text-orange-500">
+                <Flame size={20} />
+                <span className="font-bold text-lg">{streak}</span>
+              </div>
+            )}
+            {phase && (
+              <Badge
+                label={phase.name}
+                color={phase.color === 'blue' ? 'blue' : phase.color === 'purple' ? 'purple' : phase.color === 'yellow' ? 'yellow' : phase.color === 'red' ? 'red' : 'green'}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Phase progress bar */}
+        <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
+          {STUDY_PHASES.map((sp, i) => {
+            const phaseStart = [1, 6, 13, 19, 25][i];
+            const phaseEnd = [5, 12, 18, 24, 26][i];
+            const width = ((phaseEnd - phaseStart + 1) / 26) * 100;
+            const fill = currentDay >= phaseEnd ? 100 : currentDay >= phaseStart ? ((currentDay - phaseStart + 1) / (phaseEnd - phaseStart + 1)) * 100 : 0;
+            const barColors: Record<string, string> = { blue: 'bg-blue-500', purple: 'bg-purple-500', yellow: 'bg-yellow-500', red: 'bg-red-500', green: 'bg-green-500' };
+            return (
+              <div key={sp.name} className="relative" style={{ width: `${width}%` }}>
+                <div className={`absolute inset-0 ${barColors[sp.color]} rounded-sm transition-all`} style={{ width: `${fill}%` }} />
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-between mt-1 text-xs text-gray-400">
+          {STUDY_PHASES.map(sp => <span key={sp.name}>{sp.name}</span>)}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column - Progress Overview */}
-        <div className="lg:col-span-2">
-          <div className="card mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Study Progress</h2>
-              <div className="flex items-center">
-                <Clock size={18} className="mr-1 text-gray-500 dark:text-gray-400" />
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {daysRemaining > 0 
-                    ? `${daysRemaining} days until interview` 
-                    : 'Interview day!'}
-                </span>
-              </div>
-            </div>
-            
-            {/* Overall progress */}
-            <div className="mb-6">
-              <div className="flex justify-between items-end mb-2">
-                <div>
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Overall Progress
-                  </span>
-                  <div className="text-2xl font-bold">{getTotalProgress()}%</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Time Remaining
-                  </div>
-                  <div className="text-lg font-semibold">
-                    {formatTime(getEstimatedTimeRemaining())}
-                  </div>
-                </div>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                <div 
-                  className="bg-blue-600 h-2.5 rounded-full dark:bg-blue-500"
-                  style={{ width: `${getTotalProgress()}%` }}
-                ></div>
-              </div>
-            </div>
-            
-            {/* Category progress */}
-            <div className="space-y-4">
-              {categories.map((category) => {
-                const progressPercent = getCategoryProgress(category.id as keyof typeof progress);
-                const completedCount = Math.round((progressPercent / 100) * category.count);
-                
-                return (
-                  <div key={category.id} className="group">
-                    <button 
-                      onClick={() => navigate(category.path)}
-                      className="w-full flex justify-between items-center"
-                    >
-                      <div className="flex items-center">
-                        <div className={`p-2 rounded-md mr-3 ${category.color} bg-opacity-20 dark:bg-opacity-10`}>
-                          {category.icon}
-                        </div>
-                        <div className="text-left">
-                          <div className="font-medium">{category.name}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {completedCount} of {category.count} complete
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="font-medium mr-2">{progressPercent}%</span>
-                        <ChevronRight size={18} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-                      </div>
+        {/* Left: Today's Plan + Quick Launch */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Today's Plan */}
+          {todayPlan ? (
+            <Card title={todayPlan.title} subtitle={`Day ${todayPlan.day} — ${todayPlan.phase}`}
+              headerAction={<span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{todayProgress}%</span>}>
+              <ProgressBar value={todayProgress} color="blue" size="sm" className="mb-4" />
+              <div className="space-y-2">
+                {todayPlan.tasks.map(task => (
+                  <div
+                    key={task.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer
+                      ${completedTasks[task.id]
+                        ? 'bg-green-50 dark:bg-green-900/20'
+                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    onClick={() => toggleTask(task.id)}
+                  >
+                    <button className="shrink-0" onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}>
+                      {completedTasks[task.id]
+                        ? <CheckCircle size={20} className="text-green-500" />
+                        : <Circle size={20} className="text-gray-300 dark:text-gray-600" />}
                     </button>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700 mt-2">
-                      <div 
-                        className={`${category.color} h-1.5 rounded-full`}
-                        style={{ width: `${progressPercent}%` }}
-                      ></div>
+                    <span className={`flex-1 text-sm ${completedTasks[task.id] ? 'line-through text-gray-400' : ''}`}>
+                      {task.label}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {task.mobile && <Smartphone size={14} className="text-gray-400" />}
+                      {task.extra && <Star size={14} className="text-yellow-400" />}
+                      {task.route && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(task.route!); }}
+                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+                        >
+                          <ArrowRight size={14} className="text-gray-400" />
+                        </button>
+                      )}
                     </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile-friendly</span>
+                <span className="flex items-center gap-1"><Star size={12} /> Bonus</span>
+              </div>
+            </Card>
+          ) : (
+            <Card>
+              <div className="text-center py-8">
+                <Calendar size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                <h3 className="text-lg font-semibold mb-2">
+                  {currentDay < 1 ? 'Your 26-day plan starts soon' : 'Plan complete!'}
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  {currentDay < 1
+                    ? `Starts ${daysRemaining - 25} days from now`
+                    : 'You have completed all 26 days. Good luck at Meta!'}
+                </p>
+              </div>
+            </Card>
+          )}
+
+          {/* Quick Launch */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Quick Launch</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: 'Quick Drill', icon: <BookOpen size={20} />, path: '/quick-drill', color: 'bg-indigo-500' },
+                { label: 'Adaptive', icon: <Zap size={20} />, path: '/adaptive', color: 'bg-orange-500' },
+                { label: 'Timed Mock', icon: <Timer size={20} />, path: '/timed-assessment', color: 'bg-red-500' },
+                { label: 'Trivia', icon: <Target size={20} />, path: '/trivia', color: 'bg-emerald-500' },
+              ].map(item => (
+                <button
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  className={`${item.color} text-white rounded-xl p-4 flex flex-col items-center gap-2 hover:opacity-90 transition-opacity`}
+                >
+                  {item.icon}
+                  <span className="text-sm font-semibold">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Weekly Heatmap */}
+          <Card title="This Week">
+            <div className="grid grid-cols-7 gap-2">
+              {Array.from({ length: 7 }, (_, i) => {
+                const dayNum = currentDay - (new Date().getDay()) + i;
+                const dayData = dayNum >= 1 && dayNum <= 26;
+                const dayCompleted = dayData && completedTasks[`streak_${dayNum}`];
+                const isToday = dayNum === currentDay;
+                return (
+                  <div
+                    key={i}
+                    className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-medium
+                      ${isToday ? 'ring-2 ring-blue-500' : ''}
+                      ${dayCompleted ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : dayData ? 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                        : 'bg-gray-50 dark:bg-gray-900 text-gray-300 dark:text-gray-700'}`}
+                  >
+                    <span>{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i]}</span>
+                    {dayData && <span className="text-lg font-bold">{dayNum}</span>}
                   </div>
                 );
               })}
             </div>
-          </div>
-          
-          {/* Key metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="card flex items-center">
-              <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900 dark:bg-opacity-30 mr-4">
-                <BarChart2 size={24} className="text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Completed</div>
-                <div className="text-xl font-bold">
-                  {getTotalProgress()}% Done
-                </div>
-              </div>
-            </div>
-            
-            <div className="card flex items-center">
-              <div className="p-3 rounded-full bg-emerald-100 dark:bg-emerald-900 dark:bg-opacity-30 mr-4">
-                <Clock size={24} className="text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Study Time</div>
-                <div className="text-xl font-bold">
-                  {formatTime(28 * 60 - getEstimatedTimeRemaining())}
-                </div>
-              </div>
-            </div>
-            
-            <div className="card flex items-center">
-              <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-900 dark:bg-opacity-30 mr-4">
-                <Award size={24} className="text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Interview Readiness</div>
-                <div className="text-xl font-bold">
-                  {getTotalProgress() < 25 ? 'Getting Started' : 
-                   getTotalProgress() < 50 ? 'In Progress' :
-                   getTotalProgress() < 75 ? 'Almost Ready' : 
-                   getTotalProgress() < 100 ? 'Well Prepared' : 'Fully Ready'}
-                </div>
-              </div>
-            </div>
-          </div>
+          </Card>
         </div>
-        
-        {/* Right column - Timeline */}
-        <div className="lg:col-span-1">
-          <div className="card">
-            <div className="flex items-center mb-4">
-              <Calendar size={20} className="mr-2 text-blue-600 dark:text-blue-400" />
-              <h2 className="text-xl font-bold">Study Timeline</h2>
-            </div>
-            
-            <div className="space-y-6">
-              {timeline.map((day, index) => (
-                <div 
-                  key={day.day}
-                  className={`relative pl-8 ${
-                    index < timeline.length - 1 ? 'pb-6 border-l-2' : ''
-                  } ${
-                    index < currentTimelineDay 
-                      ? 'border-blue-500 dark:border-blue-400' 
-                      : index === currentTimelineDay
-                        ? 'border-blue-500 dark:border-blue-400'
-                        : 'border-gray-200 dark:border-gray-700'
-                  }`}
-                >
-                  {/* Timeline dot */}
-                  <div 
-                    className={`absolute left-0 w-4 h-4 rounded-full transform -translate-x-2 ${
-                      index < currentTimelineDay
-                        ? 'bg-blue-500 dark:bg-blue-400'
-                        : index === currentTimelineDay
-                          ? 'bg-blue-500 dark:bg-blue-400 ring-4 ring-blue-100 dark:ring-blue-900'
-                          : 'bg-gray-200 dark:bg-gray-700'
-                    }`}
-                  >
-                    {day.completed && (
-                      <CheckCircle size={16} className="text-white absolute -left-0 -top-0" />
-                    )}
-                  </div>
-                  
-                  {/* Day content */}
-                  <div className={`${
-                    index === currentTimelineDay 
-                      ? 'bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border-blue-200 dark:border-blue-800'
-                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-                  } border rounded-lg p-4`}>
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-bold">{day.day}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{day.date}</p>
-                      </div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        day.completed
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:bg-opacity-30 dark:text-green-400'
-                          : index === currentTimelineDay
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-400'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                      }`}>
-                        {day.completed 
-                          ? 'Completed' 
-                          : index === currentTimelineDay 
-                            ? 'Today' 
-                            : `${day.hours}h`}
-                      </span>
-                    </div>
-                    
-                    <h4 className="font-medium mb-1">{day.title}</h4>
-                    
-                    <ul className="text-sm space-y-1 mb-2">
-                      {day.focus.map((item, i) => (
-                        <li key={i} className="flex items-start">
-                          <div className="min-w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full mt-1.5 mr-2"></div>
-                          <span className="text-gray-600 dark:text-gray-300">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      <strong>Goal:</strong> {day.goal}
-                    </div>
-                    
-                    {index === currentTimelineDay && day.sections.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                        <div className="flex flex-wrap gap-2">
-                          {day.sections.map(section => (
-                            <button
-                              key={section}
-                              onClick={() => navigate(`/${section}`)}
-                              className="text-xs px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors dark:bg-blue-600 dark:hover:bg-blue-700"
-                            >
-                              Start {section.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+
+        {/* Right column: Stats + Weak Spots */}
+        <div className="space-y-6">
+          {/* Overall Stats */}
+          <Card title="Progress">
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-500 dark:text-gray-400">Overall</span>
+                  <span className="font-semibold">{getTotalProgress()}%</span>
                 </div>
-              ))}
+                <ProgressBar value={getTotalProgress()} color="blue" size="md" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+                  <Database size={16} className="mx-auto mb-1 text-blue-500" />
+                  <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{sqlPct}%</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">SQL</div>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+                  <Code size={16} className="mx-auto mb-1 text-green-500" />
+                  <div className="text-xl font-bold text-green-600 dark:text-green-400">{pyPct}%</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Python</div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Weak Spots */}
+          {weakSpots.length > 0 && (
+            <Card title="Focus Areas">
+              <div className="space-y-2">
+                {weakSpots.map(ws => {
+                  const pct = getCategoryProgress(ws.id);
+                  return (
+                    <button key={ws.id} onClick={() => navigate(ws.path)} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <div className="text-red-500">{ws.icon}</div>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-medium">{ws.name}</div>
+                        <ProgressBar value={pct} color="red" size="sm" />
+                      </div>
+                      <span className="text-sm font-semibold text-red-500">{pct}%</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          {/* Category Progress */}
+          <Card title="All Categories">
+            <div className="space-y-3">
+              {categories.map(cat => {
+                const pct = getCategoryProgress(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => navigate(cat.path)}
+                    className="w-full flex items-center gap-3 group"
+                  >
+                    <div className="shrink-0">{cat.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium truncate">{cat.name}</span>
+                        <span className="text-gray-500 dark:text-gray-400">{pct}%</span>
+                      </div>
+                      <ProgressBar
+                        value={pct}
+                        color={cat.color === 'blue' ? 'blue' : cat.color === 'purple' ? 'purple' : cat.color === 'green' ? 'green' : 'yellow'}
+                        size="sm"
+                      />
+                    </div>
+                    <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-500 dark:group-hover:text-gray-300 transition-colors shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-center">
+              <Clock size={16} className="mx-auto mb-1 text-gray-400" />
+              <div className="text-lg font-bold">{daysRemaining}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Days Left</div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-center">
+              <Flame size={16} className="mx-auto mb-1 text-orange-400" />
+              <div className="text-lg font-bold">{streak}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Day Streak</div>
             </div>
           </div>
         </div>

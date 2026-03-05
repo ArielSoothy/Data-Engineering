@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 import { exec } from 'child_process'
 
 // https://vite.dev/config/
@@ -48,7 +49,40 @@ export default defineConfig(({ command }) => {
   };
 
   return {
-    plugins: [react(), claudeCliPlugin],
+    plugins: [
+      react(),
+      claudeCliPlugin,
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['vite.svg', 'icon-192.png', 'icon-512.png'],
+        manifest: {
+          name: 'DE Prep - Data Engineer Interview Prep',
+          short_name: 'DE Prep',
+          description: 'Master SQL & Python for Meta Data Engineer interviews',
+          theme_color: '#1e40af',
+          background_color: '#0f172a',
+          display: 'standalone',
+          start_url: '/',
+          icons: [
+            { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          ]
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          runtimeCaching: [
+            {
+              urlPattern: /\/data\/.*\.json$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'question-data',
+                expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 7 }
+              }
+            }
+          ]
+        }
+      })
+    ],
     // Use different base paths for development and production
     base,
     build: {

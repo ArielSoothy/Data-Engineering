@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Clock, Check, Play, MessageSquare } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, Check, Play, MessageSquare, BookOpen } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import type { CategoryProgress } from '../context/AppContext';
 import { formatTime } from '../utils/helpers';
@@ -8,7 +8,9 @@ import { loadPyodide } from 'pyodide';
 import type { Database } from 'sql.js';
 import initSqlJs from 'sql.js';
 import { PracticeChat } from './PracticeChat';
-import { Badge, Button } from './ui';
+import { Badge, Button, Spinner } from './ui';
+import { generateQuestionBreakdown } from '../services/aiService';
+import type { QuestionBreakdown } from '../services/aiService';
 
 interface QuestionCardProps {
   id: number;
@@ -34,7 +36,10 @@ const QuestionCard = ({
   onToggleCompletion
 }: QuestionCardProps) => {
   const [expanded, setExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'answer' | 'tryit' | 'practice'>('answer');
+  const [activeTab, setActiveTab] = useState<'answer' | 'explain' | 'tryit' | 'practice'>('answer');
+  const [breakdown, setBreakdown] = useState<QuestionBreakdown | null>(null);
+  const [breakdownLoading, setBreakdownLoading] = useState(false);
+  const [breakdownError, setBreakdownError] = useState<string | null>(null);
   const [editorContent, setEditorContent] = useState(pseudoCode || '');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
@@ -127,9 +132,28 @@ const QuestionCard = ({
     setExpanded(!expanded);
   };
   
-  const handleTabClick = (tab: 'answer' | 'tryit' | 'practice') => {
+  const handleTabClick = (tab: 'answer' | 'explain' | 'tryit' | 'practice') => {
     setActiveTab(tab);
   };
+
+  const fetchBreakdown = async () => {
+    setBreakdownLoading(true);
+    setBreakdownError(null);
+    try {
+      const result = await generateQuestionBreakdown(question, answer, pseudoCode);
+      setBreakdown(result);
+    } catch (err: any) {
+      setBreakdownError(err?.message ?? 'Failed to generate explanation. Please try again.');
+    } finally {
+      setBreakdownLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'explain' && !breakdown && !breakdownLoading) {
+      fetchBreakdown();
+    }
+  }, [activeTab]);
   
   const handleToggleCompletion = () => {
     const newCompletedState = !completed;
@@ -217,6 +241,22 @@ const QuestionCard = ({
               Solution
             </Button>
 
+            {/* Explain tab */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleTabClick('explain')}
+              className={`rounded-none px-4 py-2 font-medium border-b-2 -mb-px ${
+                activeTab === 'explain'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-transparent dark:hover:bg-transparent'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+              icon={<BookOpen size={16} />}
+              iconPosition="left"
+            >
+              Explain
+            </Button>
+
             {/* Try It tab for code execution */}
             {(category.includes('python') || category.includes('sql')) && (
               <Button
@@ -257,6 +297,50 @@ const QuestionCard = ({
             {activeTab === 'answer' && (
               <div className="text-gray-700 dark:text-gray-300">
                 {answer}
+              </div>
+            )}
+
+            {activeTab === 'explain' && (
+              <div>
+                {breakdownLoading && (
+                  <div className="flex flex-col items-center justify-center py-10 gap-3 text-gray-500 dark:text-gray-400">
+                    <Spinner size="md" />
+                    <span className="text-sm">Generating explanation…</span>
+                  </div>
+                )}
+
+                {breakdownError && !breakdownLoading && (
+                  <div className="flex flex-col items-center gap-3 py-8 text-center">
+                    <p className="text-red-500 dark:text-red-400 text-sm">{breakdownError}</p>
+                    <Button variant="secondary" size="sm" onClick={() => { setBreakdownError(null); fetchBreakdown(); }}>
+                      Retry
+                    </Button>
+                  </div>
+                )}
+
+                {breakdown && !breakdownLoading && (
+                  <div className="flex flex-col gap-6">
+                    {/* Section 1: Question breakdown */}
+                    <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-4">
+                      <h4 className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-3">
+                        📖 What is this question asking?
+                      </h4>
+                      <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
+                        {breakdown.explanation}
+                      </p>
+                    </div>
+
+                    {/* Section 2: Step-by-step solution */}
+                    <div className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 p-4">
+                      <h4 className="text-base font-semibold text-purple-700 dark:text-purple-300 mb-3">
+                        🔢 Step-by-step solution
+                      </h4>
+                      <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap leading-relaxed font-mono">
+                        {breakdown.steps}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

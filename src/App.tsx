@@ -15,6 +15,8 @@ import MockInterview from './components/tabs/MockInterview';
 import MyProjects from './components/tabs/MyProjects';
 import AdaptivePractice from './components/tabs/AdaptivePractice';
 import MetaOfficial from './components/tabs/MetaOfficial';
+import QuickDrill from './components/tabs/QuickDrill';
+import TimedAssessment from './components/tabs/TimedAssessment';
 import { ApiTest } from './components/ApiTest';
 import { ApiDiagnostic } from './components/ApiDiagnostic';
 
@@ -60,6 +62,8 @@ function App() {
               <Route path="/mock-interview" element={<MockInterview />} />
               <Route path="/my-projects" element={<MyProjects />} />
               <Route path="/meta-official" element={<MetaOfficial />} />
+              <Route path="/quick-drill" element={<QuickDrill />} />
+              <Route path="/timed-assessment" element={<TimedAssessment />} />
               <Route path="/api-test" element={<ApiTest />} />
               <Route path="/api-diagnostic" element={<ApiDiagnostic />} />
               <Route path="*" element={<Navigate to="/" replace />} />
