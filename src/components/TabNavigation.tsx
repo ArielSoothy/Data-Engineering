@@ -4,10 +4,11 @@ import type { ReactNode } from 'react';
 import {
   LayoutDashboard, Database, Code, Braces, BarChart,
   Cloud, Video, Book, Moon, Sun, Target, GraduationCap,
-  Briefcase, Zap, Building2, BookOpen, Timer, Menu, X
+  Briefcase, Zap, Building2, BookOpen, Timer, Menu, X, RefreshCw
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { SyncModal } from './SyncModal';
 
 interface TabItem {
   id: string;
@@ -22,6 +23,7 @@ const TabNavigation = () => {
   const { preferences, toggleDarkMode } = useAppContext();
   const isOnline = useOnlineStatus();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [syncOpen, setSyncOpen] = useState(false);
 
   // Primary mobile tabs (bottom nav)
   const primaryTabs: TabItem[] = [
@@ -92,10 +94,18 @@ const TabNavigation = () => {
               </button>
             ))}
 
-            {/* Dark mode toggle */}
+            {/* Sync + Dark mode */}
+            <button
+              onClick={() => setSyncOpen(true)}
+              className="ml-auto flex items-center px-3 py-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              aria-label="Sync progress"
+              title="Sync progress across devices"
+            >
+              <RefreshCw size={18} />
+            </button>
             <button
               onClick={toggleDarkMode}
-              className="ml-auto flex items-center px-4 py-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              className="flex items-center px-3 py-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               aria-label="Toggle dark mode"
             >
               {preferences.darkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -115,6 +125,9 @@ const TabNavigation = () => {
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="font-bold text-lg">All Sections</h3>
               <div className="flex items-center gap-3">
+                <button onClick={() => { setDrawerOpen(false); setSyncOpen(true); }} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Sync">
+                  <RefreshCw size={20} />
+                </button>
                 <button onClick={toggleDarkMode} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                   {preferences.darkMode ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
@@ -174,6 +187,7 @@ const TabNavigation = () => {
           </button>
         </div>
       </div>
+      <SyncModal open={syncOpen} onClose={() => setSyncOpen(false)} onSynced={() => window.location.reload()} />
     </div>
   );
 };
