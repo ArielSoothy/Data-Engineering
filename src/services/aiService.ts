@@ -136,7 +136,10 @@ function parseAdaptiveQuestion(raw: string): AdaptiveQuestion {
   const hint1 = raw.match(/HINT1:\s*(.+?)(?=HINT2:|$)/s)?.[1]?.trim() ?? '';
   const hint2 = raw.match(/HINT2:\s*(.+?)(?=HINT3:|$)/s)?.[1]?.trim() ?? '';
   const hint3 = raw.match(/HINT3:\s*(.+?)$/s)?.[1]?.trim() ?? '';
-  return { question, answer, pseudoCode, hints: [hint1, hint2, hint3].filter(Boolean) };
+  const parsed = { question, answer, pseudoCode, hints: [hint1, hint2, hint3].filter(Boolean) };
+  // If the AI didn't follow the format, the question will be empty — treat as parse failure
+  if (!parsed.question) throw new Error('Parse failed: empty question');
+  return parsed;
 }
 
 function fallbackAdaptiveQuestion(subject: 'sql' | 'python', level: 1 | 2 | 3): AdaptiveQuestion {
@@ -165,6 +168,60 @@ function fallbackAdaptiveQuestion(subject: 'sql' | 'python', level: 1 | 2 | 3): 
       ? "df['rolling_dau'] = df['dau'].rolling(window=7, min_periods=1).mean()"
       : "df = df.sort_values('event_ts').drop_duplicates(subset=['user_id', 'event_type'], keep='last')",
     hints: ['Think about the pandas window function API', 'Sort before deduplication', 'Use chunksize parameter in read_csv']
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Question breakdown (Explain tab)
+// ---------------------------------------------------------------------------
+
+export interface QuestionBreakdown {
+  explanation: string;
+  steps: string;
+}
+
+export async function generateQuestionBreakdown(
+  question: string,
+  answer: string,
+  pseudoCode?: string
+): Promise<QuestionBreakdown> {
+  const prompt = `Given this interview question, return two clearly separated sections.
+
+BREAKDOWN:
+Explain in simple terms:
+- What inputs go in (type, format, edge cases)
+- What the output looks like
+- The key rules/constraints in plain language
+- One concrete example in your own words
+
+SOLUTION:
+Walk through the complete solution step by step. For each step:
+- Number it (Step 1, Step 2, ...)
+- Explain WHY this step is needed before saying what it does
+- Assume the reader has never solved this type of problem
+- Comment every line of any code to explain what it does and why
+
+Question: ${question}
+Answer: ${answer}
+${pseudoCode ? `Pseudo Code:\n${pseudoCode}` : ''}`;
+
+  const raw = await generateFeedback(
+    'Generate question breakdown and step-by-step solution',
+    prompt,
+    'Return structured breakdown in the specified format with BREAKDOWN: and SOLUTION: markers',
+    ''
+  );
+
+  const breakdownMatch = raw.match(/BREAKDOWN:\s*(.+?)(?=SOLUTION:|$)/s);
+  const solutionMatch = raw.match(/SOLUTION:\s*(.+?)$/s);
+
+  if (!breakdownMatch && !solutionMatch) {
+    return { explanation: '', steps: raw.trim() };
+  }
+
+  return {
+    explanation: breakdownMatch?.[1]?.trim() ?? '',
+    steps: solutionMatch?.[1]?.trim() ?? '',
   };
 }
 

@@ -250,7 +250,7 @@
       "timeEstimate": 12,
       "answer": "Generate a complete date spine between the min and max dates in the table using a recursive CTE or a pre-existing calendar table, then LEFT JOIN to daily_revenue and filter for rows where revenue IS NULL.",
       "pseudoCode": "-- Generate a full date spine with a recursive CTE\nWITH RECURSIVE date_spine AS (\n    SELECT MIN(date) AS calendar_date FROM daily_revenue\n    UNION ALL\n    SELECT DATE_ADD(calendar_date, INTERVAL 1 DAY)\n    FROM date_spine\n    WHERE calendar_date < (SELECT MAX(date) FROM daily_revenue)\n)\nSELECT\n    ds.calendar_date AS missing_date\nFROM date_spine ds\nLEFT JOIN daily_revenue dr\n    ON ds.calendar_date = dr.date\nWHERE dr.date IS NULL\nORDER BY missing_date;",
-      "aiApproach": "The date spine pattern is the canonical approach to detecting gaps in time series data. In Presto/Trino, you can use SEQUENCE(min_date, max_date, INTERVAL '1' DAY) with UNNEST instead of a recursive CTE, which is more efficient. Always confirm with the interviewer the expected date range\u2014using the table's own MIN/MAX can hide gaps at the boundaries."
+      "aiApproach": "The date spine pattern is the canonical approach to detecting gaps in time series data. In Presto/Trino, you can use SEQUENCE(min_date, max_date, INTERVAL '1' DAY) with UNNEST instead of a recursive CTE, which is more efficient. Always confirm with the interviewer the expected date range--using the table's own MIN/MAX can hide gaps at the boundaries."
     },
     {
       "id": 29,
@@ -268,7 +268,282 @@
       "timeEstimate": 20,
       "answer": "Self-join the friendships table to find common friends for each pair of users, count the mutual connections, and filter for pairs with at least 3. Use UNION to normalize the directed friendship edges before joining.",
       "pseudoCode": "-- Normalize edges so each friendship appears in both directions\nWITH all_edges AS (\n    SELECT user_id, friend_id FROM friendships\n    UNION ALL\n    SELECT friend_id AS user_id, user_id AS friend_id FROM friendships\n),\nmutual_counts AS (\n    SELECT\n        a.user_id  AS user_a,\n        b.user_id  AS user_b,\n        COUNT(*)   AS mutual_friend_count\n    FROM all_edges a\n    JOIN all_edges b\n      ON  a.friend_id = b.friend_id   -- same friend\n      AND a.user_id   < b.user_id     -- avoid duplicates and self-pairs\n    GROUP BY a.user_id, b.user_id\n)\nSELECT\n    user_a,\n    user_b,\n    mutual_friend_count\nFROM mutual_counts\nWHERE mutual_friend_count >= 3\nORDER BY mutual_friend_count DESC;",
-      "aiApproach": "This is a graph problem expressed in SQL. The key insight is normalizing directed edges with UNION ALL so you can find shared neighbors via a self-join on the friend side. The a.user_id < b.user_id predicate eliminates both duplicate pairs and self-pairs. For very large friendship graphs (Meta scale), this query is expensive\u2014interviewers may ask you to discuss approximate algorithms like locality-sensitive hashing or pre-computed mutual-friend counts."
+      "aiApproach": "This is a graph problem expressed in SQL. The key insight is normalizing directed edges with UNION ALL so you can find shared neighbors via a self-join on the friend side. The a.user_id < b.user_id predicate eliminates both duplicate pairs and self-pairs. For very large friendship graphs (Meta scale), this query is expensive--interviewers may ask you to discuss approximate algorithms like locality-sensitive hashing or pre-computed mutual-friend counts."
+    },
+    {
+      "id": 500,
+      "question": "Sessionize user clickstream data using a 30-minute inactivity gap in PostgreSQL. For each session, return the user_id, session number, session start/end times, and number of events. Table: clickstream(user_id, event_name, event_ts TIMESTAMP).",
+      "difficulty": "Hard",
+      "timeEstimate": 20,
+      "category": "Sessionization",
+      "hint": "Use LAG to compute the gap between consecutive events, then a cumulative SUM of boundary flags to assign session numbers.",
+      "answer": "Use LAG to find the previous event timestamp per user, flag rows where the gap exceeds 30 minutes as new session starts, then use a running SUM of those flags to assign session IDs.",
+      "pseudoCode": "-- PostgreSQL sessionization with 30-minute inactivity gap\nWITH with_prev AS (\n    SELECT\n        user_id,\n        event_name,\n        event_ts,\n        LAG(event_ts) OVER (PARTITION BY user_id ORDER BY event_ts) AS prev_ts\n    FROM clickstream\n),\nflagged AS (\n    SELECT\n        *,\n        CASE\n            WHEN prev_ts IS NULL\n              OR event_ts - prev_ts > INTERVAL '30 minutes'\n            THEN 1\n            ELSE 0\n        END AS new_session_flag\n    FROM with_prev\n),\nsessioned AS (\n    SELECT\n        *,\n        SUM(new_session_flag) OVER (\n            PARTITION BY user_id\n            ORDER BY event_ts\n            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n        ) AS session_num\n    FROM flagged\n)\nSELECT\n    user_id,\n    session_num,\n    MIN(event_ts)  AS session_start,\n    MAX(event_ts)  AS session_end,\n    COUNT(*)       AS event_count,\n    MAX(event_ts) - MIN(event_ts) AS session_duration\nFROM sessioned\nGROUP BY user_id, session_num\nORDER BY user_id, session_start;",
+      "aiApproach": "Sessionization is among the most common Meta DE interview questions. The pattern is always: LAG to detect gaps, CASE to flag boundaries, cumulative SUM to assign IDs. In PostgreSQL, use native INTERVAL arithmetic instead of TIMESTAMPDIFF. Mention that at Meta scale this would typically run in Spark or Presto with the same logical pattern."
+    },
+    {
+      "id": 501,
+      "question": "Calculate Day-1, Day-7, and Day-30 retention rates by weekly signup cohort in PostgreSQL. Tables: signups(user_id, signup_date DATE), user_activity(user_id, activity_date DATE).",
+      "difficulty": "Hard",
+      "timeEstimate": 20,
+      "category": "Retention",
+      "hint": "Join signups to activity, compute the day offset (activity_date - signup_date), then use conditional COUNT DISTINCT to pivot retention days into columns.",
+      "answer": "Join each user's activity to their signup date, compute the day offset, then use conditional aggregation to count distinct users who returned on exactly day 1, 7, and 30 within each weekly cohort.",
+      "pseudoCode": "WITH cohorts AS (\n    SELECT\n        user_id,\n        signup_date,\n        DATE_TRUNC('week', signup_date)::DATE AS cohort_week\n    FROM signups\n),\nactivity_with_offset AS (\n    SELECT\n        c.user_id,\n        c.cohort_week,\n        a.activity_date - c.signup_date AS day_offset\n    FROM cohorts c\n    INNER JOIN user_activity a ON a.user_id = c.user_id\n    WHERE a.activity_date >= c.signup_date\n)\nSELECT\n    cohort_week,\n    COUNT(DISTINCT c.user_id) AS cohort_size,\n    COUNT(DISTINCT CASE WHEN ao.day_offset = 1  THEN ao.user_id END) AS retained_d1,\n    COUNT(DISTINCT CASE WHEN ao.day_offset = 7  THEN ao.user_id END) AS retained_d7,\n    COUNT(DISTINCT CASE WHEN ao.day_offset = 30 THEN ao.user_id END) AS retained_d30,\n    ROUND(100.0 * COUNT(DISTINCT CASE WHEN ao.day_offset = 1  THEN ao.user_id END)\n        / NULLIF(COUNT(DISTINCT c.user_id), 0), 2) AS d1_retention_pct,\n    ROUND(100.0 * COUNT(DISTINCT CASE WHEN ao.day_offset = 7  THEN ao.user_id END)\n        / NULLIF(COUNT(DISTINCT c.user_id), 0), 2) AS d7_retention_pct,\n    ROUND(100.0 * COUNT(DISTINCT CASE WHEN ao.day_offset = 30 THEN ao.user_id END)\n        / NULLIF(COUNT(DISTINCT c.user_id), 0), 2) AS d30_retention_pct\nFROM cohorts c\nLEFT JOIN activity_with_offset ao\n    ON c.user_id = ao.user_id AND c.cohort_week = ao.cohort_week\nGROUP BY cohort_week\nORDER BY cohort_week;",
+      "aiApproach": "Retention is the single most important metric at Meta. The key design choice is whether 'day N' means exactly N days after signup or 'within the Nth day window.' PostgreSQL's native date subtraction (date - date = integer) makes offset computation trivial. Always use NULLIF to guard against zero-division for empty cohorts. At Meta scale, this query benefits from pre-aggregating a user-day activity table."
+    },
+    {
+      "id": 502,
+      "question": "Compute DAU, WAU (7-day), and MAU (28-day) along with the DAU/MAU ratio (stickiness) for each day. Table: user_activity(user_id, activity_date DATE).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "category": "Growth Metrics",
+      "hint": "Use GENERATE_SERIES for a date scaffold, then count distinct users within rolling windows using a date-range self-join or a RANGE frame.",
+      "answer": "Build a date spine with GENERATE_SERIES, then for each date compute DAU as same-day distinct users, WAU as distinct users in the trailing 7 days, and MAU as distinct users in the trailing 28 days. The DAU/MAU ratio measures product stickiness.",
+      "pseudoCode": "WITH date_spine AS (\n    SELECT d::DATE AS report_date\n    FROM GENERATE_SERIES(\n        (SELECT MIN(activity_date) FROM user_activity),\n        (SELECT MAX(activity_date) FROM user_activity),\n        INTERVAL '1 day'\n    ) AS d\n),\ndau AS (\n    SELECT\n        activity_date AS report_date,\n        COUNT(DISTINCT user_id) AS dau\n    FROM user_activity\n    GROUP BY activity_date\n),\nwau AS (\n    SELECT\n        ds.report_date,\n        COUNT(DISTINCT ua.user_id) AS wau\n    FROM date_spine ds\n    LEFT JOIN user_activity ua\n        ON ua.activity_date BETWEEN ds.report_date - INTERVAL '6 days' AND ds.report_date\n    GROUP BY ds.report_date\n),\nmau AS (\n    SELECT\n        ds.report_date,\n        COUNT(DISTINCT ua.user_id) AS mau\n    FROM date_spine ds\n    LEFT JOIN user_activity ua\n        ON ua.activity_date BETWEEN ds.report_date - INTERVAL '27 days' AND ds.report_date\n    GROUP BY ds.report_date\n)\nSELECT\n    ds.report_date,\n    COALESCE(d.dau, 0) AS dau,\n    w.wau,\n    m.mau,\n    ROUND(100.0 * COALESCE(d.dau, 0) / NULLIF(m.mau, 0), 2) AS dau_mau_ratio_pct\nFROM date_spine ds\nLEFT JOIN dau d ON ds.report_date = d.report_date\nLEFT JOIN wau w ON ds.report_date = w.report_date\nLEFT JOIN mau m ON ds.report_date = m.report_date\nORDER BY ds.report_date;",
+      "aiApproach": "DAU/MAU ratio (stickiness) is a core Meta product health metric. A ratio of 50%+ indicates a daily-use product. GENERATE_SERIES is PostgreSQL-specific and eliminates the need for recursive CTEs for date scaffolding. The trailing window definition (e.g., 6 days back + current = 7 day window) is a frequent source of off-by-one errors -- always clarify inclusive vs exclusive boundaries."
+    },
+    {
+      "id": 503,
+      "question": "Calculate a 7-day rolling average of daily revenue, handling missing dates correctly. Table: daily_revenue(report_date DATE, revenue NUMERIC).",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "category": "Rolling Averages",
+      "hint": "Use GENERATE_SERIES to fill date gaps, LEFT JOIN to actual revenue, then apply a window function with ROWS BETWEEN 6 PRECEDING AND CURRENT ROW.",
+      "answer": "Generate a complete date spine, left join to actual revenue (filling gaps with 0), then apply AVG over a 7-row window. This ensures the rolling average accounts for zero-revenue days rather than skipping them.",
+      "pseudoCode": "WITH date_spine AS (\n    SELECT d::DATE AS report_date\n    FROM GENERATE_SERIES(\n        (SELECT MIN(report_date) FROM daily_revenue),\n        (SELECT MAX(report_date) FROM daily_revenue),\n        INTERVAL '1 day'\n    ) AS d\n),\nfilled AS (\n    SELECT\n        ds.report_date,\n        COALESCE(dr.revenue, 0) AS revenue\n    FROM date_spine ds\n    LEFT JOIN daily_revenue dr ON ds.report_date = dr.report_date\n)\nSELECT\n    report_date,\n    revenue,\n    ROUND(\n        AVG(revenue) OVER (\n            ORDER BY report_date\n            ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n        ), 2\n    ) AS rolling_7d_avg,\n    SUM(revenue) OVER (\n        ORDER BY report_date\n        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n    ) AS rolling_7d_sum\nFROM filled\nORDER BY report_date;",
+      "aiApproach": "The critical subtlety is that ROWS BETWEEN operates on physical rows, not calendar days. If your data has gaps (missing dates), a 7-row window might span more than 7 days. Always scaffold with GENERATE_SERIES first to ensure 1 row per day. An alternative is RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW, but this requires a timestamp column and not all engines support it."
+    },
+    {
+      "id": 504,
+      "question": "Calculate a 28-day rolling average of daily new signups. Some days may have zero signups and no row in the table. Table: signups(user_id, signup_date DATE).",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "category": "Rolling Averages",
+      "hint": "Aggregate signups per day first, scaffold missing dates with GENERATE_SERIES and COALESCE to 0, then apply a 28-row rolling AVG.",
+      "answer": "Aggregate signup counts per day, generate a full date spine, fill missing days with zero, then compute the 28-day rolling average using a window function over the gapless series.",
+      "pseudoCode": "WITH daily_signups AS (\n    SELECT\n        signup_date,\n        COUNT(*) AS new_users\n    FROM signups\n    GROUP BY signup_date\n),\ndate_spine AS (\n    SELECT d::DATE AS report_date\n    FROM GENERATE_SERIES(\n        (SELECT MIN(signup_date) FROM signups),\n        (SELECT MAX(signup_date) FROM signups),\n        INTERVAL '1 day'\n    ) AS d\n),\nfilled AS (\n    SELECT\n        ds.report_date,\n        COALESCE(s.new_users, 0) AS new_users\n    FROM date_spine ds\n    LEFT JOIN daily_signups s ON ds.report_date = s.signup_date\n)\nSELECT\n    report_date,\n    new_users,\n    ROUND(\n        AVG(new_users) OVER (\n            ORDER BY report_date\n            ROWS BETWEEN 27 PRECEDING AND CURRENT ROW\n        ), 2\n    ) AS rolling_28d_avg\nFROM filled\nORDER BY report_date;",
+      "aiApproach": "28-day rolling averages smooth out weekly seasonality patterns that 7-day averages cannot. At Meta, L28 (last 28 days) is the standard reporting window for growth metrics. The key detail is using 27 PRECEDING + CURRENT ROW = 28 rows total. For the first 27 rows of the series, the average will use fewer data points -- mention this edge case to the interviewer."
+    },
+    {
+      "id": 505,
+      "question": "Build a multi-step conversion funnel: given events 'page_view', 'add_to_cart', 'checkout_start', 'purchase', compute the number of distinct users at each step and the step-over-step conversion rate. Table: product_events(user_id, event_name, event_ts TIMESTAMP).",
+      "difficulty": "Hard",
+      "timeEstimate": 20,
+      "category": "Funnel Analysis",
+      "hint": "Use conditional aggregation with COUNT(DISTINCT CASE WHEN ...) for each funnel step. Ensure events happen in the correct order by using MIN(event_ts) per step per user.",
+      "answer": "For each user, compute the earliest timestamp of each funnel step. A user qualifies for step N only if they completed step N-1 before step N. Use conditional aggregation to count users at each stage and compute drop-off rates.",
+      "pseudoCode": "WITH user_funnel AS (\n    SELECT\n        user_id,\n        MIN(event_ts) FILTER (WHERE event_name = 'page_view')      AS step1_ts,\n        MIN(event_ts) FILTER (WHERE event_name = 'add_to_cart')    AS step2_ts,\n        MIN(event_ts) FILTER (WHERE event_name = 'checkout_start') AS step3_ts,\n        MIN(event_ts) FILTER (WHERE event_name = 'purchase')       AS step4_ts\n    FROM product_events\n    WHERE event_name IN ('page_view', 'add_to_cart', 'checkout_start', 'purchase')\n    GROUP BY user_id\n),\nordered_funnel AS (\n    SELECT\n        user_id,\n        -- A user passes step N only if they did step N after step N-1\n        CASE WHEN step1_ts IS NOT NULL THEN 1 ELSE 0 END AS reached_step1,\n        CASE WHEN step2_ts IS NOT NULL AND step2_ts >= step1_ts THEN 1 ELSE 0 END AS reached_step2,\n        CASE WHEN step3_ts IS NOT NULL AND step3_ts >= step2_ts AND step2_ts >= step1_ts THEN 1 ELSE 0 END AS reached_step3,\n        CASE WHEN step4_ts IS NOT NULL AND step4_ts >= step3_ts AND step3_ts >= step2_ts AND step2_ts >= step1_ts THEN 1 ELSE 0 END AS reached_step4\n    FROM user_funnel\n)\nSELECT\n    SUM(reached_step1) AS users_page_view,\n    SUM(reached_step2) AS users_add_to_cart,\n    SUM(reached_step3) AS users_checkout_start,\n    SUM(reached_step4) AS users_purchase,\n    ROUND(100.0 * SUM(reached_step2) / NULLIF(SUM(reached_step1), 0), 2) AS view_to_cart_pct,\n    ROUND(100.0 * SUM(reached_step3) / NULLIF(SUM(reached_step2), 0), 2) AS cart_to_checkout_pct,\n    ROUND(100.0 * SUM(reached_step4) / NULLIF(SUM(reached_step3), 0), 2) AS checkout_to_purchase_pct,\n    ROUND(100.0 * SUM(reached_step4) / NULLIF(SUM(reached_step1), 0), 2) AS overall_conversion_pct\nFROM ordered_funnel;",
+      "aiApproach": "Funnel analysis is a core Meta product analytics pattern. The FILTER (WHERE ...) clause is PostgreSQL-specific syntactic sugar for conditional aggregation and is cleaner than CASE WHEN. The ordering constraint (step N timestamp >= step N-1) prevents counting users who did steps out of order. Discuss with the interviewer whether to enforce strict ordering or allow any-order completion."
+    },
+    {
+      "id": 506,
+      "question": "Recommend friends for each user based on mutual friend count. Return the top 5 non-friend recommendations per user ranked by mutual friends. Table: friendships(user_id INT, friend_id INT) -- each row represents a bidirectional friendship stored once (user_id < friend_id).",
+      "difficulty": "Hard",
+      "timeEstimate": 22,
+      "category": "Friend Recommendation",
+      "hint": "Normalize edges to be bidirectional, self-join on shared friends, exclude existing direct friendships, then rank by mutual count using ROW_NUMBER.",
+      "answer": "Create bidirectional edges, find all pairs of users who share a common friend but are not themselves friends, count mutual friends per pair, then rank recommendations per user and take top 5.",
+      "pseudoCode": "-- Step 1: Bidirectional edges\nWITH edges AS (\n    SELECT user_id, friend_id FROM friendships\n    UNION ALL\n    SELECT friend_id, user_id FROM friendships\n),\n-- Step 2: Find mutual friends (user_a -> friend <- user_b)\nmutuals AS (\n    SELECT\n        e1.user_id AS user_a,\n        e2.user_id AS user_b,\n        e1.friend_id AS mutual_friend\n    FROM edges e1\n    INNER JOIN edges e2\n        ON e1.friend_id = e2.friend_id  -- share a common friend\n       AND e1.user_id <> e2.user_id     -- not the same person\n),\n-- Step 3: Exclude existing friends\nmutual_counts AS (\n    SELECT\n        m.user_a,\n        m.user_b,\n        COUNT(DISTINCT m.mutual_friend) AS mutual_count\n    FROM mutuals m\n    LEFT JOIN edges e\n        ON e.user_id = m.user_a AND e.friend_id = m.user_b\n    WHERE e.user_id IS NULL  -- not already friends\n    GROUP BY m.user_a, m.user_b\n),\n-- Step 4: Rank recommendations per user\nranked AS (\n    SELECT\n        user_a,\n        user_b AS recommended_friend,\n        mutual_count,\n        ROW_NUMBER() OVER (\n            PARTITION BY user_a\n            ORDER BY mutual_count DESC, user_b\n        ) AS rec_rank\n    FROM mutual_counts\n)\nSELECT user_a AS user_id, recommended_friend, mutual_count\nFROM ranked\nWHERE rec_rank <= 5\nORDER BY user_a, rec_rank;",
+      "aiApproach": "Friend recommendation via mutual friends is a classic Meta interview problem -- it directly models the 'People You May Know' feature. The most common mistake is forgetting to normalize edges to bidirectional. The LEFT JOIN exclusion of existing friends is critical. At Meta scale, this is precomputed daily rather than run in real-time. Discuss storage trade-offs with the interviewer."
+    },
+    {
+      "id": 507,
+      "question": "Calculate content engagement metrics: for each post, compute the like rate, comment rate, share rate, and an overall engagement score (likes + 2*comments + 3*shares) per impression. Tables: posts(post_id, user_id, created_at), impressions(post_id, viewer_id, impression_ts), engagements(post_id, user_id, engagement_type, engaged_at) where engagement_type IN ('like', 'comment', 'share').",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "category": "Content Engagement",
+      "hint": "Aggregate engagements by post and type using conditional counts, join to impression counts, then divide for rates.",
+      "answer": "Count impressions and each engagement type per post, then compute rates. The weighted engagement score gives higher value to comments and shares since they indicate deeper engagement.",
+      "pseudoCode": "WITH impression_counts AS (\n    SELECT\n        post_id,\n        COUNT(*) AS total_impressions\n    FROM impressions\n    GROUP BY post_id\n),\nengagement_counts AS (\n    SELECT\n        post_id,\n        COUNT(*) FILTER (WHERE engagement_type = 'like')    AS likes,\n        COUNT(*) FILTER (WHERE engagement_type = 'comment') AS comments,\n        COUNT(*) FILTER (WHERE engagement_type = 'share')   AS shares\n    FROM engagements\n    GROUP BY post_id\n)\nSELECT\n    p.post_id,\n    p.user_id AS author_id,\n    ic.total_impressions,\n    COALESCE(ec.likes, 0)    AS likes,\n    COALESCE(ec.comments, 0) AS comments,\n    COALESCE(ec.shares, 0)   AS shares,\n    ROUND(100.0 * COALESCE(ec.likes, 0)    / NULLIF(ic.total_impressions, 0), 4) AS like_rate_pct,\n    ROUND(100.0 * COALESCE(ec.comments, 0) / NULLIF(ic.total_impressions, 0), 4) AS comment_rate_pct,\n    ROUND(100.0 * COALESCE(ec.shares, 0)   / NULLIF(ic.total_impressions, 0), 4) AS share_rate_pct,\n    ROUND(\n        (COALESCE(ec.likes, 0) + 2.0 * COALESCE(ec.comments, 0) + 3.0 * COALESCE(ec.shares, 0))\n        / NULLIF(ic.total_impressions, 0),\n    6) AS engagement_score\nFROM posts p\nLEFT JOIN impression_counts ic ON p.post_id = ic.post_id\nLEFT JOIN engagement_counts ec ON p.post_id = ec.post_id\nORDER BY engagement_score DESC NULLS LAST;",
+      "aiApproach": "Content ranking at Meta relies heavily on engagement scores like this. The weighted formula (1x likes, 2x comments, 3x shares) reflects the effort/value hierarchy. In practice, the weights are learned from ML models rather than hardcoded. Mention to the interviewer that you would also want to normalize by content age and viewer demographics to avoid bias toward older or viral posts."
+    },
+    {
+      "id": 508,
+      "question": "Detect gaps and islands in user activity: identify continuous streaks of daily activity and gaps between them. Table: user_activity(user_id, activity_date DATE).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "category": "Gaps and Islands",
+      "hint": "Subtract a ROW_NUMBER from the activity_date. Consecutive dates will produce the same group identifier.",
+      "answer": "The classic gaps-and-islands technique: assign a row number ordered by date within each user, subtract it from the date to create a group key. Consecutive dates produce the same group key, which identifies each island (streak).",
+      "pseudoCode": "WITH deduped AS (\n    -- Remove duplicate dates per user\n    SELECT DISTINCT user_id, activity_date\n    FROM user_activity\n),\nwith_group AS (\n    SELECT\n        user_id,\n        activity_date,\n        activity_date - (ROW_NUMBER() OVER (\n            PARTITION BY user_id\n            ORDER BY activity_date\n        ))::INT AS grp\n    FROM deduped\n),\nstreaks AS (\n    SELECT\n        user_id,\n        grp,\n        MIN(activity_date) AS streak_start,\n        MAX(activity_date) AS streak_end,\n        COUNT(*)           AS streak_length_days\n    FROM with_group\n    GROUP BY user_id, grp\n)\nSELECT\n    user_id,\n    streak_start,\n    streak_end,\n    streak_length_days,\n    -- Also show the gap before this streak\n    streak_start - LAG(streak_end) OVER (\n        PARTITION BY user_id ORDER BY streak_start\n    ) - 1 AS gap_days_before\nFROM streaks\nORDER BY user_id, streak_start;",
+      "aiApproach": "The date-minus-row-number trick is elegant because it exploits the fact that consecutive integers subtracted from consecutive dates yield the same constant. This is a frequently tested pattern at Meta. The deduplication step is critical -- without it, a user with two events on the same day breaks the island detection. The LAG at the end computes gap duration between islands for free."
+    },
+    {
+      "id": 509,
+      "question": "Use a recursive CTE to generate an organizational hierarchy tree showing the chain of command from CEO to every employee, with indented formatting. Table: employees(employee_id, name, manager_id, title).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "category": "Recursive CTE",
+      "hint": "Anchor on employees where manager_id IS NULL (the CEO), then recursively join employees whose manager_id matches the parent's employee_id.",
+      "answer": "Use WITH RECURSIVE anchored on the top-level manager (manager_id IS NULL), then recursively join to direct reports. Track the depth level and build a path string for hierarchy display.",
+      "pseudoCode": "WITH RECURSIVE org_tree AS (\n    -- Anchor: CEO / top-level manager(s)\n    SELECT\n        employee_id,\n        name,\n        title,\n        manager_id,\n        1 AS depth,\n        name::TEXT AS path,\n        ARRAY[employee_id] AS path_ids\n    FROM employees\n    WHERE manager_id IS NULL\n\n    UNION ALL\n\n    -- Recursive: direct reports\n    SELECT\n        e.employee_id,\n        e.name,\n        e.title,\n        e.manager_id,\n        ot.depth + 1,\n        ot.path || ' > ' || e.name,\n        ot.path_ids || e.employee_id\n    FROM employees e\n    INNER JOIN org_tree ot ON e.manager_id = ot.employee_id\n)\nSELECT\n    employee_id,\n    REPEAT('    ', depth - 1) || name AS indented_name,\n    title,\n    depth,\n    path,\n    -- Count of all reports (direct + indirect) below this person\n    (SELECT COUNT(*)\n     FROM org_tree sub\n     WHERE sub.path_ids @> ARRAY[org_tree.employee_id]\n       AND sub.employee_id <> org_tree.employee_id\n    ) AS total_reports\nFROM org_tree\nORDER BY path;",
+      "aiApproach": "Recursive CTEs are the standard PostgreSQL approach for hierarchical queries. The path_ids array enables checking ancestry with the @> (contains) operator. The total_reports subquery is expensive for large orgs -- in production, pre-compute it. Watch for infinite loops if the data has circular references; add a depth limit (WHERE depth < 20) as a safeguard."
+    },
+    {
+      "id": 510,
+      "question": "Use GENERATE_SERIES to create a date scaffold for the last 90 days and LEFT JOIN to daily metrics, filling NULLs with 0. Show daily signups and cumulative signups. Table: signups(user_id, signup_date DATE).",
+      "difficulty": "Medium",
+      "timeEstimate": 12,
+      "category": "Date Scaffolding",
+      "hint": "GENERATE_SERIES(CURRENT_DATE - 89, CURRENT_DATE, '1 day'::INTERVAL) creates 90 rows. LEFT JOIN daily signup counts and COALESCE NULLs to 0.",
+      "answer": "Use GENERATE_SERIES to produce every date in the range, left join to aggregated signup counts, fill missing days with 0, then compute a cumulative sum.",
+      "pseudoCode": "WITH date_scaffold AS (\n    SELECT d::DATE AS report_date\n    FROM GENERATE_SERIES(\n        CURRENT_DATE - INTERVAL '89 days',\n        CURRENT_DATE,\n        INTERVAL '1 day'\n    ) AS d\n),\ndaily_counts AS (\n    SELECT\n        signup_date,\n        COUNT(*) AS new_users\n    FROM signups\n    WHERE signup_date >= CURRENT_DATE - INTERVAL '89 days'\n    GROUP BY signup_date\n)\nSELECT\n    ds.report_date,\n    COALESCE(dc.new_users, 0) AS daily_signups,\n    SUM(COALESCE(dc.new_users, 0)) OVER (\n        ORDER BY ds.report_date\n        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n    ) AS cumulative_signups\nFROM date_scaffold ds\nLEFT JOIN daily_counts dc ON ds.report_date = dc.signup_date\nORDER BY ds.report_date;",
+      "aiApproach": "GENERATE_SERIES is PostgreSQL's killer feature for time-series analysis. It replaces recursive CTEs and calendar tables entirely. The 89-day offset (not 90) is intentional: CURRENT_DATE - 89 through CURRENT_DATE inclusive = 90 days. This off-by-one is a common interview trap. Cumulative SUM with ROWS BETWEEN ensures correct behavior even with tie dates."
+    },
+    {
+      "id": 511,
+      "question": "Compute the P50, P90, and P99 latency for each API endpoint from a request log. Table: api_requests(request_id, endpoint, latency_ms NUMERIC, request_ts TIMESTAMP).",
+      "difficulty": "Medium",
+      "timeEstimate": 12,
+      "category": "Percentiles",
+      "hint": "Use PERCENTILE_CONT(fraction) WITHIN GROUP (ORDER BY latency_ms) grouped by endpoint.",
+      "answer": "Use PostgreSQL's ordered-set aggregate functions PERCENTILE_CONT for interpolated percentiles and PERCENTILE_DISC for discrete percentiles, grouped by endpoint.",
+      "pseudoCode": "SELECT\n    endpoint,\n    COUNT(*)                                                        AS request_count,\n    ROUND(AVG(latency_ms), 2)                                      AS avg_latency_ms,\n    ROUND(PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY latency_ms), 2) AS p50_ms,\n    ROUND(PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY latency_ms), 2) AS p90_ms,\n    ROUND(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY latency_ms), 2) AS p99_ms,\n    -- PERCENTILE_DISC returns an actual observed value (no interpolation)\n    PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY latency_ms)           AS p99_disc_ms,\n    ROUND(STDDEV(latency_ms), 2)                                   AS stddev_ms\nFROM api_requests\nWHERE request_ts >= CURRENT_DATE - INTERVAL '7 days'\nGROUP BY endpoint\nORDER BY p99_ms DESC;",
+      "aiApproach": "PERCENTILE_CONT interpolates between adjacent values for exact fractional percentiles, while PERCENTILE_DISC returns the closest actual data point. For latency monitoring (SLOs), P99 is the standard threshold. At Meta, percentile computation at scale uses approximate algorithms like T-Digest or KLL sketches -- mention these if the interviewer asks about scalability."
+    },
+    {
+      "id": 512,
+      "question": "Use DATE_TRUNC, EXTRACT, and INTERVAL to compute week-over-week growth rate of daily active users. Table: user_activity(user_id, activity_date DATE).",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "category": "Time Series",
+      "hint": "Truncate dates to week, count DAU per week, then use LAG to get the previous week's count and compute percentage change.",
+      "answer": "Truncate activity_date to ISO week, count distinct users per week, use LAG to access the prior week's value, then compute the percentage growth.",
+      "pseudoCode": "WITH weekly_active AS (\n    SELECT\n        DATE_TRUNC('week', activity_date)::DATE AS week_start,\n        COUNT(DISTINCT user_id)                 AS wau\n    FROM user_activity\n    GROUP BY DATE_TRUNC('week', activity_date)\n)\nSELECT\n    week_start,\n    wau,\n    LAG(wau) OVER (ORDER BY week_start) AS prev_week_wau,\n    ROUND(\n        100.0 * (wau - LAG(wau) OVER (ORDER BY week_start))\n        / NULLIF(LAG(wau) OVER (ORDER BY week_start), 0),\n    2) AS wow_growth_pct,\n    -- Also show the ISO week number and year\n    EXTRACT(ISOYEAR FROM week_start) AS iso_year,\n    EXTRACT(WEEK FROM week_start)    AS iso_week\nFROM weekly_active\nORDER BY week_start;",
+      "aiApproach": "DATE_TRUNC('week', ...) in PostgreSQL truncates to Monday by default (ISO 8601). Use EXTRACT(ISOYEAR ...) rather than EXTRACT(YEAR ...) to correctly handle weeks that span year boundaries. WoW growth rate is a key metric in Meta's weekly business reviews. NULLIF prevents division by zero for the first row where LAG returns NULL."
+    },
+    {
+      "id": 513,
+      "question": "Write a query using PostgreSQL array functions to find users whose set of liked pages overlaps by at least 3 pages with a given target user. Table: page_likes(user_id INT, page_id INT).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "category": "Array Functions",
+      "hint": "Use ARRAY_AGG to collect each user's liked pages into an array, then use the && (overlap) operator and compute intersection cardinality.",
+      "answer": "Aggregate each user's page_ids into a sorted array, compute the intersection with the target user's array, and filter for users whose intersection has 3 or more elements.",
+      "pseudoCode": "WITH user_pages AS (\n    SELECT\n        user_id,\n        ARRAY_AGG(DISTINCT page_id ORDER BY page_id) AS liked_pages\n    FROM page_likes\n    GROUP BY user_id\n),\ntarget AS (\n    SELECT liked_pages\n    FROM user_pages\n    WHERE user_id = 12345  -- the target user\n)\nSELECT\n    up.user_id,\n    -- Intersection: elements in both arrays\n    (\n        SELECT ARRAY_AGG(elem ORDER BY elem)\n        FROM UNNEST(up.liked_pages) AS elem\n        WHERE elem = ANY((SELECT liked_pages FROM target))\n    ) AS common_pages,\n    -- Count of common pages\n    (\n        SELECT COUNT(*)\n        FROM UNNEST(up.liked_pages) AS elem\n        WHERE elem = ANY((SELECT liked_pages FROM target))\n    ) AS overlap_count\nFROM user_pages up\nWHERE up.user_id <> 12345\n  AND up.liked_pages && (SELECT liked_pages FROM target)  -- quick overlap check\nHAVING (\n    SELECT COUNT(*)\n    FROM UNNEST(up.liked_pages) AS elem\n    WHERE elem = ANY((SELECT liked_pages FROM target))\n) >= 3\nORDER BY overlap_count DESC;",
+      "aiApproach": "PostgreSQL's array operators (&& for overlap, @> for contains) enable set operations directly in SQL. The && operator in the WHERE clause is a fast pre-filter before computing exact intersection size. At Meta scale, this would use a pre-built inverted index or embedding similarity rather than raw set intersection. UNNEST + aggregation is the standard way to compute array intersection when the intarray extension is not available."
+    },
+    {
+      "id": 514,
+      "question": "Use a self-join to find users who performed a 'purchase' event within 24 hours of a 'page_view' event on the same product. Table: product_events(user_id, product_id, event_name, event_ts TIMESTAMP).",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "category": "Sequential Events",
+      "hint": "Self-join the table: one alias for 'page_view' events, another for 'purchase' events. Filter where purchase_ts is between view_ts and view_ts + INTERVAL '24 hours'.",
+      "answer": "Self-join product_events aliased twice: once filtered to page_view, once to purchase. Match on user_id and product_id, constraining the purchase to occur within 24 hours after the view.",
+      "pseudoCode": "SELECT DISTINCT\n    v.user_id,\n    v.product_id,\n    v.event_ts  AS view_ts,\n    p.event_ts  AS purchase_ts,\n    p.event_ts - v.event_ts AS time_to_convert\nFROM product_events v\nINNER JOIN product_events p\n    ON  v.user_id    = p.user_id\n    AND v.product_id = p.product_id\n    AND v.event_name = 'page_view'\n    AND p.event_name = 'purchase'\n    AND p.event_ts   > v.event_ts\n    AND p.event_ts   <= v.event_ts + INTERVAL '24 hours'\nORDER BY v.user_id, v.event_ts;",
+      "aiApproach": "Self-joins for sequential event analysis are a bread-and-butter Meta interview pattern. The key constraints are: (1) same user + product, (2) correct event types, (3) purchase AFTER view (not before), (4) within the time window. Without the time window, you would get all-time conversions. A common follow-up is to attribute the conversion to the LAST view before purchase, which requires adding ROW_NUMBER with DESC ordering."
+    },
+    {
+      "id": 515,
+      "question": "Compute the median time between consecutive logins per user. Only include users with at least 5 logins. Table: logins(user_id, login_ts TIMESTAMP).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "category": "Percentiles",
+      "hint": "Use LAG to compute inter-login intervals, then PERCENTILE_CONT(0.5) on those intervals grouped by user_id. Filter with HAVING.",
+      "answer": "Compute gaps between consecutive logins using LAG, then use PERCENTILE_CONT(0.5) to find the median gap per user, filtering to users with 5+ logins.",
+      "pseudoCode": "WITH login_gaps AS (\n    SELECT\n        user_id,\n        login_ts,\n        login_ts - LAG(login_ts) OVER (\n            PARTITION BY user_id ORDER BY login_ts\n        ) AS gap_interval\n    FROM logins\n),\ngap_hours AS (\n    SELECT\n        user_id,\n        -- Convert interval to hours for numeric aggregation\n        EXTRACT(EPOCH FROM gap_interval) / 3600.0 AS gap_hours\n    FROM login_gaps\n    WHERE gap_interval IS NOT NULL  -- exclude first login (no previous)\n)\nSELECT\n    user_id,\n    COUNT(*) + 1 AS total_logins,  -- gaps = logins - 1\n    ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY gap_hours), 2) AS median_gap_hours,\n    ROUND(AVG(gap_hours), 2) AS avg_gap_hours,\n    ROUND(MIN(gap_hours), 2) AS min_gap_hours,\n    ROUND(MAX(gap_hours), 2) AS max_gap_hours\nFROM gap_hours\nGROUP BY user_id\nHAVING COUNT(*) + 1 >= 5  -- at least 5 logins\nORDER BY median_gap_hours;",
+      "aiApproach": "This combines LAG for sequential analysis with PERCENTILE_CONT for robust central tendency. The median is preferred over mean because login gaps often have extreme outliers (e.g., vacation periods). Converting PostgreSQL INTERVAL to numeric (via EXTRACT(EPOCH FROM ...)) is required because PERCENTILE_CONT does not work directly on intervals. This pattern is used at Meta to segment users into engagement tiers."
+    },
+    {
+      "id": 516,
+      "question": "Find the longest streak of consecutive days with revenue above $10,000. Table: daily_revenue(report_date DATE, revenue NUMERIC).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "category": "Gaps and Islands",
+      "hint": "Filter to days above the threshold, then apply the gaps-and-islands technique (date minus row_number) to find consecutive groups. Take MAX streak length.",
+      "answer": "Filter to qualifying days, use the date-minus-row-number trick to identify consecutive streaks, then find the longest one.",
+      "pseudoCode": "WITH qualifying_days AS (\n    SELECT\n        report_date,\n        revenue\n    FROM daily_revenue\n    WHERE revenue > 10000\n),\nislands AS (\n    SELECT\n        report_date,\n        revenue,\n        report_date - (ROW_NUMBER() OVER (ORDER BY report_date))::INT AS grp\n    FROM qualifying_days\n),\nstreak_summary AS (\n    SELECT\n        grp,\n        MIN(report_date) AS streak_start,\n        MAX(report_date) AS streak_end,\n        COUNT(*)         AS streak_days,\n        ROUND(AVG(revenue), 2) AS avg_daily_revenue,\n        SUM(revenue)     AS total_revenue\n    FROM islands\n    GROUP BY grp\n)\nSELECT *\nFROM streak_summary\nORDER BY streak_days DESC\nLIMIT 1;",
+      "aiApproach": "This is the gaps-and-islands pattern applied to a threshold condition rather than mere existence. The subtraction of ROW_NUMBER from the date creates a constant group identifier for consecutive qualifying dates. A common follow-up is to show the top N streaks or to parameterize the threshold. Note that missing dates in the source table are implicitly treated as gaps."
+    },
+    {
+      "id": 517,
+      "question": "Build a recursive CTE that generates a date-based tree of weekly cohort sizes, splitting each cohort into 'retained' and 'churned' branches for weeks 1 through 4. Tables: signups(user_id, signup_date), user_activity(user_id, activity_date).",
+      "difficulty": "Hard",
+      "timeEstimate": 22,
+      "category": "Recursive CTE",
+      "hint": "Anchor on week 0 (signup cohort size), then recursively compute retained users for each subsequent week by checking activity within that week window.",
+      "answer": "Use a recursive CTE that starts with the full cohort at week 0, then for each subsequent week checks how many users from the previous week's retained set were active in the new week.",
+      "pseudoCode": "WITH RECURSIVE cohort_base AS (\n    SELECT\n        DATE_TRUNC('week', signup_date)::DATE AS cohort_week,\n        COUNT(DISTINCT user_id) AS cohort_size\n    FROM signups\n    GROUP BY DATE_TRUNC('week', signup_date)\n),\nretention_tree AS (\n    -- Anchor: week 0 = full cohort\n    SELECT\n        cb.cohort_week,\n        0 AS week_number,\n        cb.cohort_size AS retained_users,\n        cb.cohort_size AS original_size\n    FROM cohort_base cb\n\n    UNION ALL\n\n    -- Recursive: check activity in week N\n    SELECT\n        rt.cohort_week,\n        rt.week_number + 1,\n        (\n            SELECT COUNT(DISTINCT s.user_id)\n            FROM signups s\n            INNER JOIN user_activity ua ON ua.user_id = s.user_id\n            WHERE DATE_TRUNC('week', s.signup_date)::DATE = rt.cohort_week\n              AND ua.activity_date BETWEEN\n                  rt.cohort_week + ((rt.week_number + 1) * 7)\n                  AND rt.cohort_week + ((rt.week_number + 1) * 7 + 6)\n        ),\n        rt.original_size\n    FROM retention_tree rt\n    WHERE rt.week_number < 4\n)\nSELECT\n    cohort_week,\n    week_number,\n    retained_users,\n    original_size,\n    original_size - retained_users AS churned_users,\n    ROUND(100.0 * retained_users / NULLIF(original_size, 0), 2) AS retention_pct\nFROM retention_tree\nORDER BY cohort_week, week_number;",
+      "aiApproach": "This combines recursive CTEs with retention analysis -- two high-frequency Meta interview topics. The recursive approach lets you elegantly build a week-by-week decay curve per cohort. A key subtlety: this measures weekly retention (active during week N), not point retention (active on day N). The correlated subquery inside the recursive term can be expensive; in production, pre-aggregate a user-week activity table."
+    },
+    {
+      "id": 518,
+      "question": "Find all users who were active on 3 or more consecutive days in the last 30 days, and return their longest streak. Table: user_activity(user_id, activity_date DATE).",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "category": "Gaps and Islands",
+      "hint": "Apply the date-minus-row-number pattern per user, group by the resulting island key, filter for islands with 3+ days.",
+      "answer": "Deduplicate user-date pairs, apply the gaps-and-islands technique per user, identify streaks of 3+ consecutive days within the last 30 days.",
+      "pseudoCode": "WITH recent_activity AS (\n    SELECT DISTINCT user_id, activity_date\n    FROM user_activity\n    WHERE activity_date >= CURRENT_DATE - INTERVAL '30 days'\n),\nwith_islands AS (\n    SELECT\n        user_id,\n        activity_date,\n        activity_date - (ROW_NUMBER() OVER (\n            PARTITION BY user_id\n            ORDER BY activity_date\n        ))::INT AS island_id\n    FROM recent_activity\n),\nstreaks AS (\n    SELECT\n        user_id,\n        island_id,\n        MIN(activity_date) AS streak_start,\n        MAX(activity_date) AS streak_end,\n        COUNT(*)           AS streak_days\n    FROM with_islands\n    GROUP BY user_id, island_id\n    HAVING COUNT(*) >= 3\n),\nlongest_per_user AS (\n    SELECT\n        user_id,\n        streak_start,\n        streak_end,\n        streak_days,\n        ROW_NUMBER() OVER (\n            PARTITION BY user_id\n            ORDER BY streak_days DESC, streak_start DESC\n        ) AS rn\n    FROM streaks\n)\nSELECT user_id, streak_start, streak_end, streak_days\nFROM longest_per_user\nWHERE rn = 1\nORDER BY streak_days DESC, user_id;",
+      "aiApproach": "Streak detection is used for engagement features (e.g., Snapchat streaks, fitness app chains). The gaps-and-islands pattern is the standard approach. Deduplicating with SELECT DISTINCT is essential to avoid counting multiple events on the same day as multiple streak days. The final ROW_NUMBER picks each user's longest streak."
+    },
+    {
+      "id": 519,
+      "question": "Build a time-based funnel with maximum conversion windows: from a stream of events, determine what fraction of users who did 'app_open' performed 'search' within 5 minutes, then 'click_result' within 2 minutes of search. Table: app_events(user_id, event_name, event_ts TIMESTAMP).",
+      "difficulty": "Hard",
+      "timeEstimate": 22,
+      "category": "Funnel Analysis",
+      "hint": "Use self-joins with time constraints, or use LEAD/LAG to find the next event of a specific type within a time window. Build each step incrementally.",
+      "answer": "For each user, find the first qualifying sequence: app_open -> search (within 5 min) -> click_result (within 2 min of search). Count users at each stage.",
+      "pseudoCode": "WITH step1 AS (\n    -- All app_open events\n    SELECT user_id, event_ts AS open_ts\n    FROM app_events\n    WHERE event_name = 'app_open'\n),\nstep2 AS (\n    -- First search within 5 minutes of an app_open\n    SELECT DISTINCT ON (s1.user_id, s1.open_ts)\n        s1.user_id,\n        s1.open_ts,\n        e.event_ts AS search_ts\n    FROM step1 s1\n    INNER JOIN app_events e\n        ON  e.user_id = s1.user_id\n        AND e.event_name = 'search'\n        AND e.event_ts > s1.open_ts\n        AND e.event_ts <= s1.open_ts + INTERVAL '5 minutes'\n    ORDER BY s1.user_id, s1.open_ts, e.event_ts\n),\nstep3 AS (\n    -- First click_result within 2 minutes of search\n    SELECT DISTINCT ON (s2.user_id, s2.open_ts)\n        s2.user_id,\n        s2.open_ts,\n        s2.search_ts,\n        e.event_ts AS click_ts\n    FROM step2 s2\n    INNER JOIN app_events e\n        ON  e.user_id = s2.user_id\n        AND e.event_name = 'click_result'\n        AND e.event_ts > s2.search_ts\n        AND e.event_ts <= s2.search_ts + INTERVAL '2 minutes'\n    ORDER BY s2.user_id, s2.open_ts, e.event_ts\n)\nSELECT\n    COUNT(DISTINCT s1.user_id) AS users_opened,\n    COUNT(DISTINCT s2.user_id) AS users_searched,\n    COUNT(DISTINCT s3.user_id) AS users_clicked,\n    ROUND(100.0 * COUNT(DISTINCT s2.user_id) / NULLIF(COUNT(DISTINCT s1.user_id), 0), 2) AS open_to_search_pct,\n    ROUND(100.0 * COUNT(DISTINCT s3.user_id) / NULLIF(COUNT(DISTINCT s2.user_id), 0), 2) AS search_to_click_pct,\n    ROUND(100.0 * COUNT(DISTINCT s3.user_id) / NULLIF(COUNT(DISTINCT s1.user_id), 0), 2) AS overall_pct\nFROM step1 s1\nLEFT JOIN step2 s2 ON s1.user_id = s2.user_id AND s1.open_ts = s2.open_ts\nLEFT JOIN step3 s3 ON s2.user_id = s3.user_id AND s2.open_ts = s3.open_ts;",
+      "aiApproach": "Time-bounded funnels are more realistic than simple 'did they ever do X' funnels. DISTINCT ON is a PostgreSQL-specific feature that selects the first row per group (equivalent to ROW_NUMBER = 1 but more concise). The key design decisions are: (1) maximum time between steps, (2) whether to count per-session or per-user, (3) whether steps must be strictly sequential or can interleave with other events."
+    },
+    {
+      "id": 520,
+      "question": "Calculate the rolling 7-day distinct user count (WAU) for each day without using a date-range self-join. Table: user_activity(user_id, activity_date DATE).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "category": "Rolling Averages",
+      "hint": "You cannot use COUNT(DISTINCT) with a window frame. Instead, use a date spine + lateral join or a clever GROUP BY with GENERATE_SERIES to count distinct users in a 7-day lookback for each day.",
+      "answer": "Since window functions do not support COUNT(DISTINCT) with frames, use GENERATE_SERIES for a date spine and a lateral subquery (or explicit join) to count distinct users in the trailing 7-day window for each date.",
+      "pseudoCode": "WITH date_spine AS (\n    SELECT d::DATE AS report_date\n    FROM GENERATE_SERIES(\n        (SELECT MIN(activity_date) + 6 FROM user_activity),\n        (SELECT MAX(activity_date) FROM user_activity),\n        INTERVAL '1 day'\n    ) AS d\n)\nSELECT\n    ds.report_date,\n    wau.distinct_users AS rolling_7d_users\nFROM date_spine ds\nCROSS JOIN LATERAL (\n    SELECT COUNT(DISTINCT user_id) AS distinct_users\n    FROM user_activity\n    WHERE activity_date BETWEEN ds.report_date - INTERVAL '6 days'\n                            AND ds.report_date\n) wau\nORDER BY ds.report_date;",
+      "aiApproach": "This is a deceptively hard problem because the obvious window-function approach (COUNT(DISTINCT ...) OVER (ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)) does NOT work in PostgreSQL -- COUNT(DISTINCT) is not supported as a window function. The LATERAL join is the cleanest PostgreSQL solution. An alternative is to UNNEST each day into its 7-day range using GENERATE_SERIES, then aggregate. This is frequently asked at Meta because WAU is reported daily."
+    },
+    {
+      "id": 521,
+      "question": "Detect notification fatigue: find users whose click-through rate on notifications dropped by more than 50% comparing the last 7 days to the prior 7 days. Table: notifications(user_id, notif_id, sent_ts TIMESTAMP, clicked BOOLEAN).",
+      "difficulty": "Hard",
+      "timeEstimate": 18,
+      "category": "Content Engagement",
+      "hint": "Compute CTR per user for two periods (last 7 days and prior 7 days) using conditional aggregation, then compare the two CTRs.",
+      "answer": "Partition each user's notifications into two periods, compute click-through rate for each period, then flag users whose recent CTR is less than 50% of their earlier CTR.",
+      "pseudoCode": "WITH user_ctr AS (\n    SELECT\n        user_id,\n        -- Prior period: days 8-14 ago\n        COUNT(*) FILTER (\n            WHERE sent_ts::DATE BETWEEN CURRENT_DATE - 14 AND CURRENT_DATE - 8\n        ) AS prior_sent,\n        COUNT(*) FILTER (\n            WHERE sent_ts::DATE BETWEEN CURRENT_DATE - 14 AND CURRENT_DATE - 8\n              AND clicked = TRUE\n        ) AS prior_clicks,\n        -- Recent period: last 7 days\n        COUNT(*) FILTER (\n            WHERE sent_ts::DATE BETWEEN CURRENT_DATE - 7 AND CURRENT_DATE - 1\n        ) AS recent_sent,\n        COUNT(*) FILTER (\n            WHERE sent_ts::DATE BETWEEN CURRENT_DATE - 7 AND CURRENT_DATE - 1\n              AND clicked = TRUE\n        ) AS recent_clicks\n    FROM notifications\n    WHERE sent_ts >= CURRENT_DATE - INTERVAL '14 days'\n    GROUP BY user_id\n)\nSELECT\n    user_id,\n    prior_sent,\n    prior_clicks,\n    ROUND(100.0 * prior_clicks / NULLIF(prior_sent, 0), 2) AS prior_ctr_pct,\n    recent_sent,\n    recent_clicks,\n    ROUND(100.0 * recent_clicks / NULLIF(recent_sent, 0), 2) AS recent_ctr_pct,\n    ROUND(\n        100.0 * (\n            (recent_clicks::NUMERIC / NULLIF(recent_sent, 0))\n            - (prior_clicks::NUMERIC / NULLIF(prior_sent, 0))\n        ) / NULLIF(prior_clicks::NUMERIC / NULLIF(prior_sent, 0), 0),\n    2) AS ctr_change_pct\nFROM user_ctr\nWHERE prior_sent >= 5  -- minimum sample size\n  AND recent_sent >= 5\n  AND (recent_clicks::NUMERIC / NULLIF(recent_sent, 0))\n      < 0.5 * (prior_clicks::NUMERIC / NULLIF(prior_sent, 0))\nORDER BY ctr_change_pct;",
+      "aiApproach": "Notification fatigue detection is a real Meta product concern -- over-notifying users leads to uninstalls. The FILTER clause (PostgreSQL-specific) makes multi-period conditional aggregation clean. The minimum sample size threshold (>= 5) prevents flagging users with too few notifications. A production system would also consider a statistical significance test rather than a simple 50% threshold."
+    },
+    {
+      "id": 522,
+      "question": "Using GENERATE_SERIES and LEFT JOIN, create an hourly activity heatmap for the last 7 days showing event counts per hour of day. Table: user_events(user_id, event_type, event_ts TIMESTAMP).",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "category": "Date Scaffolding",
+      "hint": "Cross join GENERATE_SERIES(0, 23) for hours with GENERATE_SERIES for dates. Left join to event counts grouped by date and hour.",
+      "answer": "Generate all (date, hour) pairs using GENERATE_SERIES, then left join to actual event counts to produce a complete grid including zero-activity cells.",
+      "pseudoCode": "WITH date_range AS (\n    SELECT d::DATE AS report_date\n    FROM GENERATE_SERIES(\n        CURRENT_DATE - INTERVAL '6 days',\n        CURRENT_DATE,\n        INTERVAL '1 day'\n    ) AS d\n),\nhours AS (\n    SELECT h AS hour_of_day\n    FROM GENERATE_SERIES(0, 23) AS h\n),\nscaffold AS (\n    SELECT report_date, hour_of_day\n    FROM date_range CROSS JOIN hours\n),\nevent_counts AS (\n    SELECT\n        event_ts::DATE                AS event_date,\n        EXTRACT(HOUR FROM event_ts)::INT AS event_hour,\n        COUNT(*)                      AS event_count,\n        COUNT(DISTINCT user_id)       AS unique_users\n    FROM user_events\n    WHERE event_ts >= CURRENT_DATE - INTERVAL '6 days'\n    GROUP BY event_ts::DATE, EXTRACT(HOUR FROM event_ts)\n)\nSELECT\n    s.report_date,\n    s.hour_of_day,\n    COALESCE(ec.event_count, 0)  AS event_count,\n    COALESCE(ec.unique_users, 0) AS unique_users\nFROM scaffold s\nLEFT JOIN event_counts ec\n    ON s.report_date = ec.event_date\n   AND s.hour_of_day = ec.event_hour\nORDER BY s.report_date, s.hour_of_day;",
+      "aiApproach": "Heatmap queries require a complete scaffold to avoid gaps in the visualization. GENERATE_SERIES is PostgreSQL's built-in way to produce the scaffold. The CROSS JOIN between dates and hours creates the full 7x24 = 168 cell grid. This pattern is used at Meta to identify peak engagement hours for optimal ad delivery and notification timing."
+    },
+    {
+      "id": 523,
+      "question": "Write a query to find 'power users' -- users in the top 1% by event count who also have activity on at least 5 distinct days in the last 30 days. Table: user_events(user_id, event_type, event_ts TIMESTAMP).",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "category": "Growth Metrics",
+      "hint": "Use PERCENTILE_DISC or NTILE to find the top 1% cutoff, then add the distinct-days filter.",
+      "answer": "Compute event count and distinct active days per user, determine the 99th percentile event count, then filter for users above that threshold with 5+ distinct active days.",
+      "pseudoCode": "WITH user_stats AS (\n    SELECT\n        user_id,\n        COUNT(*)                                AS total_events,\n        COUNT(DISTINCT event_ts::DATE)          AS active_days,\n        COUNT(DISTINCT event_type)              AS distinct_event_types\n    FROM user_events\n    WHERE event_ts >= CURRENT_DATE - INTERVAL '30 days'\n    GROUP BY user_id\n),\nthresholds AS (\n    SELECT\n        PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY total_events) AS p99_events\n    FROM user_stats\n)\nSELECT\n    us.user_id,\n    us.total_events,\n    us.active_days,\n    us.distinct_event_types,\n    ROUND(100.0 * us.total_events / NULLIF(\n        (SELECT SUM(total_events) FROM user_stats), 0\n    ), 4) AS pct_of_all_events\nFROM user_stats us\nCROSS JOIN thresholds t\nWHERE us.total_events >= t.p99_events\n  AND us.active_days >= 5\nORDER BY us.total_events DESC;",
+      "aiApproach": "Power user analysis at Meta combines volume (event count) with consistency (active days). Using PERCENTILE_DISC ensures you get an actual observed value as the threshold rather than an interpolated one. The distinct_event_types column provides an additional signal of engagement breadth. In production, these segments are refreshed daily and used for cohort-specific feature gating."
+    },
+    {
+      "id": 524,
+      "question": "Implement a query that detects 'churned' users -- users who were active in the 30-day period ending 60 days ago but have had zero activity in the last 30 days. Table: user_activity(user_id, activity_date DATE).",
+      "difficulty": "Medium",
+      "timeEstimate": 12,
+      "category": "Retention",
+      "hint": "Use two conditional aggregations or two subqueries: one for users active 31-60 days ago, one for users active 0-30 days ago. Churned = present in first but absent from second.",
+      "answer": "Identify users active in the earlier period who have zero activity in the recent period using a LEFT JOIN anti-pattern or NOT EXISTS.",
+      "pseudoCode": "WITH active_prior AS (\n    -- Users active 31-60 days ago\n    SELECT DISTINCT user_id\n    FROM user_activity\n    WHERE activity_date BETWEEN CURRENT_DATE - 60 AND CURRENT_DATE - 31\n),\nactive_recent AS (\n    -- Users active in the last 30 days\n    SELECT DISTINCT user_id\n    FROM user_activity\n    WHERE activity_date >= CURRENT_DATE - 30\n)\nSELECT\n    ap.user_id,\n    MAX(ua.activity_date) AS last_activity_date,\n    CURRENT_DATE - MAX(ua.activity_date) AS days_since_last_activity\nFROM active_prior ap\nLEFT JOIN active_recent ar ON ap.user_id = ar.user_id\nINNER JOIN user_activity ua ON ap.user_id = ua.user_id\nWHERE ar.user_id IS NULL  -- not active recently\nGROUP BY ap.user_id\nORDER BY last_activity_date DESC;",
+      "aiApproach": "Churn detection is the inverse of retention and equally important at Meta. The LEFT JOIN + IS NULL anti-pattern is the standard SQL way to find elements in set A but not in set B. An alternative is NOT EXISTS, which some query optimizers handle more efficiently. The days_since_last_activity column helps prioritize re-engagement campaigns -- users who churned recently are more likely to be recoverable."
     }
   ]
 }

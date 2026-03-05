@@ -87,8 +87,7 @@ const AppContext = createContext<AppContextType>({
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Initialize state from localStorage if available
   const [progress, setProgress] = useState<CategoryProgress>(() => {
-    const savedProgress = localStorage.getItem('msInterviewProgress');
-    return savedProgress ? JSON.parse(savedProgress) : {
+    const defaults: CategoryProgress = {
       sqlBasics: [],
       sqlAdvanced: [],
       pythonBasics: [],
@@ -99,6 +98,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       adaptive: [],
       metaOfficial: []
     };
+    const savedProgress = localStorage.getItem('msInterviewProgress');
+    return savedProgress ? { ...defaults, ...JSON.parse(savedProgress) } : defaults;
   });
   
   const [currentSession, setCurrentSession] = useState<TimerSession | null>(null);
@@ -173,7 +174,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   // Calculate total progress percentage
   const getTotalProgress = (): number => {
-    const totalQuestions = 40 + 20 + 25 + 15 + 10 + 5 + 30; // Fixed categories only; metaOfficial excluded (user-defined count)
+    const totalQuestions = 40 + 55 + 15 + 38 + 5 + 10 + 12 + 30; // Fixed categories only; metaOfficial excluded (user-defined count)
 
     const completedCount = Object.entries(progress).reduce((total, [key, category]) => {
       if (key === 'metaOfficial') return total; // excluded: count is user-defined
@@ -187,17 +188,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const getCategoryProgress = (category: keyof CategoryProgress): number => {
     const categoryTotals: Record<keyof CategoryProgress, number> = {
       sqlBasics: 40,
-      sqlAdvanced: 20,
-      pythonBasics: 25,
-      pythonAdvanced: 15,
-      decompositionScenarios: 10,
-      azureServices: 15,
-      mockInterviews: 5,
+      sqlAdvanced: 55,
+      pythonBasics: 15,
+      pythonAdvanced: 38,
+      decompositionScenarios: 5,
+      azureServices: 10,
+      mockInterviews: 12,
       adaptive: 30,
-      metaOfficial: 50 // placeholder; actual count depends on how many questions user pastes
+      metaOfficial: 50
     };
     
-    const completed = progress[category].filter(q => q.completed).length;
+    const completed = (progress[category] ?? []).filter(q => q.completed).length;
     const total = categoryTotals[category];
     
     return total > 0 ? Math.round((completed / total) * 100) : 0;
