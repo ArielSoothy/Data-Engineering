@@ -30,3 +30,12 @@ dist-ssr
 
 # Vercel
 .vercel/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Screenshots (testing artifacts)
+*.png
+
+# Meta/temp folders
+meta/
