@@ -1,7 +1,7 @@
 /**
  * AI-Powered Trivia Question Generation Service
  * 
- * This service generates complete trivia questions using Claude API for Microsoft Data Engineer
+ * This service generates complete trivia questions using Claude API for Meta Data Engineer
  * interview preparation. Designed to be modular for future enhancements.
  * 
  * Features:
@@ -28,52 +28,52 @@ const generateMockAIQuestions = (difficulty: string, count: number): AITriviaQue
   const mockQuestions: AITriviaQuestion[] = [
     {
       id: 9001, // Use unique numeric IDs for AI questions
-      question: 'In Azure Data Factory, what is the primary difference between a pipeline and a data flow?',
+      question: 'At Meta, when would you choose Presto over Spark for a data processing task?',
       difficulty: difficulty as 'Easy' | 'Medium' | 'Hard',
       timeEstimate: 5,
-      answer: 'A pipeline orchestrates activities and controls execution flow, while a data flow performs actual data transformations using a visual interface.',
-      pseudoCode: '// Pipeline: Orchestration layer\npipeline {\n  activities: [copy, dataflow, stored_procedure]\n}\n\n// Data Flow: Transformation layer\ndataflow {\n  source -> transform -> sink\n}',
-      aiApproach: 'Think of pipelines as the conductor of an orchestra (orchestration) and data flows as the musicians playing instruments (transformation).',
+      answer: 'Presto is ideal for interactive, low-latency ad-hoc SQL queries over large datasets, while Spark is better for complex multi-stage ETL pipelines and iterative ML workloads.',
+      pseudoCode: '-- Presto: Interactive analytics\nSELECT user_id, COUNT(*) FROM events\nWHERE ds = \'2025-01-01\' GROUP BY 1;\n\n# Spark: Multi-stage ETL\ndf = spark.read.table("events")\ndf_transformed = df.filter(...).groupBy(...).agg(...)\ndf_transformed.write.saveAsTable("output")',
+      aiApproach: 'At Meta, Presto powers interactive queries across the data warehouse (fast SQL), while Spark handles heavy ETL and ML pipelines that require iterative processing and complex transformations.',
       answers: [
         {
           id: 'correct',
-          text: 'A pipeline orchestrates activities and controls execution flow, while a data flow performs actual data transformations using a visual interface.',
+          text: 'Presto is ideal for interactive, low-latency ad-hoc SQL queries over large datasets, while Spark is better for complex multi-stage ETL pipelines and iterative ML workloads.',
           isCorrect: true
         },
         {
           id: 'wrong_1',
-          text: 'A pipeline stores data permanently while a data flow only processes data temporarily in memory.',
+          text: 'Presto is used exclusively for real-time streaming while Spark only handles batch processing of historical data.',
           isCorrect: false
         },
         {
           id: 'wrong_2',
-          text: 'A pipeline is used for batch processing while a data flow is exclusively for real-time streaming data.',
+          text: 'Presto replaces Spark entirely at Meta since it supports both SQL and programmatic transformations equally well.',
           isCorrect: false
         }
       ]
     },
     {
       id: 9002,
-      question: 'When implementing data partitioning in Azure Synapse Analytics, which strategy would be most effective for a time-series dataset with frequent recent data queries?',
+      question: 'When partitioning a petabyte-scale Hive table at Meta that stores daily user interaction events, which partitioning strategy would optimize both query performance and storage efficiency?',
       difficulty: difficulty as 'Easy' | 'Medium' | 'Hard',
       timeEstimate: 7,
-      answer: 'Date-based partitioning (e.g., by month or day) allows query pruning for recent data and aligns with typical time-series access patterns.',
-      pseudoCode: 'CREATE TABLE sales_data (\n  transaction_date DATE,\n  amount DECIMAL(10,2),\n  ...\n)\nWITH (\n  PARTITION(transaction_date RANGE RIGHT\n    FOR VALUES (\'2024-01-01\', \'2024-02-01\', ...))\n)',
-      aiApproach: 'Partition elimination is key - queries for recent data will only scan relevant partitions, dramatically improving performance.',
+      answer: 'Partition by ds (datestamp) as the primary partition and optionally by a high-cardinality column like country, enabling partition pruning on date ranges while keeping partition file sizes manageable.',
+      pseudoCode: 'CREATE TABLE user_events (\n  user_id BIGINT,\n  event_type STRING,\n  payload STRING\n)\nPARTITIONED BY (ds STRING, country STRING)\nSTORED AS ORC;  -- columnar format for compression\n\n-- Presto query with partition pruning\nSELECT event_type, COUNT(*)\nFROM user_events\nWHERE ds = \'2025-01-15\' AND country = \'US\'\nGROUP BY 1;',
+      aiApproach: 'At Meta scale, ds-based partitioning is standard for Hive tables. Partition pruning ensures Presto/Spark only scans relevant date partitions instead of the entire petabyte dataset.',
       answers: [
         {
           id: 'correct',
-          text: 'Date-based partitioning (e.g., by month or day) allows query pruning for recent data and aligns with typical time-series access patterns.',
+          text: 'Partition by ds (datestamp) as the primary partition and optionally by a high-cardinality column like country, enabling partition pruning on date ranges while keeping partition file sizes manageable.',
           isCorrect: true
         },
         {
           id: 'wrong_1',
-          text: 'Hash partitioning on user ID provides the most even data distribution and fastest query performance.',
+          text: 'Hash partition by user_id to ensure even distribution across nodes, since user-based queries are the most common access pattern.',
           isCorrect: false
         },
         {
           id: 'wrong_2',
-          text: 'Round-robin partitioning ensures equal partition sizes and optimal parallel processing for all queries.',
+          text: 'Store the table unpartitioned with a clustered index on event_type for the fastest aggregation queries.',
           isCorrect: false
         }
       ]
@@ -85,7 +85,7 @@ const generateMockAIQuestions = (difficulty: string, count: number): AITriviaQue
       timeEstimate: 6,
       answer: 'Use pd.read_csv() with chunksize parameter to process the file in smaller chunks, allowing processing of datasets larger than available RAM.',
       pseudoCode: 'chunk_size = 10000\nfor chunk in pd.read_csv(\'large_file.csv\', chunksize=chunk_size):\n    # Process each chunk\n    processed_chunk = chunk.groupby(\'column\').sum()\n    # Append to result or save incrementally',
-      aiApproach: 'Memory management is crucial for big data processing - chunking allows you to work with datasets larger than RAM by processing pieces sequentially.',
+      aiApproach: 'At Meta scale, datasets regularly exceed single-machine memory. Chunking lets you process massive exports locally, but in production you would typically use Spark or Presto for distributed processing.',
       answers: [
         {
           id: 'correct',
@@ -126,7 +126,7 @@ export const generateAITriviaQuestions = async (
   try {
     const difficultyText = difficulty === 'All' ? 'Mixed (Easy, Medium, Hard)' : difficulty;
     
-    const prompt = `Generate ${count} Microsoft Data Engineer interview trivia questions with the following specifications:
+    const prompt = `Generate ${count} Meta Data Engineer interview trivia questions with the following specifications:
 
 DIFFICULTY: ${difficultyText}
 COUNT: ${count} questions
@@ -135,7 +135,7 @@ FORMAT: Multiple choice with exactly 3 answers each
 TOPICS TO COVER (mix these appropriately):
 - SQL queries, joins, indexing, performance optimization
 - Python data manipulation (pandas, numpy, data structures)
-- Azure data services (Data Factory, Synapse, Data Lake, etc.)
+- Meta data infrastructure (Presto, Spark, Hive, Scribe, Dataswarm)
 - ETL/ELT pipeline design and best practices
 - Data modeling and warehousing concepts
 - System design for data platforms
@@ -151,7 +151,7 @@ FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
 QUESTION 1:
 Q: [Question text here]
 A: [Answer option A]
-B: [Answer option B] 
+B: [Answer option B]
 C: [Answer option C]
 CORRECT: [A, B, or C]
 EXPLANATION: [Brief explanation]
@@ -159,11 +159,11 @@ EXPLANATION: [Brief explanation]
 QUESTION 2:
 [Continue same format...]
 
-Make sure questions are appropriate for ${difficultyText} difficulty level and relevant to Microsoft Data Engineer role.`;
+Make sure questions are appropriate for ${difficultyText} difficulty level and relevant to Meta Data Engineer role.`;
 
     // Use the existing Claude API service
     const response = await generateFeedback(
-      'Generate trivia questions for Microsoft Data Engineer interview',
+      'Generate trivia questions for Meta Data Engineer interview',
       prompt,
       'Generate comprehensive trivia questions as specified',
       ''
@@ -265,7 +265,7 @@ const createTriviaQuestion = (
     timeEstimate: difficulty === 'Easy' ? 3 : difficulty === 'Medium' ? 5 : 7,
     answer: questionData.answer,
     pseudoCode: questionData.pseudoCode || '',
-    aiApproach: questionData.aiApproach || 'AI-generated question for Microsoft Data Engineer interview preparation.',
+    aiApproach: questionData.aiApproach || 'AI-generated question for Meta Data Engineer interview preparation.',
     answers: shuffled
   };
 };

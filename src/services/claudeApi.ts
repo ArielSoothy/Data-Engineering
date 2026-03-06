@@ -13,38 +13,8 @@ const GEMINI_API_URL = import.meta.env.DEV
   ? 'http://localhost:3000/api/geminiProxy'
   : '/api/geminiProxy';
 
-// Context prompt for interview preparation
-const CONTEXT_PROMPT = `You are helping Ariel, a 42-year-old Senior Data Engineer at Nuvei (fintech/payments) prepare for a Microsoft Data Engineer technical interview. 
-
-ARIEL'S BACKGROUND:
-- 4 years experience at Nuvei/Simplex (ETL pipelines, Snowflake, DBT, Airflow, Python/SQL)
-- Currently taking Google/Reichman AI & Deep Learning course
-- Has IDC MBA background, worked at Taboola, eBay before Nuvei
-- Salary: 22.5k NIS, aiming for 30k+ at Microsoft
-- Lives in Tel Aviv, has 8-month-old baby
-
-TECHNICAL EXPERIENCE:
-- Strong: SQL, Python, ETL, data pipelines, fintech domain knowledge
-- Current: Learning AI/ML, agents, modern data stack
-- Approach: "AI-augmented development" - uses AI tools for implementation while focusing on architecture/problem-solving
-- Pattern: Excels at bridging business problems with technical solutions
-
-INTERVIEW CONTEXT:
-- 75-minute Microsoft Data Engineer technical test
-- Writing code without AI assistance during interview
-- Need concise, memorable answers (not long explanations)
-- Questions cover: Python, SQL, System Design, Azure, Problem Decomposition
-- Microsoft values: system thinking, scalability, business impact
-
-YOUR ROLE AS FEEDBACK PROVIDER:
-1. Provide practical, interview-focused feedback
-2. Reference Ariel's fintech experience when relevant
-3. Keep feedback concise but actionable
-4. Focus on what can be improved for interview success
-5. Suggest how to better position technical knowledge
-6. Point out missing key concepts that Microsoft expects
-
-Be direct, constructive, and focus on interview performance improvement.`;
+// Import shared context prompt (single source of truth)
+import { CONTEXT_PROMPT } from './providers/prompts';
 
 // Generate mock feedback when API key is not available
 const generateMockFeedback = (userAnswer: string, correctAnswer: string): string => {
@@ -67,8 +37,8 @@ const generateMockFeedback = (userAnswer: string, correctAnswer: string): string
 - Clear technical explanation
 - Good interview-ready structure
 
-**For Microsoft Interview:**
-- This level of detail is perfect for the 75-minute format
+**For Meta Interview:**
+- This level of detail is perfect for the technical screen
 - You've covered the technical and business aspects they look for
 
 Keep practicing at this level!`;
@@ -79,24 +49,24 @@ Keep practicing at this level!`;
 - You understand the core concept
 - Decent technical approach
 
-**Missing for Microsoft:**
+**Missing for Meta:**
 - Add more detail about ${correctKeywords.slice(0, 2).join(', ')}
 - Include scalability/production considerations
-- Reference your Nuvei experience when relevant
+- Reference your pipeline/dbt experience when relevant
 
 **Next Steps:** Review the complete answer and practice explaining it concisely.`;
   } else {
     return `📚 **Needs More Preparation**
 
 **Key Gaps:**
-- Missing fundamental concepts Microsoft expects
+- Missing fundamental concepts Meta expects at E5/E6
 - Limited technical depth for senior role
 - Need stronger connection to real-world applications
 
 **Study Plan:**
 1. Review the core principles in the reference answer
-2. Practice explaining with your fintech background
-3. Focus on system design thinking Microsoft values
+2. Practice explaining with your pipeline/dbt experience
+3. Focus on system design thinking Meta values
 
 Don't get discouraged - targeted practice will get you there!`;
   }
@@ -122,11 +92,11 @@ ${correctAnswer}
 
 ${pseudoCode ? `**REFERENCE CODE:**\n${pseudoCode}` : ''}
 
-**TASK:** Provide concise, actionable feedback on the candidate's answer for Microsoft Data Engineer interview success. Focus on:
+**TASK:** Provide concise, actionable feedback on the candidate's answer for Meta Senior Data Engineer interview success. Focus on:
 1. What's missing or incorrect
 2. How to improve for interview setting
 3. Connection to candidate's fintech background if relevant
-4. Key points Microsoft expects to hear
+4. Key points Meta expects to hear at E5/E6 level
 
 Keep feedback practical and interview-focused (not academic).`;
 

@@ -108,3 +108,30 @@ Keep feedback practical and interview-focused (not academic).`
     return generateMockFeedback(userAnswer, correctAnswer);
   }
 };
+
+/** Send a raw prompt without the feedback template wrapper */
+export const generateRaw = async (prompt: string): Promise<string> => {
+  const apiKey = getGroqApiKey();
+  if (!apiKey) throw new Error('No Groq API key');
+
+  const model = import.meta.env.VITE_GROQ_MODEL || DEFAULT_MODEL;
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: CONTEXT_PROMPT },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 800,
+      temperature: 0.3
+    })
+  });
+
+  if (!response.ok) throw new Error(`Groq returned ${response.status}`);
+  const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+  const text = data.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Empty Groq response');
+  return text;
+};

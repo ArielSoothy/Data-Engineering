@@ -102,3 +102,33 @@ Keep feedback practical and interview-focused (not academic).`
     return generateMockFeedback(userAnswer, correctAnswer);
   }
 };
+
+/** Send a raw prompt without the feedback template wrapper */
+export const generateRaw = async (prompt: string): Promise<string> => {
+  const apiKey = getClaudeApiKey();
+  if (!apiKey) throw new Error('No Claude API key');
+
+  const model = import.meta.env.VITE_CLAUDE_MODEL || DEFAULT_MODEL;
+  const response = await axios.post(
+    CLAUDE_API_URL,
+    {
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      system: CONTEXT_PROMPT,
+      max_tokens: 800,
+      temperature: 0.3
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      timeout: 30000
+    }
+  );
+
+  const text = response.data?.content?.[0]?.text;
+  if (!text) throw new Error('Empty Claude response');
+  return text;
+};

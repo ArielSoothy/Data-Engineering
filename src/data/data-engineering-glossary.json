@@ -153,69 +153,65 @@
       }
     }
   },
-  "mstic": {
-    "title": "Microsoft MSTIC Senior Data Engineer Terms",
-    "description": "Specialized terms for Microsoft security and intelligence platforms",
+  "meta_infra": {
+    "title": "Meta Data Infrastructure Terms",
+    "description": "Key technologies and concepts in Meta's data platform",
     "terms": {
-      "Azure Sentinel": {
-        "definition": "Microsoft's cloud-native SIEM (Security Information and Event Management) solution",
-        "example": "Collecting security logs from Office 365, Azure AD, and firewalls for threat detection"
+      "Presto": {
+        "definition": "Distributed SQL query engine for interactive analytics on petabyte-scale data",
+        "example": "SELECT user_id, COUNT(*) FROM user_events WHERE ds = '2026-03-01' GROUP BY 1"
       },
-      "KQL (Kusto Query Language)": {
-        "definition": "Query language used in Azure Data Explorer, Log Analytics, and Azure Sentinel",
-        "example": "SecurityEvent | where TimeGenerated > ago(24h) | summarize count() by Computer"
+      "Hive": {
+        "definition": "Data warehouse system built on Hadoop for reading, writing, and managing large datasets in HDFS",
+        "example": "Partitioned Hive table storing daily snapshots of 2B user profiles by ds (datestamp)"
       },
-      "Azure Data Explorer (ADX)": {
-        "definition": "Fast, fully managed data analytics service for real-time analysis of large volumes of data",
-        "example": "Analyzing petabytes of telemetry data for security threat hunting"
+      "Scribe": {
+        "definition": "Meta's distributed log transport system for real-time data ingestion at massive scale",
+        "example": "Scribe collecting 500B+ events/day from mobile apps, web, and backend services"
       },
-      "Log Analytics Workspace": {
-        "definition": "Azure service that collects and analyzes log data from various sources",
-        "example": "Centralized workspace collecting logs from VMs, applications, and Azure services"
+      "Dataswarm": {
+        "definition": "Meta's internal workflow orchestrator (similar to Airflow) for scheduling and managing data pipelines",
+        "example": "Dataswarm DAG running hourly ETL: ingest → transform → load into warehouse tables"
       },
-      "Data Connector": {
-        "definition": "Components that enable data ingestion from various sources into Azure Sentinel",
-        "example": "Office 365 connector bringing email and SharePoint activity logs into Sentinel"
+      "Scuba": {
+        "definition": "Real-time analytics system for interactive exploration of event data with sub-second latency",
+        "example": "Product team using Scuba to monitor News Feed engagement metrics in real-time"
       },
-      "Hunting Queries": {
-        "definition": "Proactive search queries to find threats and suspicious activities in security data",
-        "example": "KQL query searching for unusual login patterns or potential insider threats"
+      "XStream": {
+        "definition": "Stream processing framework built on Apache Flink for real-time data transformations",
+        "example": "XStream pipeline computing real-time ad impression counts for budget pacing"
       },
-      "Workbooks": {
-        "definition": "Interactive dashboards in Azure Sentinel for data visualization and analysis",
-        "example": "Security dashboard showing threat trends, incident status, and investigation metrics"
+      "Data Catalog": {
+        "definition": "Centralized metadata system for discovering, understanding, and governing data assets across Meta",
+        "example": "Engineers searching the catalog to find the canonical user_dim table and its SLA"
       },
-      "Playbooks": {
-        "definition": "Automated response workflows triggered by security incidents or alerts",
-        "example": "Logic App that automatically blocks suspicious IPs when malware is detected"
+      "ds (Datestamp)": {
+        "definition": "Standard partition column in Meta's data warehouse representing the date a snapshot was taken",
+        "example": "WHERE ds = '2026-03-01' — queries a single day's partition instead of scanning all data"
       },
-      "MITRE ATT&CK": {
-        "definition": "Framework describing adversary tactics and techniques based on real-world observations",
-        "example": "Mapping detected activities to MITRE techniques like T1078 (Valid Accounts)"
+      "Fact & Dimension Tables": {
+        "definition": "Core modeling pattern at Meta: facts store events/metrics, dimensions store entity attributes",
+        "example": "fact_impressions joined with dim_users and dim_campaigns for ad analytics"
       },
-      "Threat Intelligence": {
-        "definition": "Organized data about current and potential security threats",
-        "example": "IoC (Indicators of Compromise) feeds providing known malicious IP addresses and domains"
+      "Sessionization": {
+        "definition": "Grouping user events into sessions based on inactivity timeout (typically 30 min at Meta)",
+        "example": "LAG(event_ts) to detect gaps > 30 min, then SUM(new_session_flag) for session IDs"
       },
-      "SIEM": {
-        "definition": "Security Information and Event Management - platform for log collection and security analysis",
-        "example": "Azure Sentinel as cloud SIEM collecting logs from all enterprise systems"
+      "Retention Analysis": {
+        "definition": "Measuring how many users return after first use, a key metric across all Meta products",
+        "example": "D1/D7/D28 retention cohorts for Instagram Reels launch analysis"
       },
-      "SOAR": {
-        "definition": "Security Orchestration, Automation and Response - platform for automating security operations",
-        "example": "Automated incident response workflows reducing manual investigation time"
+      "A/B Testing (Quick Experiments)": {
+        "definition": "Meta's framework for running controlled experiments to measure feature impact on metrics",
+        "example": "Testing News Feed ranking change: 5% holdout group, measuring DAU and session time"
       },
-      "CommonSecurityLog": {
-        "definition": "Standardized log format in Azure Sentinel for security event data",
-        "example": "Firewall logs normalized into CommonSecurityLog table for consistent querying"
+      "PyTorch": {
+        "definition": "Meta's open-source deep learning framework used for ML model training and inference",
+        "example": "Training content recommendation model on distributed GPU clusters"
       },
-      "Advanced Threat Protection (ATP)": {
-        "definition": "Microsoft's suite of security tools for detecting and responding to advanced threats",
-        "example": "Microsoft Defender ATP detecting fileless malware using behavioral analysis"
-      },
-      "Zero Trust": {
-        "definition": "Security model assuming no implicit trust and verifying every transaction",
-        "example": "Conditional Access policies requiring MFA even for internal network access"
+      "FBLearner": {
+        "definition": "Meta's ML platform for training, deploying, and managing machine learning models at scale",
+        "example": "FBLearner pipeline: feature engineering → model training → A/B test → production rollout"
       }
     }
   },

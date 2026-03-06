@@ -1,19 +1,10 @@
 /**
- * Enhanced Trivia Service for Microsoft Data Engineer Interview Preparation
- * 
- * This service provides intelligent trivia answer generation with multiple strategies:
- * 1. Claude API integration for sophisticated wrong answers (when available)
+ * Enhanced Trivia Service for Meta Data Engineer Interview Preparation
+ *
+ * Provides intelligent trivia answer generation with multiple strategies:
+ * 1. AI integration for sophisticated wrong answers (when available)
  * 2. Context-aware fallback generation based on question content
  * 3. Smart wrong answer selection from related questions
- * 
- * Features:
- * - Difficulty-based question filtering
- * - Domain-specific wrong answer generation (SQL vs Python)
- * - Performance analytics and scoring
- * - Realistic distractors that test genuine understanding
- * 
- * @author MS Interview Prep App
- * @version 1.0.0
  */
 
 import { generateFeedback } from './claudeApi';

@@ -17,7 +17,7 @@ interface GlossaryData {
   junior: GlossarySection;
   mid: GlossarySection;
   senior: GlossarySection;
-  mstic: GlossarySection;
+  meta_infra: GlossarySection;
   tools: GlossarySection;
 }
 
@@ -159,7 +159,7 @@ const Glossary = () => {
     { key: 'junior', label: 'Junior Level', icon: '🌱' },
     { key: 'mid', label: 'Mid Level', icon: '🚀' },
     { key: 'senior', label: 'Senior Level', icon: '⭐' },
-    { key: 'mstic', label: 'MSTIC Team', icon: '🛡️' },
+    { key: 'meta_infra', label: 'Meta Infra', icon: '🏗️' },
     { key: 'tools', label: 'Essential Tools', icon: '🔧' },
     { key: 'trivia', label: 'Trivia', icon: '🧠' }
   ];
@@ -478,7 +478,7 @@ const Glossary = () => {
               Learning Path Recommendation
             </h3>
             <p className="text-gray-600 dark:text-gray-300 text-sm">
-              Start with Junior terms, progress through Mid and Senior levels, then explore specialized MSTIC and Tools sections. Test your knowledge with Trivia!
+              Start with Junior terms, progress through Mid and Senior levels, then explore Meta Infrastructure and Tools sections. Test your knowledge with Trivia!
             </p>
           </div>
           <ExternalLink className="text-gray-400" size={20} />

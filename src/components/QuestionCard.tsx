@@ -275,7 +275,7 @@ const QuestionCard = ({
                   <Brain size={16} className="text-blue-600 dark:text-blue-400" />
                   <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">AI Feedback</span>
                   {feedbackProvider && (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-200 dark:bg-blue-800 text-blue-700 dark:text-blue-300 ml-auto">{feedbackProvider}</span>
+                    <Badge label={`via ${feedbackProvider}`} color="blue" size="sm" className="ml-auto" />
                   )}
                 </div>
                 <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
@@ -381,9 +381,7 @@ const QuestionCard = ({
                   <div className="flex flex-col gap-6">
                     {breakdownProvider && (
                       <div className="flex justify-end">
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                          via {breakdownProvider}
-                        </span>
+                        <Badge label={`via ${breakdownProvider}`} color="blue" size="sm" />
                       </div>
                     )}
                     {/* Section 1: Question breakdown */}

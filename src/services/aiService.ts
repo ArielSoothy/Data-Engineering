@@ -75,6 +75,21 @@ async function callProvider(
   }
 }
 
+async function callProviderRaw(provider: AIProvider, prompt: string): Promise<string> {
+  switch (provider) {
+    case 'groq':
+      return groqProvider.generateRaw(prompt);
+    case 'claude':
+      return claudeProvider.generateRaw(prompt);
+    case 'gemini':
+      return geminiProvider.generateRaw(prompt);
+    case 'claude-cli':
+      return claudeCliProvider.generateRaw(prompt);
+    default:
+      throw new Error(`Unknown provider: ${provider}`);
+  }
+}
+
 /** Which provider actually served the last request */
 let _lastProvider: AIProvider | null = null;
 export function getLastUsedProvider(): AIProvider | null { return _lastProvider; }
@@ -144,15 +159,20 @@ HINT1: [first hint - conceptual direction]
 HINT2: [second hint - more specific]
 HINT3: [third hint - near-solution]`;
 
+  const provider = getActiveProvider();
+
   try {
-    const raw = await generateFeedback(
-      'Generate adaptive interview question',
-      prompt,
-      'Return structured question in the specified format',
-      ''
-    );
+    const raw = await callProviderRaw(provider, prompt);
+    _lastProvider = provider;
     return parseAdaptiveQuestion(raw);
   } catch {
+    if (provider !== 'gemini') {
+      try {
+        const raw = await callProviderRaw('gemini', prompt);
+        _lastProvider = 'gemini';
+        return parseAdaptiveQuestion(raw);
+      } catch { /* fall through */ }
+    }
     return fallbackAdaptiveQuestion(subject, level);
   }
 }
@@ -215,6 +235,8 @@ export async function generateQuestionBreakdown(
 ): Promise<QuestionBreakdown> {
   const prompt = `Explain this interview question concisely. Be direct — no filler.
 
+You MUST use these exact markers in your response:
+
 BREAKDOWN:
 1-2 sentences: What is this asking? (plain English, no jargon)
 Then 2-3 bullet points: key rules/constraints the interviewer expects you to know.
@@ -228,12 +250,24 @@ Question: ${question}
 Answer: ${answer}
 ${pseudoCode ? `Code:\n${pseudoCode}` : ''}`;
 
-  const raw = await generateFeedback(
-    'Generate question breakdown and step-by-step solution',
-    prompt,
-    'Return structured breakdown in the specified format with BREAKDOWN: and SOLUTION: markers',
-    ''
-  );
+  const provider = getActiveProvider();
+
+  let raw: string;
+  try {
+    raw = await callProviderRaw(provider, prompt);
+    _lastProvider = provider;
+  } catch {
+    if (provider !== 'gemini') {
+      try {
+        raw = await callProviderRaw('gemini', prompt);
+        _lastProvider = 'gemini';
+      } catch {
+        return { explanation: '', steps: '' };
+      }
+    } else {
+      return { explanation: '', steps: '' };
+    }
+  }
 
   const breakdownMatch = raw.match(/BREAKDOWN:\s*(.+?)(?=SOLUTION:|$)/s);
   const solutionMatch = raw.match(/SOLUTION:\s*(.+?)$/s);
@@ -264,13 +298,29 @@ HINT1: [conceptual direction - what approach to think about]
 HINT2: [more specific - which function/clause/technique to use]
 HINT3: [near-solution - the key insight or structure]`;
 
+  const provider = getActiveProvider();
+
   try {
-    const raw = await generateFeedback('Generate hints', prompt, '', '');
+    const raw = await callProviderRaw(provider, prompt);
+    _lastProvider = provider;
     const h1 = raw.match(/HINT1:\s*(.+?)(?=HINT2:|$)/s)?.[1]?.trim() ?? '';
     const h2 = raw.match(/HINT2:\s*(.+?)(?=HINT3:|$)/s)?.[1]?.trim() ?? '';
     const h3 = raw.match(/HINT3:\s*(.+?)$/s)?.[1]?.trim() ?? '';
-    return [h1, h2, h3].filter(Boolean);
+    const hints = [h1, h2, h3].filter(Boolean);
+    if (hints.length > 0) return hints;
+    throw new Error('No hints parsed');
   } catch {
+    if (provider !== 'gemini') {
+      try {
+        const raw = await callProviderRaw('gemini', prompt);
+        _lastProvider = 'gemini';
+        const h1 = raw.match(/HINT1:\s*(.+?)(?=HINT2:|$)/s)?.[1]?.trim() ?? '';
+        const h2 = raw.match(/HINT2:\s*(.+?)(?=HINT3:|$)/s)?.[1]?.trim() ?? '';
+        const h3 = raw.match(/HINT3:\s*(.+?)$/s)?.[1]?.trim() ?? '';
+        const hints = [h1, h2, h3].filter(Boolean);
+        if (hints.length > 0) return hints;
+      } catch { /* fall through to defaults */ }
+    }
     return ['Think about the data structure needed', 'Consider using a window function', 'Group by the key dimension first'];
   }
 }

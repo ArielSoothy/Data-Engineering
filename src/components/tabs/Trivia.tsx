@@ -217,14 +217,14 @@ const Trivia = () => {
               Interactive Trivia Challenge
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-6 text-lg">
-              Test your knowledge with 20 questions from SQL, Python, Azure, and system design topics.
-              Choose between curated existing questions or AI-generated questions tailored for Microsoft interviews!
+              Test your knowledge with 20 questions from SQL, Python, and system design topics.
+              Choose between curated existing questions or AI-generated questions tailored for Meta interviews!
             </p>
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
               <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">What you'll get:</h3>
               <ul className="text-blue-800 dark:text-blue-400 text-sm space-y-1">
                 <li>• 📚 <strong>Existing Questions:</strong> Curated questions from SQL Basics, SQL Advanced, Python Basics & Python Advanced</li>
-                <li>• 🤖 <strong>AI-Generated:</strong> Fresh questions covering Azure, system design, and Microsoft-specific topics</li>
+                <li>• 🤖 <strong>AI-Generated:</strong> Fresh questions covering system design, data pipelines, and Meta-specific topics</li>
                 <li>• Multiple choice format with realistic distractors</li>
                 <li>• Detailed explanations after each answer</li>
                 <li>• Progress tracking and final score</li>
@@ -276,8 +276,8 @@ const Trivia = () => {
                 <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                   <p className="text-sm text-purple-800 dark:text-purple-300">
                     <Sparkles className="inline h-4 w-4 mr-1" />
-                    AI will generate fresh questions tailored to Microsoft Data Engineer interviews,
-                    including Azure, SQL, Python, and system design topics.
+                    AI will generate fresh questions tailored to Meta Data Engineer interviews,
+                    including SQL, Python, data pipelines, and system design topics.
                   </p>
                 </div>
               )}
