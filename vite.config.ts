@@ -132,7 +132,7 @@ export default defineConfig(({ command }) => {
     base,
     build: {
       // Generate sourcemaps for easier debugging
-      sourcemap: true,
+      sourcemap: false,
       // Add rollup options for better compatibility
       rollupOptions: {
         output: {

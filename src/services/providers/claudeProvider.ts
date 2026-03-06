@@ -4,9 +4,10 @@
 import axios from 'axios';
 import { CONTEXT_PROMPT } from './prompts';
 import { generateMockFeedback } from './mockFeedback';
+import { AI_MODELS } from '../../config';
 
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
+const DEFAULT_MODEL = AI_MODELS.claude;
 
 export const getClaudeApiKey = (): string | undefined => {
   const envKey = import.meta.env.VITE_CLAUDE_API_KEY as string | undefined;

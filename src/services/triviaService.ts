@@ -7,7 +7,7 @@
  * 3. Smart wrong answer selection from related questions
  */
 
-import { generateFeedback } from './claudeApi';
+import { generateFeedback } from './aiService';
 import type { Question } from '../hooks/useQuestions';
 
 export interface TriviaAnswer {

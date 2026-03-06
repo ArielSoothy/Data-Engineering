@@ -1,3 +1,4 @@
+/** @deprecated Use aiService.ts instead — this file is kept for reference only */
 import axios from 'axios';
 import { getApiKey } from '../utils/helpers';
 
@@ -102,7 +103,7 @@ Keep feedback practical and interview-focused (not academic).`;
 
     if (AI_PROVIDER === 'gemini') {
       console.log('Calling Gemini API via proxy...');
-      const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
+      const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash'; // legacy — use aiService.ts instead
       const response = await axios.post(
         GEMINI_API_URL,
         {
@@ -126,7 +127,7 @@ Keep feedback practical and interview-focused (not academic).`;
       throw new Error('Unexpected response format from Gemini API');
     } else {
       console.log('Calling Claude API via proxy...');
-      const model = import.meta.env.VITE_CLAUDE_MODEL || 'claude-3-haiku-20240307';
+      const model = import.meta.env.VITE_CLAUDE_MODEL || 'claude-haiku-4-5-20251001';
       const payload = {
         model,
         messages: [

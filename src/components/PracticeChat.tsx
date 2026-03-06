@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Send } from 'lucide-react';
-import { generateFeedback } from '../services/claudeApi';
+import { generateFeedback } from '../services/aiService';
 
 interface ChatMessage {
   role: 'user' | 'assistant';

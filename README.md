@@ -18,7 +18,7 @@ This app supports multiple AI providers via serverless API routes and can run on
 - Set `VITE_AI_PROVIDER` to `gemini` (default) or `claude`.
 - For Gemini (Gemini 1.5 Flash Free):
   - Create an environment variable `GEMINI_API_KEY` in Vercel project settings.
-  - Optionally set `GEMINI_MODEL` (defaults to `gemini-1.5-flash`).
+  - Optionally set `GEMINI_MODEL` (defaults to `gemini-2.5-flash`).
 - For Claude:
   - Create `CLAUDE_API_KEY` in Vercel project settings.
   - Optionally set `CLAUDE_MODEL`.

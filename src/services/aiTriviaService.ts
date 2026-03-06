@@ -15,7 +15,7 @@
  * @version 1.0.0
  */
 
-import { generateFeedback } from './claudeApi';
+import { generateFeedback } from './aiService';
 import type { Question } from '../hooks/useQuestions';
 import type { TriviaAnswer } from './triviaService';
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { generateFeedback } from '../services/claudeApi';
+import { generateFeedback } from '../services/aiService';
 
 export const ApiDiagnostic = () => {
   const [results, setResults] = useState<string[]>([]);

@@ -1,4 +1,5 @@
 import { createClient } from '../lib/supabase/client';
+import { DEFAULT_SYNC_CODE } from '../config';
 
 const DEVICE_ID_KEY = 'de_prep_device_id';
 const LOCAL_UPDATED_KEY = 'de_prep_local_updated';
@@ -21,7 +22,7 @@ export function setSyncCode(code: string) {
 function getOrCreateDeviceId(): string {
   let id = localStorage.getItem(DEVICE_ID_KEY);
   if (!id) {
-    id = crypto.randomUUID();
+    id = DEFAULT_SYNC_CODE;
     localStorage.setItem(DEVICE_ID_KEY, id);
   }
   return id;

@@ -5,6 +5,20 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
+const ALLOWED_ORIGINS = [
+  'https://data-engineering-nine.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:4173',
+];
+
+const MAX_TOKENS_CAP = 4096;
+
+function getCorsOrigin(req: VercelRequest): string {
+  const origin = req.headers.origin as string | undefined;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) return origin;
+  return ALLOWED_ORIGINS[0];
+}
+
 type GenerateRequest = {
   model?: string;
   prompt: string;
@@ -15,6 +29,7 @@ type GenerateRequest = {
 
 const buildGeminiBody = (reqBody: GenerateRequest) => {
   const { prompt, system, maxOutputTokens, temperature } = reqBody;
+  const cappedTokens = Math.min(Number(maxOutputTokens) || 800, MAX_TOKENS_CAP);
   const parts: Array<{ text: string }> = [];
   if (system && system.trim().length > 0) {
     parts.push({ text: `SYSTEM:\n${system}\n\n` });
@@ -28,15 +43,15 @@ const buildGeminiBody = (reqBody: GenerateRequest) => {
       }
     ],
     generationConfig: {
-      maxOutputTokens: maxOutputTokens ?? 800,
+      maxOutputTokens: cappedTokens,
       temperature: typeof temperature === 'number' ? temperature : 0.3
     }
   };
 };
 
 async function vercelHandler(req: VercelRequest, res: VercelResponse) {
-  // Add CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = getCorsOrigin(req);
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -56,8 +71,14 @@ async function vercelHandler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // Input validation
+  const body = req.body as GenerateRequest;
+  if (!body.prompt || typeof body.prompt !== 'string') {
+    res.status(400).json({ error: 'prompt string is required' });
+    return;
+  }
+
   try {
-    const body = req.body as GenerateRequest;
     const model = body.model || DEFAULT_MODEL;
     const url = `${GEMINI_BASE}/${encodeURIComponent(model)}:generateContent?key=${apiKey}`;
     const geminiBody = buildGeminiBody(body);
@@ -92,6 +113,11 @@ export const handler = async (event: any) => {
   }
   try {
     const body: GenerateRequest = event.body ? JSON.parse(event.body) : { prompt: '' };
+
+    if (!body.prompt || typeof body.prompt !== 'string') {
+      return { statusCode: 400, body: JSON.stringify({ error: 'prompt string is required' }) };
+    }
+
     const model = body.model || DEFAULT_MODEL;
     const url = `${GEMINI_BASE}/${encodeURIComponent(model)}:generateContent?key=${apiKey}`;
     const geminiBody = buildGeminiBody(body);
