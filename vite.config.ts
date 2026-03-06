@@ -24,9 +24,11 @@ export default defineConfig(({ command }) => {
         req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
         req.on('end', () => {
           let prompt = '';
+          let model = '';
           try {
-            const parsed = JSON.parse(body) as { prompt?: string };
+            const parsed = JSON.parse(body) as { prompt?: string; model?: string };
             prompt = parsed.prompt ?? body;
+            model = parsed.model ?? '';
           } catch {
             prompt = body;
           }
@@ -37,11 +39,12 @@ export default defineConfig(({ command }) => {
           delete cleanEnv.CLAUDECODE;
           delete cleanEnv.ANTHROPIC_API_KEY;
 
-          const child = spawn('npx', [
-            '@anthropic-ai/claude-code',
-            '-p', '-',
-            '--output-format', 'json',
-          ], {
+          const args = ['@anthropic-ai/claude-code', '-p', '-', '--output-format', 'json'];
+          if (model) {
+            args.push('--model', model);
+          }
+
+          const child = spawn('npx', args, {
             shell: '/bin/zsh',
             timeout: 120000,
             env: cleanEnv,

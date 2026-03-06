@@ -103,3 +103,33 @@ Keep feedback practical and interview-focused (not academic).`;
     return generateMockFeedback(userAnswer, correctAnswer);
   }
 };
+
+/** Send a raw prompt without the feedback template wrapper */
+export const generateRaw = async (prompt: string): Promise<string> => {
+  const apiKey = getGeminiApiKey();
+  const model = import.meta.env.VITE_GEMINI_MODEL || DEFAULT_MODEL;
+
+  if (apiKey) {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const geminiModel = genAI.getGenerativeModel({ model, systemInstruction: CONTEXT_PROMPT });
+    const result = await geminiModel.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
+    });
+    const text = result.response.text();
+    if (!text) throw new Error('Empty Gemini response');
+    return text;
+  }
+
+  // No client-side key — try proxy
+  const res = await fetch('/api/geminiProxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, prompt, system: CONTEXT_PROMPT, maxOutputTokens: 800, temperature: 0.3 }),
+  });
+  if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
+  const data = await res.json();
+  const text = data?.content?.[0]?.text;
+  if (!text) throw new Error('Empty proxy response');
+  return text;
+};
