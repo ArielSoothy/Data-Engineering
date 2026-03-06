@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { pullProgress, pushProgressDebounced } from '../services/progressSync';
+import { pullProgress, pushProgressDebounced, flushSync } from '../services/progressSync';
 
 // Define types
 export interface QuestionProgress {
@@ -202,6 +202,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (savedPrefs) setPreferences(prev => ({ ...prev, ...JSON.parse(savedPrefs) }));
       }
     }).catch(() => { /* offline — localStorage is fine */ });
+  }, []);
+
+  // Flush pending sync when user leaves the page
+  useEffect(() => {
+    const handleUnload = () => flushSync();
+    window.addEventListener('beforeunload', handleUnload);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushSync();
+    });
+    return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
   // Save progress and preferences to localStorage when they change
