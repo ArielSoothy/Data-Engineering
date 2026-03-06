@@ -102,7 +102,7 @@ Keep feedback practical and interview-focused (not academic).`;
 
     if (AI_PROVIDER === 'gemini') {
       console.log('Calling Gemini API via proxy...');
-      const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash';
+      const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
       const response = await axios.post(
         GEMINI_API_URL,
         {
