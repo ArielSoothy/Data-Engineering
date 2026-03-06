@@ -3,9 +3,10 @@
 
 import { CONTEXT_PROMPT } from './prompts';
 import { generateMockFeedback } from './mockFeedback';
+import { AI_MODELS } from '../../config';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+const DEFAULT_MODEL = AI_MODELS.groq;
 
 interface GroqErrorResponse {
   error?: {

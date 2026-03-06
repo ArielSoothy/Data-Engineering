@@ -5,4 +5,5 @@ export { Input } from './Input';
 export { Modal } from './Modal';
 export { ProgressBar } from './ProgressBar';
 export { Select } from './Select';
+export { Section } from './Section';
 export { Spinner } from './Spinner';

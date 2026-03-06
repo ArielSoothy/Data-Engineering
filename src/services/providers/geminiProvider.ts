@@ -4,8 +4,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CONTEXT_PROMPT } from './prompts';
 import { generateMockFeedback } from './mockFeedback';
+import { AI_MODELS } from '../../config';
 
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+const DEFAULT_MODEL = AI_MODELS.gemini;
 
 export const getGeminiApiKey = (): string | undefined => {
   const envKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;

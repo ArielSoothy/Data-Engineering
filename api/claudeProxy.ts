@@ -2,11 +2,26 @@ import axios from 'axios';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = process.env.CLAUDE_MODEL || 'claude-3-haiku-20240307';
+// Keep in sync with src/config.ts AI_MODELS.claude
+const DEFAULT_MODEL = process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001';
+
+const ALLOWED_ORIGINS = [
+  'https://data-engineering-nine.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:4173',
+];
+
+const MAX_TOKENS_CAP = 4096;
+
+function getCorsOrigin(req: VercelRequest): string {
+  const origin = req.headers.origin as string | undefined;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) return origin;
+  return ALLOWED_ORIGINS[0]; // default to production
+}
 
 async function vercelHandler(req: VercelRequest, res: VercelResponse) {
-  // Add CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = getCorsOrigin(req);
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -28,8 +43,16 @@ async function vercelHandler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // Input validation
+  const messages = req.body?.messages;
+  if (!Array.isArray(messages) || messages.length === 0) {
+    res.status(400).json({ error: 'messages array is required' });
+    return;
+  }
+
   try {
-    const body = { ...req.body, model: req.body?.model || DEFAULT_MODEL };
+    const maxTokens = Math.min(Number(req.body?.max_tokens) || 800, MAX_TOKENS_CAP);
+    const body = { ...req.body, model: req.body?.model || DEFAULT_MODEL, max_tokens: maxTokens };
     const response = await axios.post(CLAUDE_ENDPOINT, body, {
       headers: {
         'Content-Type': 'application/json',
@@ -56,7 +79,13 @@ export const handler = async (event: any) => {
   }
 
   const body = event.body ? JSON.parse(event.body) : {};
-  const requestBody = { ...body, model: body.model || DEFAULT_MODEL };
+
+  if (!Array.isArray(body.messages) || body.messages.length === 0) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'messages array is required' }) };
+  }
+
+  const maxTokens = Math.min(Number(body.max_tokens) || 800, MAX_TOKENS_CAP);
+  const requestBody = { ...body, model: body.model || DEFAULT_MODEL, max_tokens: maxTokens };
 
   try {
     const response = await axios.post(CLAUDE_ENDPOINT, requestBody, {

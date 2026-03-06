@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { pullProgress, pushProgressDebounced, flushSync } from '../services/progressSync';
+import { CATEGORY_TOTALS } from '../config';
 
 // Define types
 export interface QuestionProgress {
@@ -154,7 +155,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const getTotalProgress = useCallback((): number => {
-    const totalQuestions = 40 + 55 + 15 + 38 + 5 + 10 + 12 + 30;
+    const totalQuestions = Object.entries(CATEGORY_TOTALS)
+      .filter(([key]) => key !== 'metaOfficial')
+      .reduce((sum, [, count]) => sum + count, 0);
     const completedCount = Object.entries(progress).reduce((total, [key, category]) => {
       if (key === 'metaOfficial') return total;
       return total + category.filter((q: QuestionProgress) => q.completed).length;
@@ -163,13 +166,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [progress]);
 
   const getCategoryProgress = useCallback((category: keyof CategoryProgress): number => {
-    const categoryTotals: Record<keyof CategoryProgress, number> = {
-      sqlBasics: 40, sqlAdvanced: 55, pythonBasics: 15, pythonAdvanced: 38,
-      decompositionScenarios: 5, azureServices: 10, mockInterviews: 12,
-      adaptive: 30, metaOfficial: 50
-    };
     const completed = (progress[category] ?? []).filter(q => q.completed).length;
-    const total = categoryTotals[category];
+    const total = CATEGORY_TOTALS[category] ?? 0;
     return total > 0 ? Math.round((completed / total) * 100) : 0;
   }, [progress]);
 
