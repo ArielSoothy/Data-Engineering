@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import {
-  LayoutDashboard, Database, Code, Braces, BarChart,
-  Cloud, Video, Book, Moon, Sun, Target, GraduationCap,
-  Briefcase, Zap, Building2, BookOpen, Timer, Menu, X, RefreshCw, BarChart3
+  LayoutDashboard, BarChart,
+  Cloud, Video, Book, Moon, Sun, GraduationCap,
+  Briefcase, Timer, Menu, X, RefreshCw, BarChart3, Layers
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -28,28 +28,21 @@ const TabNavigation = () => {
   // Primary mobile tabs (bottom nav)
   const primaryTabs: TabItem[] = [
     { id: 'dashboard', label: 'Home', icon: <LayoutDashboard size={20} />, path: '/' },
-    { id: 'quick-drill', label: 'Drill', icon: <BookOpen size={20} />, path: '/quick-drill' },
-    { id: 'adaptive', label: 'Practice', icon: <Zap size={20} />, path: '/adaptive' },
+    { id: 'study', label: 'Study', icon: <Layers size={20} />, path: '/study' },
     { id: 'timed-assessment', label: 'Timed', icon: <Timer size={20} />, path: '/timed-assessment' },
+    { id: 'daily-assessment', label: 'Daily', icon: <BarChart3 size={20} />, path: '/daily-assessment' },
   ];
 
-  // All tabs for desktop and More drawer
+  // All tabs for desktop and More drawer (consolidated — 8 question tabs merged into Study Hub)
   const allTabs: TabItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
-    { id: 'quick-drill', label: 'Quick Drill', icon: <BookOpen size={20} />, path: '/quick-drill' },
-    { id: 'sql-basics', label: 'SQL Basics', icon: <Database size={20} />, path: '/sql-basics' },
-    { id: 'sql-advanced', label: 'SQL Advanced', icon: <Database size={20} />, path: '/sql-advanced' },
-    { id: 'python-basics', label: 'Python Basics', icon: <Code size={20} />, path: '/python-basics' },
-    { id: 'python-advanced', label: 'Python Advanced', icon: <Braces size={20} />, path: '/python-advanced' },
-    { id: 'adaptive', label: 'Adaptive Practice', icon: <Zap size={20} />, path: '/adaptive' },
+    { id: 'study', label: 'Study Hub', icon: <Layers size={20} />, path: '/study' },
     { id: 'timed-assessment', label: 'Timed Assessment', icon: <Timer size={20} />, path: '/timed-assessment' },
     { id: 'daily-assessment', label: 'Daily Assessment', icon: <BarChart3 size={20} />, path: '/daily-assessment' },
-    { id: 'trivia', label: 'Trivia', icon: <Target size={20} />, path: '/trivia' },
     { id: 'decomposition', label: 'Product Sense', icon: <BarChart size={20} />, path: '/decomposition' },
     { id: 'tech-stack', label: 'Meta Tech Stack', icon: <Cloud size={20} />, path: '/tech-stack' },
     { id: 'mock-interview', label: 'Mock Interview', icon: <Video size={20} />, path: '/mock-interview' },
     { id: 'my-projects', label: 'My Projects', icon: <Briefcase size={20} />, path: '/my-projects' },
-    { id: 'meta-official', label: 'Meta Official', icon: <Building2 size={20} />, path: '/meta-official' },
     { id: 'glossary', label: 'Glossary', icon: <Book size={20} />, path: '/glossary' },
   ];
 
