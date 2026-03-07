@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Calendar, Clock, ChevronRight, ChevronLeft, Database, Code, Braces,
   CheckCircle, Zap, Flame,
-  BookOpen, Timer, ArrowRight, Circle, Smartphone, Star, Target
+  BookOpen, Timer, Circle, Smartphone, Star, Target
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { useDailyPlan } from '../../hooks/useDailyPlan';
@@ -163,38 +163,46 @@ const Dashboard = () => {
                   {viewPlan.tasks.map(task => (
                     <div
                       key={task.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-colors
                         ${completedTasks[task.id]
                           ? 'bg-green-50 dark:bg-green-900/20'
                           : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                      onClick={() => toggleTask(task.id)}
                     >
-                      <button className="shrink-0" onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}>
+                      <button className="shrink-0 p-1" onClick={() => toggleTask(task.id)} aria-label={completedTasks[task.id] ? 'Mark incomplete' : 'Mark complete'}>
                         {completedTasks[task.id]
                           ? <CheckCircle size={20} className="text-green-500" />
                           : <Circle size={20} className="text-gray-300 dark:text-gray-600" />}
                       </button>
-                      <div className="flex-1 min-w-0">
-                        <span className={`text-sm ${completedTasks[task.id] ? 'line-through text-gray-400' : ''}`}>
-                          {task.label}
-                        </span>
-                        {task.speedTarget && (
-                          <span className="block text-xs text-blue-500 dark:text-blue-400 mt-0.5">
-                            <Timer size={10} className="inline mr-1" />{task.speedTarget}
+                      {task.route ? (
+                        <button
+                          className="flex-1 min-w-0 text-left cursor-pointer"
+                          onClick={() => navigate(task.route!)}
+                        >
+                          <span className={`text-sm ${completedTasks[task.id] ? 'line-through text-gray-400' : 'text-blue-600 dark:text-blue-400 hover:underline'}`}>
+                            {task.label}
                           </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5">
+                          {task.speedTarget && (
+                            <span className="block text-xs text-blue-500 dark:text-blue-400 mt-0.5">
+                              <Timer size={10} className="inline mr-1" />{task.speedTarget}
+                            </span>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="flex-1 min-w-0">
+                          <span className={`text-sm ${completedTasks[task.id] ? 'line-through text-gray-400' : ''}`}>
+                            {task.label}
+                          </span>
+                          {task.speedTarget && (
+                            <span className="block text-xs text-blue-500 dark:text-blue-400 mt-0.5">
+                              <Timer size={10} className="inline mr-1" />{task.speedTarget}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
                         {task.mobile && <Smartphone size={14} className="text-gray-400" />}
                         {task.extra && <Star size={14} className="text-yellow-400" />}
-                        {task.route && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); navigate(task.route!); }}
-                            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
-                          >
-                            <ArrowRight size={14} className="text-gray-400" />
-                          </button>
-                        )}
+                        {task.route && <ChevronRight size={16} className="text-gray-400" />}
                       </div>
                     </div>
                   ))}

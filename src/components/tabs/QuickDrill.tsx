@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Badge, Button, ProgressBar, Spinner } from '../ui';
+import { pushProgressDebounced } from '../../services/progressSync';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -20,7 +21,7 @@ interface CardProgress {
 }
 
 type ProgressMap = Record<number, CardProgress>;
-type Mode = 'menu' | 'flashcard' | 'quiz' | 'results';
+type Mode = 'menu' | 'flashcard' | 'puzzle' | 'results';
 type CategoryFilter = 'all' | 'python' | 'sql';
 
 /* ── Helpers ───────────────────────────────────────────────────────── */
@@ -48,8 +49,9 @@ function loadProgress(): ProgressMap {
 function saveProgress(p: ProgressMap) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-  } catch {
-    /* silent */
+    pushProgressDebounced();
+  } catch (e) {
+    console.warn('[QuickDrill] Failed to save progress:', e);
   }
 }
 
@@ -58,12 +60,29 @@ function isToday(iso?: string): boolean {
   return new Date(iso).toDateString() === new Date().toDateString();
 }
 
-function generateQuizOptions(card: DrillCard, allCards: DrillCard[]): string[] {
-  const sameCategory = allCards.filter((c) => c.cat === card.cat && c.id !== card.id);
-  const shuffled = [...sameCategory].sort(() => Math.random() - 0.5);
-  const wrongAnswers = shuffled.slice(0, 3).map((c) => c.a);
-  const options = [...wrongAnswers, card.a].sort(() => Math.random() - 0.5);
-  return options;
+function extractPuzzleLines(answer: string): string[] {
+  return answer
+    .split('\n')
+    .filter(line => {
+      const t = line.trim();
+      if (!t || t.length < 2) return false;
+      // Skip commentary lines
+      if (/^(Note|Remember|Tip|→|\/\/\s|Bad:|Good:|Fix:|Common:|Example:|Like |Without |With )/i.test(t)) return false;
+      return true;
+    });
+}
+
+function isPuzzleCard(card: DrillCard): boolean {
+  return extractPuzzleLines(card.a).length >= 4;
+}
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 function buildFlashcardDeck(cards: DrillCard[], progress: ProgressMap): DrillCard[] {
@@ -93,14 +112,17 @@ function buildFlashcardDeck(cards: DrillCard[], progress: ProgressMap): DrillCar
   ];
 }
 
-function buildQuizDeck(cards: DrillCard[], progress: ProgressMap): DrillCard[] {
+function buildPuzzleDeck(cards: DrillCard[], progress: ProgressMap): DrillCard[] {
+  // Only cards with enough code lines for a puzzle
+  const puzzleCards = cards.filter(isPuzzleCard);
+
   const weakPred = (c: DrillCard) => {
     const p = progress[c.id];
     return p && (p.wrong > 0 || (p.seen > 0 && p.correct < 2));
   };
 
-  const weak = cards.filter(weakPred);
-  const rest = cards.filter((c) => !weakPred(c));
+  const weak = puzzleCards.filter(weakPred);
+  const rest = puzzleCards.filter((c) => !weakPred(c));
 
   const sortByReview = (a: DrillCard, b: DrillCard) => {
     const aToday = isToday(progress[a.id]?.lastReviewed);
@@ -128,9 +150,11 @@ export default function QuickDrill() {
   const [diffFilter, setDiffFilter] = useState(0);
   const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, seen: 0 });
 
-  // Quiz-specific
-  const [quizOptions, setQuizOptions] = useState<string[]>([]);
-  const [quizAnswer, setQuizAnswer] = useState<string | null>(null);
+  // Puzzle-specific
+  const [puzzleOriginal, setPuzzleOriginal] = useState<string[]>([]);
+  const [puzzleAvailIdx, setPuzzleAvailIdx] = useState<number[]>([]);
+  const [puzzlePlacedIdx, setPuzzlePlacedIdx] = useState<number[]>([]);
+  const [puzzleChecked, setPuzzleChecked] = useState(false);
 
   /* ── Fetch cards ─────────────────────────────────────────────────── */
 
@@ -179,25 +203,28 @@ export default function QuickDrill() {
   /* ── Session management ──────────────────────────────────────────── */
 
   const startSession = useCallback(
-    (cat: CategoryFilter, studyMode: 'flashcard' | 'quiz') => {
+    (cat: CategoryFilter, studyMode: 'flashcard' | 'puzzle') => {
       let filtered = allCards;
       if (cat === 'python') filtered = allCards.filter((c) => c.cat === 'Python');
       if (cat === 'sql') filtered = allCards.filter((c) => c.cat === 'SQL');
       if (diffFilter > 0) filtered = filtered.filter((c) => c.difficulty <= diffFilter);
 
       const ordered =
-        studyMode === 'quiz'
-          ? buildQuizDeck(filtered, progress)
+        studyMode === 'puzzle'
+          ? buildPuzzleDeck(filtered, progress)
           : buildFlashcardDeck(filtered, progress);
 
       setDeck(ordered);
       setCurrentIndex(0);
       setShowAnswer(false);
-      setQuizAnswer(null);
       setSessionStats({ correct: 0, wrong: 0, seen: 0 });
 
-      if (studyMode === 'quiz' && ordered.length > 0) {
-        setQuizOptions(generateQuizOptions(ordered[0], allCards));
+      if (studyMode === 'puzzle' && ordered.length > 0) {
+        const lines = extractPuzzleLines(ordered[0].a);
+        setPuzzleOriginal(lines);
+        setPuzzleAvailIdx(shuffleArray(lines.map((_, i) => i)));
+        setPuzzlePlacedIdx([]);
+        setPuzzleChecked(false);
       }
       setMode(studyMode);
     },
@@ -210,17 +237,20 @@ export default function QuickDrill() {
 
   const advanceCard = useCallback(() => {
     setShowAnswer(false);
-    setQuizAnswer(null);
     const next = currentIndex + 1;
     if (next < deck.length) {
       setCurrentIndex(next);
-      if (mode === 'quiz') {
-        setQuizOptions(generateQuizOptions(deck[next], allCards));
+      if (mode === 'puzzle') {
+        const lines = extractPuzzleLines(deck[next].a);
+        setPuzzleOriginal(lines);
+        setPuzzleAvailIdx(shuffleArray(lines.map((_, i) => i)));
+        setPuzzlePlacedIdx([]);
+        setPuzzleChecked(false);
       }
     } else {
       setMode('results');
     }
-  }, [currentIndex, deck, mode, allCards]);
+  }, [currentIndex, deck, mode]);
 
   const markFlashcard = useCallback(
     (knew: boolean) => {
@@ -246,30 +276,48 @@ export default function QuickDrill() {
     [currentCard, progress, persistProgress, advanceCard],
   );
 
-  const handleQuizSelect = useCallback(
-    (option: string) => {
-      if (quizAnswer !== null || !currentCard) return;
-      setQuizAnswer(option);
-      const isCorrect = option === currentCard.a;
-      const prev = progress[currentCard.id] || { seen: 0, correct: 0, wrong: 0 };
-      const updated: ProgressMap = {
-        ...progress,
-        [currentCard.id]: {
-          seen: prev.seen + 1,
-          correct: prev.correct + (isCorrect ? 1 : 0),
-          wrong: prev.wrong + (isCorrect ? 0 : 1),
-          lastReviewed: new Date().toISOString(),
-        },
-      };
-      persistProgress(updated);
-      setSessionStats((s) => ({
-        seen: s.seen + 1,
-        correct: s.correct + (isCorrect ? 1 : 0),
-        wrong: s.wrong + (isCorrect ? 0 : 1),
-      }));
-    },
-    [quizAnswer, currentCard, progress, persistProgress],
-  );
+  const placePuzzleLine = useCallback((idx: number) => {
+    if (puzzleChecked) return;
+    setPuzzleAvailIdx(prev => prev.filter(i => i !== idx));
+    setPuzzlePlacedIdx(prev => [...prev, idx]);
+  }, [puzzleChecked]);
+
+  const removePuzzleLine = useCallback((position: number) => {
+    if (puzzleChecked) return;
+    setPuzzlePlacedIdx(prev => {
+      const idx = prev[position];
+      setPuzzleAvailIdx(a => [...a, idx]);
+      return [...prev.slice(0, position), ...prev.slice(position + 1)];
+    });
+  }, [puzzleChecked]);
+
+  const checkPuzzle = useCallback(() => {
+    if (!currentCard) return;
+    let correct = 0;
+    for (let i = 0; i < puzzleOriginal.length; i++) {
+      if (puzzlePlacedIdx[i] === i) correct++;
+    }
+    const pct = puzzleOriginal.length > 0 ? Math.round((correct / puzzleOriginal.length) * 100) : 0;
+    const isCorrect = pct >= 80;
+    setPuzzleChecked(true);
+
+    const prev = progress[currentCard.id] || { seen: 0, correct: 0, wrong: 0 };
+    const updated: ProgressMap = {
+      ...progress,
+      [currentCard.id]: {
+        seen: prev.seen + 1,
+        correct: prev.correct + (isCorrect ? 1 : 0),
+        wrong: prev.wrong + (isCorrect ? 0 : 1),
+        lastReviewed: new Date().toISOString(),
+      },
+    };
+    persistProgress(updated);
+    setSessionStats((s) => ({
+      seen: s.seen + 1,
+      correct: s.correct + (isCorrect ? 1 : 0),
+      wrong: s.wrong + (isCorrect ? 0 : 1),
+    }));
+  }, [currentCard, puzzleOriginal, puzzlePlacedIdx, progress, persistProgress]);
 
   const resetProgress = useCallback(() => {
     persistProgress({});
@@ -373,7 +421,7 @@ export default function QuickDrill() {
 
   /* ── Empty deck guard ────────────────────────────────────────────── */
 
-  if ((mode === 'flashcard' || mode === 'quiz') && !currentCard) {
+  if ((mode === 'flashcard' || mode === 'puzzle') && !currentCard) {
     return (
       <div className="max-w-lg mx-auto px-4 pt-16 pb-32 text-center">
         <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
@@ -454,9 +502,17 @@ export default function QuickDrill() {
     );
   }
 
-  /* ── Quiz Mode ───────────────────────────────────────────────────── */
+  /* ── Puzzle Mode ─────────────────────────────────────────────────── */
 
-  if (mode === 'quiz' && currentCard) {
+  if (mode === 'puzzle' && currentCard) {
+    const puzzleCorrectCount = puzzleChecked
+      ? puzzlePlacedIdx.reduce((acc, idx, i) => acc + (idx === i ? 1 : 0), 0)
+      : 0;
+    const puzzlePct = puzzleChecked && puzzleOriginal.length > 0
+      ? Math.round((puzzleCorrectCount / puzzleOriginal.length) * 100)
+      : 0;
+    const allPlaced = puzzleAvailIdx.length === 0;
+
     return (
       <div className="max-w-lg mx-auto px-4 pt-4 pb-32">
         <TopBar />
@@ -468,55 +524,96 @@ export default function QuickDrill() {
           className="mb-4"
         />
 
+        {/* Question */}
         <Card padding="lg" className="mb-4">
-          <p className="text-xs font-extrabold tracking-[0.15em] text-blue-500 dark:text-blue-400 mb-2">
-            Q
+          <p className="text-xs font-extrabold tracking-[0.15em] text-purple-500 dark:text-purple-400 mb-2">
+            ARRANGE THE CODE
           </p>
           <pre className="font-mono text-sm leading-relaxed text-gray-800 dark:text-gray-200 whitespace-pre-wrap m-0">
             {currentCard.q}
           </pre>
         </Card>
 
-        <div className="flex flex-col gap-2">
-          {quizOptions.map((opt, i) => {
-            const isSelected = quizAnswer === opt;
-            const isCorrectAnswer = opt === currentCard.a;
-            const answered = quizAnswer !== null;
-
-            let borderClass = 'border-gray-200 dark:border-gray-700';
-            let bgClass = '';
-            if (answered && isCorrectAnswer) {
-              borderClass = 'border-green-500 dark:border-green-400';
-              bgClass = 'bg-green-50 dark:bg-green-900/20';
-            } else if (answered && isSelected && !isCorrectAnswer) {
-              borderClass = 'border-red-500 dark:border-red-400';
-              bgClass = 'bg-red-50 dark:bg-red-900/20';
-            }
-
-            return (
-              <button
-                key={i}
-                onClick={() => handleQuizSelect(opt)}
-                disabled={answered}
-                className={[
-                  'w-full text-left rounded-lg border-2 p-3 min-h-[48px] transition-colors',
-                  'bg-white dark:bg-gray-800',
-                  borderClass,
-                  bgClass,
-                  !answered ? 'cursor-pointer hover:border-blue-400 dark:hover:border-blue-500' : 'cursor-default',
-                  answered ? '' : 'active:scale-[0.98]',
-                ].join(' ')}
-              >
-                <pre className="font-mono text-xs leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap m-0">
-                  {opt}
-                </pre>
-              </button>
-            );
-          })}
+        {/* Placed lines (answer zone) */}
+        <div className="mb-3">
+          <p className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase mb-2">
+            Your answer {puzzlePlacedIdx.length > 0 && `(${puzzlePlacedIdx.length}/${puzzleOriginal.length})`}
+          </p>
+          <div className="min-h-[60px] rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 p-2 space-y-1">
+            {puzzlePlacedIdx.length === 0 && (
+              <p className="text-xs text-gray-400 dark:text-gray-600 text-center py-3">
+                Tap lines below to build the answer
+              </p>
+            )}
+            {puzzlePlacedIdx.map((origIdx, pos) => {
+              let lineClass = 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20';
+              if (puzzleChecked) {
+                lineClass = origIdx === pos
+                  ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20'
+                  : 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-900/20';
+              }
+              return (
+                <button
+                  key={`placed-${pos}`}
+                  onClick={() => removePuzzleLine(pos)}
+                  disabled={puzzleChecked}
+                  className={`w-full text-left rounded border p-2 min-h-[36px] transition-colors ${lineClass} ${!puzzleChecked ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+                >
+                  <pre className="font-mono text-xs leading-relaxed whitespace-pre-wrap m-0">
+                    {puzzleOriginal[origIdx]}
+                  </pre>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {quizAnswer !== null && (
-          <div className="mt-4">
+        {/* Available lines (scrambled) */}
+        {puzzleAvailIdx.length > 0 && (
+          <div className="mb-4">
+            <p className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase mb-2">
+              Available lines
+            </p>
+            <div className="space-y-1">
+              {puzzleAvailIdx.map((origIdx) => (
+                <button
+                  key={`avail-${origIdx}`}
+                  onClick={() => placePuzzleLine(origIdx)}
+                  className="w-full text-left rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 min-h-[36px] cursor-pointer hover:border-purple-400 dark:hover:border-purple-500 active:scale-[0.98] transition-colors"
+                >
+                  <pre className="font-mono text-xs leading-relaxed whitespace-pre-wrap m-0 text-gray-700 dark:text-gray-300">
+                    {puzzleOriginal[origIdx]}
+                  </pre>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Check / Results */}
+        {!puzzleChecked && allPlaced && (
+          <Button size="lg" className="w-full min-h-[48px] !bg-purple-600 hover:!bg-purple-700" onClick={checkPuzzle}>
+            Check Order
+          </Button>
+        )}
+
+        {puzzleChecked && (
+          <div className="space-y-3">
+            <div className={`text-center p-3 rounded-lg font-bold ${
+              puzzlePct >= 80 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                : puzzlePct >= 50 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+            }`}>
+              {puzzlePct >= 80 ? 'Nailed it!' : puzzlePct >= 50 ? 'Close!' : 'Not quite'} — {puzzleCorrectCount}/{puzzleOriginal.length} lines correct
+            </div>
+            {puzzlePct < 100 && (
+              <Card padding="sm" className="!bg-gray-50 dark:!bg-gray-800">
+                <p className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase mb-2">Correct order</p>
+                <pre className="font-mono text-xs leading-relaxed text-green-700 dark:text-green-300 whitespace-pre-wrap m-0">
+                  {puzzleOriginal.join('\n')}
+                </pre>
+              </Card>
+            )}
             <Button size="lg" className="w-full min-h-[48px]" onClick={advanceCard}>
               Next &rarr;
             </Button>
@@ -628,28 +725,28 @@ export default function QuickDrill() {
         </div>
       </Card>
 
-      {/* Quiz Section */}
+      {/* Puzzle Section */}
       <Card className="mb-6">
         <h2 className="text-xs font-bold tracking-[0.2em] text-gray-500 dark:text-gray-400 uppercase mb-1">
-          Quiz Mode
+          Code Puzzle
         </h2>
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
-          Multiple choice. Weak cards first.
+          Arrange scrambled code lines in the correct order. Weak cards first.
         </p>
         <div className="flex gap-2">
           <Button
             variant="primary"
             size="md"
-            className="flex-1 min-h-[48px] !bg-blue-700 hover:!bg-blue-800 dark:!bg-blue-800 dark:hover:!bg-blue-900"
-            onClick={() => startSession('python', 'quiz')}
+            className="flex-1 min-h-[48px] !bg-purple-700 hover:!bg-purple-800 dark:!bg-purple-800 dark:hover:!bg-purple-900"
+            onClick={() => startSession('python', 'puzzle')}
           >
             Python
           </Button>
           <Button
             variant="primary"
             size="md"
-            className="flex-1 min-h-[48px] !bg-emerald-700 hover:!bg-emerald-800 dark:!bg-emerald-800 dark:hover:!bg-emerald-900"
-            onClick={() => startSession('sql', 'quiz')}
+            className="flex-1 min-h-[48px] !bg-purple-700 hover:!bg-purple-800 dark:!bg-purple-800 dark:hover:!bg-purple-900"
+            onClick={() => startSession('sql', 'puzzle')}
           >
             SQL
           </Button>
@@ -657,7 +754,7 @@ export default function QuickDrill() {
             variant="secondary"
             size="md"
             className="flex-1 min-h-[48px]"
-            onClick={() => startSession('all', 'quiz')}
+            onClick={() => startSession('all', 'puzzle')}
           >
             All
           </Button>
