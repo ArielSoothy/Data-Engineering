@@ -9,7 +9,7 @@ import type { Database } from 'sql.js';
 import initSqlJs from 'sql.js';
 import { PracticeChat } from './PracticeChat';
 import { Badge, Button, Spinner } from './ui';
-import { generateQuestionBreakdown, generateFeedback, getLastUsedProvider } from '../services/aiService';
+import { generateQuestionBreakdown, generateFeedback, getLastUsedProvider, getLastUsedModel } from '../services/aiService';
 import type { QuestionBreakdown } from '../services/aiService';
 
 interface QuestionCardProps {
@@ -147,7 +147,7 @@ const QuestionCard = ({
     try {
       const result = await generateQuestionBreakdown(question, answer, pseudoCode);
       setBreakdown(result);
-      setBreakdownProvider(getLastUsedProvider());
+      setBreakdownProvider(getLastUsedModel() || getLastUsedProvider());
     } catch (err: any) {
       setBreakdownError(err?.message ?? 'Failed to generate explanation. Please try again.');
     } finally {
@@ -162,7 +162,7 @@ const QuestionCard = ({
     try {
       const result = await generateFeedback(question, userAnswer, answer, pseudoCode);
       setAiFeedback(result);
-      setFeedbackProvider(getLastUsedProvider());
+      setFeedbackProvider(getLastUsedModel() || getLastUsedProvider());
     } catch {
       setAiFeedback('Failed to get feedback. Please try again.');
     } finally {

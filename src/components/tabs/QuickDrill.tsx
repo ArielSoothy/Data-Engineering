@@ -587,9 +587,17 @@ export default function QuickDrill() {
           </pre>
 
           {!showAnswer && (
-            <p className="text-center text-xs text-gray-400 dark:text-gray-600 tracking-widest mt-6">
-              tap to reveal
-            </p>
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <p className="text-xs text-gray-400 dark:text-gray-600 tracking-widest">
+                tap to reveal
+              </p>
+              <button
+                onClick={(e) => { e.stopPropagation(); advanceCard(); }}
+                className="text-xs text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 underline"
+              >
+                skip &rarr;
+              </button>
+            </div>
           )}
 
           {showAnswer && (

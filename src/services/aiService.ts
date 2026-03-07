@@ -5,6 +5,7 @@ import * as groqProvider from './providers/groqProvider';
 import * as claudeProvider from './providers/claudeProvider';
 import * as geminiProvider from './providers/geminiProvider';
 import * as claudeCliProvider from './providers/claudeCliProvider';
+import { AI_MODELS } from '../config';
 
 export type AIProvider = 'groq' | 'claude' | 'gemini' | 'claude-cli';
 
@@ -93,6 +94,17 @@ async function callProviderRaw(provider: AIProvider, prompt: string): Promise<st
 /** Which provider actually served the last request */
 let _lastProvider: AIProvider | null = null;
 export function getLastUsedProvider(): AIProvider | null { return _lastProvider; }
+
+const PROVIDER_MODEL_NAMES: Record<AIProvider, string> = {
+  groq: AI_MODELS.groq,
+  claude: AI_MODELS.claude,
+  gemini: AI_MODELS.gemini,
+  'claude-cli': 'claude-cli',
+};
+export function getLastUsedModel(): string | null {
+  if (!_lastProvider) return null;
+  return PROVIDER_MODEL_NAMES[_lastProvider] ?? _lastProvider;
+}
 
 export async function generateFeedback(
   question: string,
@@ -256,16 +268,16 @@ ${pseudoCode ? `Code:\n${pseudoCode}` : ''}`;
   try {
     raw = await callProviderRaw(provider, prompt);
     _lastProvider = provider;
-  } catch {
+  } catch (primaryErr) {
     if (provider !== 'gemini') {
       try {
         raw = await callProviderRaw('gemini', prompt);
         _lastProvider = 'gemini';
       } catch {
-        return { explanation: '', steps: '' };
+        throw primaryErr;
       }
     } else {
-      return { explanation: '', steps: '' };
+      throw primaryErr;
     }
   }
 
