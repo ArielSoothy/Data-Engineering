@@ -8,7 +8,7 @@ const COMPLETION_KEY = 'daily_plan_completion';
 const STREAK_KEY = 'daily_plan_streak';
 
 export interface DailyPlanState {
-  currentDay: number; // 1-26, or 0 if before start, or 27+ if past
+  currentDay: number; // 1-24, or 0 if before start, or 25+ if past
   daysRemaining: number;
   todayPlan: DayPlan | null;
   phase: typeof STUDY_PHASES[number] | null;
@@ -22,7 +22,7 @@ export interface DailyPlanState {
 export function useDailyPlan(): DailyPlanState {
   const now = new Date();
   const startDate = new Date(INTERVIEW_DATE);
-  startDate.setDate(startDate.getDate() - 25); // Day 1 = 26 days before interview
+  startDate.setDate(startDate.getDate() - 23); // Day 1 = 24 days before interview
 
   const diffMs = now.getTime() - startDate.getTime();
   const currentDay = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
@@ -34,11 +34,10 @@ export function useDailyPlan(): DailyPlanState {
 
   const phase = useMemo(() => {
     if (currentDay < 1) return STUDY_PHASES[0];
-    if (currentDay <= 5) return STUDY_PHASES[0];
-    if (currentDay <= 12) return STUDY_PHASES[1];
-    if (currentDay <= 18) return STUDY_PHASES[2];
-    if (currentDay <= 24) return STUDY_PHASES[3];
-    return STUDY_PHASES[4];
+    if (currentDay <= 7) return STUDY_PHASES[0];
+    if (currentDay <= 14) return STUDY_PHASES[1];
+    if (currentDay <= 21) return STUDY_PHASES[2];
+    return STUDY_PHASES[3];
   }, [currentDay]);
 
   const completedTasks = getFromLocalStorage<Record<string, boolean>>(COMPLETION_KEY, {});
@@ -75,7 +74,7 @@ export function useDailyPlan(): DailyPlanState {
   }, [todayPlan, completedTasks]);
 
   return {
-    currentDay: Math.max(0, Math.min(currentDay, 27)),
+    currentDay: Math.max(0, Math.min(currentDay, 25)),
     daysRemaining,
     todayPlan,
     phase,

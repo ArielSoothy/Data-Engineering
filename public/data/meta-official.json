@@ -2,13 +2,243 @@
   "questions": [
     {
       "id": 1,
-      "question": "Paste your first Meta official question here",
-      "category": "behavioral",
+      "question": "Write a query to identify all authors who have published 5 or more books.",
+      "category": "sql",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "hints": [
+        "You need to JOIN the authors and books tables on author_id.",
+        "Use GROUP BY on the author to count their books.",
+        "HAVING filters groups after aggregation — use it to enforce the >= 5 condition."
+      ],
+      "answer": "Join authors to books, group by author, and use HAVING to keep only those with 5+ books.",
+      "pseudoCode": "SELECT\n    a.author_id,\n    a.name,\n    COUNT(b.book_id) AS book_count\nFROM authors a\nJOIN books b ON a.author_id = b.author_id\nGROUP BY a.author_id, a.name\nHAVING COUNT(b.book_id) >= 5\nORDER BY book_count DESC;",
+      "explanation": "This is a classic GROUP BY + HAVING pattern. The JOIN connects each author to their books. GROUP BY collapses all rows for the same author into one group. COUNT(b.book_id) counts how many books each author has. HAVING (not WHERE) is used because we are filtering on an aggregate result. WHERE filters individual rows before grouping; HAVING filters groups after aggregation.",
+      "tags": ["JOIN", "GROUP BY", "HAVING", "COUNT"]
+    },
+    {
+      "id": 2,
+      "question": "Calculate the percentage of total sales that were completed on the same day the customer registered.",
+      "category": "sql",
       "difficulty": "Medium",
       "timeEstimate": 10,
-      "answer": "Paste the answer or expected talking points here",
-      "pseudoCode": "",
-      "aiApproach": ""
+      "hints": [
+        "JOIN transactions to customers so you can compare purchase_date with registration_date.",
+        "Use a CASE expression inside SUM to conditionally count same-day sales.",
+        "Multiply by 100.0 (not 100) to avoid integer division truncation."
+      ],
+      "answer": "Join transactions to customers, use conditional aggregation to sum same-day sales, then divide by total sales.",
+      "pseudoCode": "SELECT\n    ROUND(\n        SUM(CASE\n            WHEN t.purchase_date = c.registration_date THEN t.amount\n            ELSE 0\n        END) * 100.0 / NULLIF(SUM(t.amount), 0),\n        2\n    ) AS same_day_sales_pct\nFROM transactions t\nJOIN customers c ON t.customer_id = c.customer_id;",
+      "explanation": "The key insight is conditional aggregation: a CASE expression inside SUM lets you total only the rows where purchase_date equals registration_date, while the outer SUM totals everything. Dividing the two gives the percentage. Multiplying by 100.0 (a decimal literal) avoids integer division. NULLIF guards against division by zero if there are no sales at all.",
+      "tags": ["JOIN", "CASE", "aggregation", "date comparison", "NULLIF"]
+    },
+    {
+      "id": 3,
+      "question": "Find customers who purchased 3 or more books on BOTH their first AND last purchase day.",
+      "category": "sql",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "hints": [
+        "Use MIN and MAX window functions to find each customer's first and last purchase dates.",
+        "Filter to rows where the purchase_date matches either the first or last date.",
+        "Group by customer and date, count books, then use HAVING to enforce >= 3. Finally require both dates are present."
+      ],
+      "answer": "Use window functions to identify first and last purchase dates, filter to those dates, group and count, then intersect the two sets.",
+      "pseudoCode": "WITH customer_bounds AS (\n    SELECT\n        customer_id,\n        purchase_date,\n        book_id,\n        MIN(purchase_date) OVER (PARTITION BY customer_id) AS first_day,\n        MAX(purchase_date) OVER (PARTITION BY customer_id) AS last_day\n    FROM transactions\n),\nqualified_days AS (\n    SELECT\n        customer_id,\n        purchase_date,\n        COUNT(book_id) AS books_bought\n    FROM customer_bounds\n    WHERE purchase_date = first_day OR purchase_date = last_day\n    GROUP BY customer_id, purchase_date\n    HAVING COUNT(book_id) >= 3\n)\nSELECT customer_id\nFROM qualified_days\nGROUP BY customer_id\nHAVING COUNT(DISTINCT purchase_date) = 2;",
+      "explanation": "Step 1: The customer_bounds CTE attaches each customer's earliest and latest purchase date to every row using MIN/MAX window functions. Step 2: We filter to only rows on those boundary dates, then group by customer + date and keep only groups with 3+ books. Step 3: The final query keeps only customers who appear in qualified_days for two distinct dates (meaning they met the threshold on both their first and last day). If a customer's first and last day are the same (only one purchase day), COUNT(DISTINCT purchase_date) = 1, so they are excluded — which is the correct behavior.",
+      "tags": ["window functions", "MIN", "MAX", "CTE", "HAVING", "self-join"]
+    },
+    {
+      "id": 4,
+      "question": "Find the top 5 customer IDs by average payment per book, considering only books purchased by people they invited (referrals).",
+      "category": "sql",
+      "difficulty": "Hard",
+      "timeEstimate": 15,
+      "hints": [
+        "The customers table has a referred_by column that links a customer to whoever invited them.",
+        "Self-join customers to find referrer-referee pairs, then join to transactions for the referee's purchases.",
+        "Group by the referrer's customer_id and compute AVG(amount)."
+      ],
+      "answer": "Self-join customers on referred_by to find referral pairs, join to transactions for referee purchases, then aggregate by referrer.",
+      "pseudoCode": "SELECT\n    referrer.customer_id AS referrer_id,\n    ROUND(AVG(t.amount), 2) AS avg_payment_per_book\nFROM customers referrer\nJOIN customers referee\n    ON referee.referred_by = referrer.customer_id\nJOIN transactions t\n    ON t.customer_id = referee.customer_id\nGROUP BY referrer.customer_id\nORDER BY avg_payment_per_book DESC\nLIMIT 5;",
+      "explanation": "This requires a self-join on the customers table. 'referrer' is the person who invited others; 'referee' is the person whose referred_by matches the referrer's customer_id. We then join transactions on the referee's customer_id to get only books purchased by referred customers. AVG(t.amount) computes the average payment per book across all referees for each referrer. ORDER BY DESC + LIMIT 5 gives the top 5.",
+      "tags": ["self-join", "aggregation", "AVG", "LIMIT", "referral"]
+    },
+    {
+      "id": 5,
+      "question": "Find the total number of authors whose website URL contains '.com' and calculate the percentage of those authors who have never made a sale.",
+      "category": "sql",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "hints": [
+        "Filter authors with LIKE '%%.com%%' (or POSITION/STRPOS) on the website_url column.",
+        "LEFT JOIN through books and transactions to find sales; authors with no transactions have NULL transaction_id.",
+        "Use conditional aggregation: COUNT total .com authors and COUNT those with no sales."
+      ],
+      "answer": "Filter authors by .com in URL, left join through books to transactions, then use conditional aggregation to compute the percentage with no sales.",
+      "pseudoCode": "WITH com_authors AS (\n    SELECT a.author_id, a.name\n    FROM authors a\n    WHERE a.website_url LIKE '%%.com%%'\n),\nauthor_sales AS (\n    SELECT\n        ca.author_id,\n        COUNT(DISTINCT t.transaction_id) AS sale_count\n    FROM com_authors ca\n    LEFT JOIN books b ON b.author_id = ca.author_id\n    LEFT JOIN transactions t ON t.book_id = b.book_id\n    GROUP BY ca.author_id\n)\nSELECT\n    COUNT(*) AS total_com_authors,\n    SUM(CASE WHEN sale_count = 0 THEN 1 ELSE 0 END) AS never_sold,\n    ROUND(\n        SUM(CASE WHEN sale_count = 0 THEN 1 ELSE 0 END) * 100.0\n        / NULLIF(COUNT(*), 0),\n        2\n    ) AS pct_never_sold\nFROM author_sales;",
+      "explanation": "First CTE filters to authors whose website_url contains '.com'. Second CTE left-joins through books to transactions — LEFT JOIN is critical because authors with no books or no sales must still appear (with sale_count = 0). The final SELECT counts total .com authors, counts how many have zero sales, and divides to get the percentage. NULLIF prevents division by zero.",
+      "tags": ["LIKE", "LEFT JOIN", "CTE", "conditional aggregation", "string functions"]
+    },
+    {
+      "id": 6,
+      "question": "Calculate the total sales value and number of unique paying customers, grouped and sorted by payment type.",
+      "category": "sql",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "hints": [
+        "GROUP BY payment_type to segment the results.",
+        "Use SUM(amount) for total sales value.",
+        "Use COUNT(DISTINCT customer_id) for unique customers."
+      ],
+      "answer": "Group transactions by payment_type and use aggregate functions for totals and distinct counts.",
+      "pseudoCode": "SELECT\n    payment_type,\n    SUM(amount) AS total_sales,\n    COUNT(DISTINCT customer_id) AS unique_customers\nFROM transactions\nGROUP BY payment_type\nORDER BY total_sales DESC;",
+      "explanation": "This is a straightforward GROUP BY aggregation. SUM(amount) adds up all transaction amounts within each payment type. COUNT(DISTINCT customer_id) ensures each customer is counted only once even if they made multiple purchases with the same payment type. ORDER BY total_sales DESC sorts from highest to lowest revenue.",
+      "tags": ["GROUP BY", "SUM", "COUNT DISTINCT", "ORDER BY"]
+    },
+    {
+      "id": 7,
+      "question": "Write a query to find the sum of total orders per user and the running total partitioned by user, ordered by purchase date.",
+      "category": "sql",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "hints": [
+        "Use a window function with SUM() OVER(...) for the running total.",
+        "PARTITION BY customer_id keeps each customer's running total separate.",
+        "ORDER BY purchase_date inside the OVER clause defines the running order."
+      ],
+      "answer": "Combine a regular GROUP BY for total orders with a window function SUM for the running total.",
+      "pseudoCode": "SELECT\n    customer_id,\n    purchase_date,\n    amount,\n    SUM(amount) OVER (\n        PARTITION BY customer_id\n    ) AS total_orders_per_user,\n    SUM(amount) OVER (\n        PARTITION BY customer_id\n        ORDER BY purchase_date\n        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n    ) AS running_total\nFROM transactions\nORDER BY customer_id, purchase_date;",
+      "explanation": "Two window functions are used side by side. The first SUM(...) OVER (PARTITION BY customer_id) with no ORDER BY computes the grand total for each customer across all their rows. The second SUM(...) OVER (PARTITION BY customer_id ORDER BY purchase_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) computes a cumulative running total that grows row by row. The ROWS BETWEEN clause makes the running-total semantics explicit, though it is the default when ORDER BY is present.",
+      "tags": ["window functions", "SUM OVER", "PARTITION BY", "running total"]
+    },
+    {
+      "id": 8,
+      "question": "Given a users table with user_id, email, and phone columns: extract the domain from email (after @), mask the phone number (first 6 digits as '******', keep last 4), output anon_phone, email_domain, user_id, sorted by original phone ascending.",
+      "category": "sql",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "hints": [
+        "Use SUBSTRING with POSITION (or STRPOS) to find the '@' and extract everything after it.",
+        "For masking, concatenate '******' with SUBSTRING(phone, 7) or RIGHT(phone, 4) depending on format.",
+        "ORDER BY the original phone column, not the masked version."
+      ],
+      "answer": "Use string functions to extract the email domain and mask the phone number.",
+      "pseudoCode": "SELECT\n    customer_id AS user_id,\n    SUBSTRING(email FROM POSITION('@' IN email) + 1) AS email_domain,\n    '******' || SUBSTRING(phone FROM 7) AS anon_phone\nFROM customers\nORDER BY phone ASC;",
+      "explanation": "POSITION('@' IN email) returns the character index of the '@' symbol. Adding 1 and passing to SUBSTRING extracts everything after it — the domain. For phone masking, we replace the first 6 characters with literal asterisks and concatenate the remainder using SUBSTRING(phone FROM 7), which returns everything from the 7th character onward (the last 4 digits of a 10-digit number). We ORDER BY the original phone column so the sort reflects the actual phone number, not the masked version.",
+      "tags": ["SUBSTRING", "POSITION", "string functions", "masking", "ORDER BY"]
+    },
+    {
+      "id": 9,
+      "question": "Write a function that takes two strings and returns the words that don't match between them (case-sensitive comparison).",
+      "category": "python",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "hints": [
+        "Split both strings into sets of words using .split().",
+        "The symmetric difference (set1 ^ set2) gives elements in either set but not both.",
+        "Return the result as a sorted list for deterministic output."
+      ],
+      "answer": "Split both strings into word sets and return the symmetric difference.",
+      "pseudoCode": "def unmatched_words(s1: str, s2: str) -> list[str]:\n    words1 = set(s1.split())\n    words2 = set(s2.split())\n    return sorted(words1 ^ words2)\n\n\n# Example usage\nprint(unmatched_words(\"hello world foo\", \"hello bar world\"))\n# Output: ['bar', 'foo']",
+      "explanation": "str.split() breaks a string into a list of words on whitespace. Converting to sets allows O(1) membership testing. The symmetric difference operator (^) returns elements that are in one set or the other but not both — exactly the words that don't match. Sorting the result produces a deterministic order. This is case-sensitive by default since we do not call .lower().",
+      "tags": ["set", "split", "symmetric difference"]
+    },
+    {
+      "id": 10,
+      "question": "Write a function to count the frequency of each character in a given string.",
+      "category": "python",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "hints": [
+        "collections.Counter does this in one line.",
+        "Alternatively, iterate through the string and build a dict manually.",
+        "Decide whether to count spaces or not based on requirements."
+      ],
+      "answer": "Use collections.Counter or a manual dictionary loop to count character frequencies.",
+      "pseudoCode": "from collections import Counter\n\ndef char_frequency(s: str) -> dict[str, int]:\n    return dict(Counter(s))\n\n\n# Manual approach (no imports)\ndef char_frequency_manual(s: str) -> dict[str, int]:\n    freq = {}\n    for char in s:\n        freq[char] = freq.get(char, 0) + 1\n    return freq\n\n\n# Example usage\nprint(char_frequency(\"hello\"))\n# Output: {'h': 1, 'e': 1, 'l': 2, 'o': 1}",
+      "explanation": "Counter from the collections module is the idiomatic Python solution — it takes any iterable and returns a dict-like object mapping elements to their counts. The manual approach uses dict.get(key, default) to initialize missing keys to 0 and increment. Both run in O(n) time. In an interview, showing both approaches demonstrates knowledge of the standard library and fundamental data structures.",
+      "tags": ["dict", "Counter", "frequency", "collections"]
+    },
+    {
+      "id": 11,
+      "question": "Given a list of (location, comment) tuples, find the most common comment across all locations, ignoring duplicate comments from the same location.",
+      "category": "python",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "hints": [
+        "First, deduplicate by converting tuples to a set so each (location, comment) pair appears only once.",
+        "Then extract just the comments and count them with Counter.",
+        "Use Counter.most_common(1) to get the top result."
+      ],
+      "answer": "Deduplicate (location, comment) pairs using a set, then count comments with Counter.",
+      "pseudoCode": "from collections import Counter\n\ndef most_common_comment(data: list[tuple[str, str]]) -> str:\n    # Deduplicate: each (location, comment) pair counted once\n    unique_pairs = set(data)\n    # Count comments across all locations\n    comment_counts = Counter(comment for _, comment in unique_pairs)\n    # Return the most common comment\n    return comment_counts.most_common(1)[0][0]\n\n\n# Example usage\ndata = [\n    (\"NYC\", \"great\"),\n    (\"NYC\", \"great\"),   # duplicate — ignored\n    (\"LA\", \"great\"),\n    (\"LA\", \"okay\"),\n    (\"SF\", \"okay\"),\n    (\"SF\", \"great\"),\n]\nprint(most_common_comment(data))\n# Output: 'great' (appears in 3 unique locations)",
+      "explanation": "The key insight is deduplication before counting. Converting the list of tuples to a set removes duplicate (location, comment) pairs, so if NYC says 'great' twice it only counts once. Then we extract just the comments and use Counter to find frequencies. most_common(1) returns a list of (element, count) tuples; [0][0] extracts the element. This correctly finds the comment that appears across the most distinct locations.",
+      "tags": ["set", "Counter", "tuples", "deduplication"]
+    },
+    {
+      "id": 12,
+      "question": "Given a list of meeting start and end times as tuples, find the maximum number of meetings that can overlap at the same time.",
+      "category": "python",
+      "difficulty": "Medium",
+      "timeEstimate": 12,
+      "hints": [
+        "Think of this as an event sweep: create +1 events for starts and -1 events for ends.",
+        "Sort all events by time; break ties by processing ends (-1) before starts (+1).",
+        "Walk through the sorted events, maintaining a running count. The peak is your answer."
+      ],
+      "answer": "Use a sweep line algorithm: create start (+1) and end (-1) events, sort, and track the running maximum.",
+      "pseudoCode": "def max_overlapping_meetings(meetings: list[tuple[int, int]]) -> int:\n    events = []\n    for start, end in meetings:\n        events.append((start, 1))   # meeting starts\n        events.append((end, -1))    # meeting ends\n\n    # Sort by time; if tied, process ends before starts\n    events.sort(key=lambda x: (x[0], x[1]))\n\n    max_overlap = 0\n    current = 0\n    for _, delta in events:\n        current += delta\n        max_overlap = max(max_overlap, current)\n    return max_overlap\n\n\n# Example usage\nmeetings = [(1, 5), (2, 6), (4, 7), (8, 10)]\nprint(max_overlapping_meetings(meetings))\n# Output: 3 (meetings 1-5, 2-6, and 4-7 all overlap at time 4)",
+      "explanation": "This is the classic sweep line (or timeline merge) algorithm. Each meeting generates two events: a +1 at start time and a -1 at end time. Sorting all events chronologically and walking through them with a running counter tells us how many meetings are active at any point. Ties are broken by processing ends (-1) before starts (+1) so that a meeting ending at time T is not counted as overlapping with one starting at time T. The maximum value of the counter is the answer. Time complexity: O(n log n) for sorting.",
+      "tags": ["sorting", "sweep line", "intervals", "greedy"]
+    },
+    {
+      "id": 13,
+      "question": "Given a positive integer, construct the largest possible number by rearranging its digits.",
+      "category": "python",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "hints": [
+        "Convert the integer to a string to access individual digits.",
+        "Sort the digits in descending order.",
+        "Join them back and convert to int."
+      ],
+      "answer": "Convert to string, sort digits descending, rejoin, and convert back to int.",
+      "pseudoCode": "def largest_number(n: int) -> int:\n    digits = sorted(str(n), reverse=True)\n    return int(''.join(digits))\n\n\n# Example usage\nprint(largest_number(38294))   # Output: 98432\nprint(largest_number(10523))   # Output: 53210",
+      "explanation": "Converting the integer to a string lets us treat each digit as an individual character. Python's sorted() with reverse=True arranges characters in descending order (since digit characters sort lexicographically the same as numerically). Joining the sorted list back into a string and converting to int gives the largest possible number. This works because placing larger digits in more significant positions always produces a larger number. Time complexity: O(d log d) where d is the number of digits.",
+      "tags": ["string", "sorting", "type conversion"]
+    },
+    {
+      "id": 14,
+      "question": "Write a function to calculate the average price from a list of book prices, handling empty lists.",
+      "category": "python",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "hints": [
+        "Check if the list is empty before dividing.",
+        "Use sum() and len() for a clean solution.",
+        "Decide what to return for empty lists: 0, None, or raise an exception."
+      ],
+      "answer": "Guard against empty lists, then compute sum divided by length.",
+      "pseudoCode": "def average_price(prices: list[float]) -> float | None:\n    if not prices:\n        return None\n    return sum(prices) / len(prices)\n\n\n# Example usage\nprint(average_price([12.99, 9.99, 24.50, 7.99]))\n# Output: 13.8675\n\nprint(average_price([]))\n# Output: None",
+      "explanation": "The critical edge case is the empty list — dividing by zero would raise a ZeroDivisionError. Checking 'if not prices' handles this gracefully. Returning None (rather than 0) clearly communicates 'no data' versus 'the average is zero'. sum() and len() are both O(n), making the overall complexity O(n). In a data engineering context, you might also want to handle None/NaN values within the list using a list comprehension filter.",
+      "tags": ["sum", "len", "edge case", "None handling"]
+    },
+    {
+      "id": 15,
+      "question": "Write a function to find the first recurring character in a string.",
+      "category": "python",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "hints": [
+        "Use a set to track characters you have already seen.",
+        "Iterate through the string; if the current character is in the set, return it immediately.",
+        "If no character recurs, return None."
+      ],
+      "answer": "Iterate through the string with a seen-set; return the first character that is already in the set.",
+      "pseudoCode": "def first_recurring(s: str) -> str | None:\n    seen = set()\n    for char in s:\n        if char in seen:\n            return char\n        seen.add(char)\n    return None\n\n\n# Example usage\nprint(first_recurring(\"abcdebc\"))  # Output: 'b'\nprint(first_recurring(\"abcdef\"))   # Output: None\nprint(first_recurring(\"aabb\"))     # Output: 'a'",
+      "explanation": "A set provides O(1) average-case lookup and insertion. As we iterate through the string, we check whether each character has been seen before. The first character that is already in the set is the first recurring character, so we return it immediately. If we finish the loop without finding a repeat, we return None. Total time complexity is O(n) and space complexity is O(k) where k is the size of the character alphabet (at most n).",
+      "tags": ["set", "O(1) lookup", "early return"]
     }
   ]
 }

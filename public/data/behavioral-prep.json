@@ -1,0 +1,116 @@
+{
+  "stories": [
+    {
+      "id": 1,
+      "prompt": "Tell me about a project you owned end-to-end",
+      "category": "ownership",
+      "tips": [
+        "Use STAR format",
+        "Quantify impact with concrete metrics",
+        "Show technical depth in architecture decisions",
+        "Highlight how you handled ambiguity in requirements",
+        "Mention how you drove alignment across stakeholders"
+      ],
+      "exampleFramework": "Situation → Task → Action → Result",
+      "metaValues": ["Move Fast", "Focus on Impact"]
+    },
+    {
+      "id": 2,
+      "prompt": "Describe a time you collaborated with non-technical stakeholders on a data project",
+      "category": "collaboration",
+      "tips": [
+        "Explain how you translated technical concepts for a non-technical audience",
+        "Show empathy for their priorities and constraints",
+        "Highlight the shared outcome and how both sides contributed",
+        "Mention specific communication tools or frameworks you used",
+        "Demonstrate active listening and iteration on feedback"
+      ],
+      "exampleFramework": "Situation → Task → Action → Result",
+      "metaValues": ["Build Awesome Things", "Be Direct and Respect Your Colleagues"]
+    },
+    {
+      "id": 3,
+      "prompt": "Tell me about a disagreement or conflict you had with a colleague or manager",
+      "category": "conflict",
+      "tips": [
+        "Stay professional — never badmouth the other person",
+        "Focus on the disagreement, not the personality",
+        "Show how you sought to understand the other perspective first",
+        "Describe the resolution and what you learned",
+        "Emphasize that healthy debate leads to better outcomes"
+      ],
+      "exampleFramework": "Situation → Task → Action → Result",
+      "metaValues": ["Be Direct and Respect Your Colleagues", "Move Fast"]
+    },
+    {
+      "id": 4,
+      "prompt": "Describe a decision you made with incomplete or ambiguous information",
+      "category": "ambiguity",
+      "tips": [
+        "Show your decision-making framework under uncertainty",
+        "Explain what signals you used to make the call",
+        "Mention how you mitigated risk while moving forward",
+        "Highlight iteration — did you revisit the decision as new data came in?",
+        "Demonstrate comfort with imperfect information"
+      ],
+      "exampleFramework": "Situation → Task → Action → Result",
+      "metaValues": ["Move Fast", "Be Bold"]
+    },
+    {
+      "id": 5,
+      "prompt": "Give an example where your work had a measurable, quantified impact",
+      "category": "impact",
+      "tips": [
+        "Lead with the numbers: hours saved, error rates reduced, revenue impact",
+        "Explain the baseline before your work and the improvement after",
+        "Connect technical work to business outcomes",
+        "Be specific — 'reduced pipeline runtime from 4 hours to 20 minutes' beats 'made it faster'",
+        "Show how you measured and validated the impact"
+      ],
+      "exampleFramework": "Situation → Task → Action → Result",
+      "metaValues": ["Focus on Impact", "Move Fast"]
+    },
+    {
+      "id": 6,
+      "prompt": "Why Meta? Why Data Engineering?",
+      "category": "motivation",
+      "tips": [
+        "Be genuine — interviewers can detect rehearsed answers",
+        "Connect Meta's mission to your personal values or interests",
+        "Show knowledge of Meta's data infrastructure and scale",
+        "Explain why DE specifically, not just 'I like data'",
+        "Mention specific Meta products, technologies, or challenges that excite you"
+      ],
+      "exampleFramework": "Personal connection → Why DE as a craft → Why Meta specifically → What you want to build",
+      "metaValues": ["Live in the Future", "Build Awesome Things"]
+    },
+    {
+      "id": 7,
+      "prompt": "Tell me about a time you failed or made the wrong call",
+      "category": "failure",
+      "tips": [
+        "Pick a real failure, not a humble brag",
+        "Own the mistake fully — no deflecting blame",
+        "Focus most of your answer on what you learned and changed",
+        "Show the concrete process or behavior change that resulted",
+        "Demonstrate self-awareness and growth mindset"
+      ],
+      "exampleFramework": "Situation → Task → Action → Result → Lesson & Change",
+      "metaValues": ["Be Bold", "Be Direct and Respect Your Colleagues"]
+    },
+    {
+      "id": 8,
+      "prompt": "Describe a time you raised the bar or provided technical leadership for your team",
+      "category": "leadership",
+      "tips": [
+        "Leadership doesn't require a title — show influence through action",
+        "Mention specific initiatives: code reviews, documentation, mentoring, tooling",
+        "Quantify the team-level impact if possible",
+        "Show how you brought others along rather than just doing it yourself",
+        "Highlight lasting improvements that persisted after the project"
+      ],
+      "exampleFramework": "Situation → Task → Action → Result",
+      "metaValues": ["Focus on Impact", "Build Awesome Things", "Live in the Future"]
+    }
+  ]
+}

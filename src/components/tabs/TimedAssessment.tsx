@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Clock, ChevronDown, ChevronUp, SkipForward, ArrowRight, RotateCcw, Home, Play, Zap } from 'lucide-react';
+import { Clock, ChevronDown, ChevronUp, SkipForward, ArrowRight, RotateCcw, Home, Play, Zap, Lightbulb, ArrowRightCircle } from 'lucide-react';
 import { Card, Badge, Button, ProgressBar } from '../ui';
 import type { Question } from '../../hooks/useQuestions';
 
@@ -8,7 +8,7 @@ import type { Question } from '../../hooks/useQuestions';
 /* ------------------------------------------------------------------ */
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Mixed';
-type Phase = 'setup' | 'sql' | 'python' | 'results';
+type Phase = 'setup' | 'intro' | 'sql' | 'transition' | 'python' | 'results';
 type QuestionMode = 'standard' | 'quick';
 
 interface AssessmentAnswer {
@@ -29,6 +29,19 @@ interface PhaseResult {
 /* ------------------------------------------------------------------ */
 
 const PHASE_DURATION = 25 * 60; // 25 minutes in seconds
+const INTRO_DURATION = 5 * 60;  // 5 minutes intro
+const TRANSITION_DURATION = 60; // 1 minute transition
+
+const META_TIPS = [
+  { icon: '🎯', title: 'State your approach first', detail: 'Briefly describe your plan before coding. "I\'ll join these tables, then aggregate, then filter with HAVING."' },
+  { icon: '💬', title: 'Think aloud', detail: 'Explain your reasoning as you code. Interviewers want to see your thought process.' },
+  { icon: '🚀', title: 'Correct first, optimize second', detail: 'Get a working solution, then improve it. Don\'t over-engineer on the first pass.' },
+  { icon: '⚠️', title: 'Check NULLs & edge cases', detail: 'Meta explicitly tests NULL handling. Use COALESCE, IS NULL, and guard against divide-by-zero.' },
+  { icon: '🔧', title: 'Ask for syntax help', detail: 'It\'s OK to ask "What\'s the syntax for X?" — Meta says this is fine and expected.' },
+  { icon: '▶️', title: 'Run your code early', detail: 'Don\'t spend minutes manually checking. Hit run, see errors, fix iteratively.' },
+  { icon: '👂', title: 'Listen for hints', detail: 'If the interviewer asks "Are you sure about that approach?" — they\'re guiding you. Reconsider.' },
+  { icon: '📊', title: 'Verify the grain', detail: 'Before writing SQL, ask: "What does one row represent?" Getting the grain wrong is a common trap.' },
+];
 
 const formatTimer = (totalSeconds: number): string => {
   const m = Math.floor(totalSeconds / 60);
@@ -126,7 +139,7 @@ const TimedAssessment = () => {
 
   /* ---------- timer ---------- */
   useEffect(() => {
-    if (phase !== 'sql' && phase !== 'python') return;
+    if (phase !== 'sql' && phase !== 'python' && phase !== 'intro' && phase !== 'transition') return;
 
     const interval = setInterval(() => {
       setTimeRemaining((prev) => {
@@ -143,15 +156,20 @@ const TimedAssessment = () => {
 
   // When timer hits 0, auto-advance
   useEffect(() => {
-    if (timeRemaining === 0 && (phase === 'sql' || phase === 'python')) {
+    if (timeRemaining !== 0) return;
+    if (phase === 'intro') {
+      startSqlPhase();
+    } else if (phase === 'sql' || phase === 'python') {
       finishPhase();
+    } else if (phase === 'transition') {
+      startPythonPhase();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRemaining, phase]);
 
   /* ---------- beforeunload warning ---------- */
   useEffect(() => {
-    if (phase === 'sql' || phase === 'python') {
+    if (phase === 'intro' || phase === 'sql' || phase === 'transition' || phase === 'python') {
       const handler = (e: BeforeUnloadEvent) => {
         e.preventDefault();
       };
@@ -170,12 +188,33 @@ const TimedAssessment = () => {
     setCurrentIndex(0);
     setCurrentAnswer('');
     setAnswers([]);
-    setTimeRemaining(PHASE_DURATION);
+    setTimeRemaining(INTRO_DURATION);
     questionStartRef.current = Date.now();
     setSqlResult(null);
     setPythonResult(null);
     setExpandedResults(new Set());
+    setPhase('intro');
+  };
+
+  const startSqlPhase = () => {
+    setTimeRemaining(PHASE_DURATION);
+    questionStartRef.current = Date.now();
     setPhase('sql');
+  };
+
+  const startTransition = (sqlRes: PhaseResult) => {
+    setSqlResult(sqlRes);
+    setTimeRemaining(TRANSITION_DURATION);
+    setPhase('transition');
+  };
+
+  const startPythonPhase = () => {
+    setCurrentIndex(0);
+    setCurrentAnswer('');
+    setAnswers([]);
+    setTimeRemaining(PHASE_DURATION);
+    questionStartRef.current = Date.now();
+    setPhase('python');
   };
 
   const currentQuestions = phase === 'sql' ? selectedSql : selectedPython;
@@ -247,14 +286,7 @@ const TimedAssessment = () => {
     };
 
     if (phase === 'sql') {
-      setSqlResult(result);
-      // Transition to python
-      setCurrentIndex(0);
-      setCurrentAnswer('');
-      setAnswers([]);
-      setTimeRemaining(PHASE_DURATION);
-      questionStartRef.current = Date.now();
-      setPhase('python');
+      startTransition(result);
     } else {
       setPythonResult(result);
       setPhase('results');
@@ -304,7 +336,7 @@ const TimedAssessment = () => {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-gray-100">Timed Assessment</h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Simulate Meta's 50-minute technical screen
+            Simulate Meta's 60-minute technical screen
           </p>
         </div>
 
@@ -312,15 +344,28 @@ const TimedAssessment = () => {
           <div className="flex items-center gap-3 mb-4">
             <Clock size={24} className="text-blue-500" />
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Format</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">25 min SQL + 25 min Python</p>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Format — Matches Real Interview</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">5 min prep → 25 min SQL → 25 min Python → Review</p>
             </div>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            You will be presented with SQL questions first, followed by Python questions. Each phase
-            has its own 25-minute timer. When the timer expires or you finish all questions, you
-            automatically move to the next phase.
-          </p>
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+              <span><strong>Intro (5 min)</strong> — Review tips, plan your approach</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+              <span><strong>SQL Phase (25 min)</strong> — PostgreSQL questions on business schema</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0" />
+              <span><strong>Python Phase (25 min)</strong> — Lists, dicts, sets, strings</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-yellow-400 shrink-0" />
+              <span><strong>Review</strong> — See your results + pacing breakdown</span>
+            </div>
+          </div>
         </Card>
 
         {/* Difficulty */}
@@ -380,6 +425,100 @@ const TimedAssessment = () => {
     );
   }
 
+  /* ========================== INTRO ========================== */
+  if (phase === 'intro') {
+    const pct = (timeRemaining / INTRO_DURATION) * 100;
+    return (
+      <div className="container mx-auto px-4 py-4 pb-36 md:pb-8 max-w-3xl">
+        {/* Timer */}
+        <div className="sticky top-0 z-30 bg-white dark:bg-gray-900 pb-3 pt-1 -mx-4 px-4 border-b border-gray-200 dark:border-gray-700 mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Intro — Review these tips before you start
+            </span>
+            <span className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">
+              {formatTimer(timeRemaining)}
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div className="h-2 rounded-full transition-all duration-1000 bg-blue-500" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+
+        <div className="text-center mb-6">
+          <Lightbulb size={40} className="mx-auto text-yellow-500 mb-3" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+            Meta Interview Tips
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            These are the habits that score points. Read them before coding.
+          </p>
+        </div>
+
+        <div className="grid gap-3 mb-8">
+          {META_TIPS.map((tip, i) => (
+            <Card key={i} className="!p-4">
+              <div className="flex gap-3">
+                <span className="text-2xl shrink-0">{tip.icon}</span>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{tip.title}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{tip.detail}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <Button variant="primary" size="lg" className="w-full" onClick={startSqlPhase} icon={<ArrowRight size={20} />}>
+          Skip to SQL Phase
+        </Button>
+      </div>
+    );
+  }
+
+  /* ======================== TRANSITION ======================== */
+  if (phase === 'transition' && sqlResult) {
+    const answered = sqlResult.answers.filter(a => !a.skipped).length;
+    const pct = (timeRemaining / TRANSITION_DURATION) * 100;
+    return (
+      <div className="container mx-auto px-4 py-8 pb-36 md:pb-8 max-w-2xl text-center">
+        {/* Timer */}
+        <div className="mb-8">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+            <div className="h-2 rounded-full transition-all duration-1000 bg-yellow-500" style={{ width: `${pct}%` }} />
+          </div>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Python starts in {formatTimer(timeRemaining)}
+          </span>
+        </div>
+
+        <ArrowRightCircle size={48} className="mx-auto text-purple-500 mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          SQL Phase Complete
+        </h2>
+        <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+          You answered <span className="font-bold text-green-600 dark:text-green-400">{answered}</span> of{' '}
+          <span className="font-bold">{sqlResult.questions.length}</span> questions in{' '}
+          <span className="font-bold">{formatTimer(sqlResult.totalTime)}</span>
+        </p>
+
+        <Card className="mb-8 text-left">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Python Phase Tips</h3>
+          <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+            <li>• Focus on lists, dicts, sets, strings — no libraries needed</li>
+            <li>• Use Counter/defaultdict for frequency problems</li>
+            <li>• Get the correct solution first, then optimize</li>
+            <li>• Handle edge cases: empty input, None values, duplicates</li>
+          </ul>
+        </Card>
+
+        <Button variant="primary" size="lg" className="w-full" onClick={startPythonPhase} icon={<Play size={20} />}>
+          Start Python Phase Now
+        </Button>
+      </div>
+    );
+  }
+
   /* =================== ACTIVE PHASE (SQL / Python) =================== */
   if (phase === 'sql' || phase === 'python') {
     const question = currentQuestions[currentIndex];
@@ -393,9 +532,14 @@ const TimedAssessment = () => {
         {/* Timer bar (sticky top) */}
         <div className="sticky top-0 z-30 bg-white dark:bg-gray-900 pb-3 pt-1 -mx-4 px-4 border-b border-gray-200 dark:border-gray-700 mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {phaseLabel} Phase &mdash; Question {currentIndex + 1} of {currentQuestions.length}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {phaseLabel} Phase &mdash; Question {currentIndex + 1} of {currentQuestions.length}
+              </span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                Target: ~{Math.floor(PHASE_DURATION / 60 / currentQuestions.length)} min/question
+              </span>
+            </div>
             <span
               className={`text-2xl font-mono font-bold ${
                 color === 'red'

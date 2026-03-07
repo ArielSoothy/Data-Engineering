@@ -22,6 +22,7 @@ const AdaptivePractice = lazy(() => import('./components/tabs/AdaptivePractice')
 const MetaOfficial = lazy(() => import('./components/tabs/MetaOfficial'));
 const QuickDrill = lazy(() => import('./components/tabs/QuickDrill'));
 const TimedAssessment = lazy(() => import('./components/tabs/TimedAssessment'));
+const DailyAssessment = lazy(() => import('./components/tabs/DailyAssessment'));
 const ApiTest = lazy(() => import('./components/ApiTest').then(m => ({ default: m.ApiTest })));
 const ApiDiagnostic = lazy(() => import('./components/ApiDiagnostic').then(m => ({ default: m.ApiDiagnostic })));
 
@@ -70,6 +71,7 @@ function App() {
                 <Route path="/meta-official" element={<MetaOfficial />} />
                 <Route path="/quick-drill" element={<QuickDrill />} />
                 <Route path="/timed-assessment" element={<TimedAssessment />} />
+                <Route path="/daily-assessment" element={<DailyAssessment />} />
                 <Route path="/api-test" element={<ApiTest />} />
                 <Route path="/api-diagnostic" element={<ApiDiagnostic />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

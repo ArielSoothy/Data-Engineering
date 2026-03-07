@@ -50,6 +50,7 @@
       "question": "How do you read a CSV file in Python?",
       "difficulty": "Medium",
       "timeEstimate": 6,
+      "metaRelevant": false,
       "answer": "You can read CSV files using pandas.read_csv() or the built-in csv module. Pandas is preferred for data analysis, while the csv module is useful for row-by-row processing. For large files, use pandas' chunksize parameter to process in chunks.",
       "pseudoCode": "# Using pandas (most common for data engineering)\nimport pandas as pd\n\n# Basic reading\ndf = pd.read_csv('data.csv')\n\n# With options\ndf = pd.read_csv(\n    'data.csv',\n    sep=',',                 # Delimiter\n    header=0,                # Row with column names\n    na_values=['NA', 'NULL'] # Values to treat as NA\n)\n\n# For large files (process in chunks)\nchunks = []\nfor chunk in pd.read_csv('large_file.csv', chunksize=10000):\n    # Process each chunk\n    chunks.append(chunk.mean())\n\n# Using csv module\nimport csv\nwith open('data.csv', 'r') as file:\n    csv_reader = csv.reader(file)\n    header = next(csv_reader)  # Skip header\n    for row in csv_reader:\n        # Process each row\n        print(row)",
       "aiApproach": "For data analysis, use pandas.read_csv() with appropriate options for data types, missing values, and column selection. For very large files, use the chunksize parameter to avoid memory issues. Use error handling for production code."
@@ -59,6 +60,7 @@
       "question": "What's the difference between pandas DataFrame and Series?",
       "difficulty": "Easy",
       "timeEstimate": 5,
+      "metaRelevant": false,
       "answer": "A Series is a one-dimensional labeled array similar to a column in a spreadsheet. A DataFrame is a two-dimensional labeled data structure similar to a table in a database. DataFrame columns are actually Series objects sharing the same index.",
       "pseudoCode": "import pandas as pd\n\n# Series - 1D labeled array\nseries = pd.Series([10, 20, 30, 40], index=['A', 'B', 'C', 'D'])\nprint(series.shape)  # (4,)\n\n# DataFrame - 2D labeled data structure\ndf = pd.DataFrame({\n    'name': ['Alice', 'Bob', 'Carol'],\n    'age': [25, 30, 35],\n    'department': ['IT', 'HR', 'Finance']\n})\nprint(df.shape)  # (3, 3)\n\n# Accessing Series from DataFrame\nage_series = df['age']  # Returns a Series",
       "aiApproach": "Think of a Series as a single column of data with row labels, and a DataFrame as multiple Series objects sharing the same index. Series operations typically return scalars, while DataFrame operations often return Series objects."
@@ -68,6 +70,7 @@
       "question": "How do you handle missing values in pandas?",
       "difficulty": "Medium",
       "timeEstimate": 8,
+      "metaRelevant": false,
       "answer": "Missing values in pandas can be handled by: 1) Detecting them with df.isnull() or df.isna(), 2) Removing them with df.dropna(), 3) Filling them with df.fillna(), 4) Interpolating with df.interpolate(), or 5) Forward/backward filling with methods='ffill'/'bfill'.",
       "pseudoCode": "import pandas as pd\nimport numpy as np\n\n# Create DataFrame with missing values\ndf = pd.DataFrame({\n    'A': [1, np.nan, 3],\n    'B': [4, 5, np.nan]\n})\n\n# Detect missing values\nprint(df.isnull().sum())  # Count NaN per column\n\n# Remove rows with any NaN values\ndf_dropna = df.dropna()\n\n# Fill missing values with a constant\ndf_fill = df.fillna(0)\n\n# Fill with column mean\ndf_mean = df.fillna(df.mean())\n\n# Forward fill (use previous value)\ndf_ffill = df.fillna(method='ffill')",
       "aiApproach": "Choose your missing value strategy based on the data context. For time series, forward/backward fill works well. For numerical features, mean/median is common. For categorical data, use mode or a specific value like 'Unknown'."
@@ -77,6 +80,7 @@
       "question": "What's the difference between merge() and join() in pandas?",
       "difficulty": "Medium",
       "timeEstimate": 7,
+      "metaRelevant": false,
       "answer": "merge() is more flexible and can join on any columns, while join() is optimized for index-based joins. merge() works like SQL joins with inner, outer, left, and right options. join() is primarily for combining DataFrames on their indexes.",
       "pseudoCode": "import pandas as pd\n\n# Create sample DataFrames\ndf1 = pd.DataFrame({'key': ['A', 'B', 'C'], 'value1': [1, 2, 3]})\ndf2 = pd.DataFrame({'key': ['B', 'C', 'D'], 'value2': [4, 5, 6]})\n\n# merge() - can join on any columns\nmerged = pd.merge(\n    df1, df2,\n    on='key',      # Common column\n    how='left'     # Keep all rows from df1\n)\n\n# join() - index-based\ndf1_idx = df1.set_index('key')\ndf2_idx = df2.set_index('key')\njoined = df1_idx.join(df2_idx, how='left')",
       "aiApproach": "Use merge() for complex joins on specific columns, particularly when the join columns have different names. Use join() for simple index-based operations, which is often faster when repeatedly joining indexed DataFrames."
@@ -86,6 +90,7 @@
       "question": "How do you group data in pandas?",
       "difficulty": "Medium",
       "timeEstimate": 8,
+      "metaRelevant": false,
       "answer": "Use the groupby() method to split data into groups based on some criteria, then apply aggregate functions like sum(), mean(), or count() to each group. You can group by one or multiple columns and apply different aggregations to different columns.",
       "pseudoCode": "import pandas as pd\n\n# Sample data\ndf = pd.DataFrame({\n    'department': ['Sales', 'HR', 'Sales', 'IT', 'HR'],\n    'employee': ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve'],\n    'salary': [50000, 60000, 55000, 65000, 62000],\n    'bonus': [5000, 3000, 4500, 7000, 3500]\n})\n\n# Group by one column and calculate mean\ndept_avg = df.groupby('department').mean()\n\n# Group by and apply multiple aggregations\ndept_stats = df.groupby('department').agg({\n    'salary': ['mean', 'min', 'max', 'count'],\n    'bonus': ['mean', 'sum']\n})\n\n# Apply custom function to each group\ndef salary_range(x):\n    return x.max() - x.min()\n    \ndf.groupby('department')['salary'].apply(salary_range)",
       "aiApproach": "GroupBy operations follow a split-apply-combine pattern: split the data into groups, apply a function to each group, then combine the results. Use the agg() method for multiple aggregations and transform() to keep the original DataFrame structure."
@@ -95,6 +100,7 @@
       "question": "Explain the differences between Pandas Series and DataFrame.",
       "difficulty": "Easy",
       "timeEstimate": 5,
+      "metaRelevant": false,
       "answer": "A Series is a one-dimensional labeled array that can hold data of any type, similar to a column in a spreadsheet. A DataFrame is a two-dimensional labeled data structure with columns that can be of different types, similar to a table in a database or a spreadsheet.",
       "pseudoCode": "# Creating a Series\nimport pandas as pd\ns = pd.Series([1, 2, 3], index=['a', 'b', 'c'])\n\n# Creating a DataFrame\ndf = pd.DataFrame({\n    'A': [1, 2, 3],\n    'B': ['a', 'b', 'c']\n})",
       "aiApproach": "Think of a Series as a single column of data with row labels, and a DataFrame as multiple Series objects sharing the same index. Most operations that work on Series also work on DataFrames, column-wise."
@@ -104,6 +110,7 @@
       "question": "How would you handle missing values in a DataFrame?",
       "difficulty": "Medium",
       "timeEstimate": 8,
+      "metaRelevant": false,
       "answer": "You can handle missing values by: (1) Detecting them using isnull() or isna(), (2) Removing them using dropna(), (3) Filling them with a specific value using fillna(), (4) Interpolating them using interpolate(), or (5) Forward/backward filling using ffill() or bfill().",
       "pseudoCode": "# Detect missing values\ndf.isnull().sum()\n\n# Remove rows with missing values\ndf_clean = df.dropna()\n\n# Fill missing values with a constant\ndf_filled = df.fillna(0)\n\n# Fill with column mean\ndf_mean_filled = df.fillna(df.mean())\n\n# Forward fill (use previous value)\ndf_ffill = df.fillna(method='ffill')",
       "aiApproach": "Choose your missing value strategy based on the data context. Forward/backward fill works well for time series, mean/median for numerical features, and mode for categorical data."
@@ -113,6 +120,7 @@
       "question": "How would you merge two DataFrames in Pandas?",
       "difficulty": "Medium",
       "timeEstimate": 10,
+      "metaRelevant": false,
       "answer": "Use pd.merge() or the DataFrame.merge() method to combine DataFrames. You can specify the type of join (inner, outer, left, right), the columns to join on, and how to handle overlapping columns.",
       "pseudoCode": "# Inner join on a common column\nmerged_df = pd.merge(df1, df2, on='key_column')\n\n# Left join with different column names\nmerged_df = pd.merge(\n    df1, df2, \n    left_on='df1_key', \n    right_on='df2_key', \n    how='left'\n)\n\n# Outer join on index\nmerged_df = pd.merge(\n    df1, df2,\n    left_index=True,\n    right_index=True,\n    how='outer'\n)",
       "aiApproach": "Think of DataFrame merges just like SQL joins. Use suffixes parameter to handle duplicate column names (e.g., suffixes=('_left', '_right'))."
@@ -122,6 +130,7 @@
       "question": "Explain the difference between .loc and .iloc in Pandas.",
       "difficulty": "Medium",
       "timeEstimate": 6,
+      "metaRelevant": false,
       "answer": ".loc is label-based indexing, meaning it uses the actual labels of the rows/columns. .iloc is integer position-based indexing, using the numeric position (starting from 0). .loc includes the last element when slicing, while .iloc excludes it.",
       "pseudoCode": "# .loc examples (label-based)\ndf.loc['row_label', 'column_label']  # Single value\ndf.loc['row_label1':'row_label2', ['col1', 'col2']]  # Slice\n\n# .iloc examples (position-based)\ndf.iloc[0, 0]  # First cell\ndf.iloc[0:2, 1:3]  # First 2 rows, columns 1 and 2",
       "aiApproach": "Remember: .loc is for Labels, .iloc is for Integer positions. When slicing with .loc, both start and end labels are included. With .iloc, the end index is excluded."
@@ -131,9 +140,55 @@
       "question": "How would you perform a GroupBy operation in Pandas?",
       "difficulty": "Medium",
       "timeEstimate": 8,
+      "metaRelevant": false,
       "answer": "Use the groupby() method to split data into groups based on some criteria, then apply an aggregate function like sum(), mean(), count(), etc. to each group. You can group by one or multiple columns.",
       "pseudoCode": "# Group by one column and calculate mean of other columns\ndf.groupby('category').mean()\n\n# Group by multiple columns with multiple aggregations\ndf.groupby(['category', 'subcategory']).agg({\n    'value': ['sum', 'mean', 'count'],\n    'other_value': ['min', 'max']\n})\n\n# Apply a custom function to each group\ndf.groupby('category').apply(lambda x: x['value'].max() - x['value'].min())",
       "aiApproach": "GroupBy operations follow a split-apply-combine pattern: split the data into groups, apply a function to each group, then combine the results. This mirrors the SQL GROUP BY behavior."
+    },
+    {
+      "id": 16,
+      "question": "How do you manipulate lists in Python? Explain append, extend, pop, and slicing.",
+      "difficulty": "Easy",
+      "timeEstimate": 6,
+      "answer": "Lists support multiple mutation operations: append() adds a single element to the end, extend() adds all elements from an iterable, pop() removes and returns an element by index (default last), and slicing creates sub-lists using [start:stop:step] syntax. insert() adds at a specific position, and remove() deletes by value.",
+      "pseudoCode": "users = ['alice', 'bob', 'charlie']\n\n# append - adds ONE element to the end\nusers.append('diana')\nprint(users)  # ['alice', 'bob', 'charlie', 'diana']\n\n# extend - adds ALL elements from an iterable\nusers.extend(['eve', 'frank'])\nprint(users)  # ['alice', 'bob', 'charlie', 'diana', 'eve', 'frank']\n\n# pop - remove and return by index (default -1 = last)\nremoved = users.pop()      # 'frank'\nremoved = users.pop(1)     # 'bob'\nprint(users)  # ['alice', 'charlie', 'diana', 'eve']\n\n# Slicing [start:stop:step]\nnums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]\nprint(nums[2:5])      # [2, 3, 4]\nprint(nums[:3])       # [0, 1, 2]\nprint(nums[7:])       # [7, 8, 9]\nprint(nums[::2])      # [0, 2, 4, 6, 8]  (every 2nd)\nprint(nums[::-1])     # [9, 8, 7, ...] (reversed)\n\n# List comprehension with condition\nevens = [x for x in nums if x % 2 == 0]\nprint(evens)  # [0, 2, 4, 6, 8]\n\n# Nested comprehension - flatten\nmatrix = [[1, 2], [3, 4], [5, 6]]\nflat = [val for row in matrix for val in row]\nprint(flat)  # [1, 2, 3, 4, 5, 6]",
+      "aiApproach": "Know the difference between append (single item) and extend (iterable) -- append(['a','b']) adds one list element while extend(['a','b']) adds two string elements. Slicing creates a new list (shallow copy), so modifying the slice does not affect the original. Negative indices count from the end: nums[-1] is the last element."
+    },
+    {
+      "id": 17,
+      "question": "How do you use dict.get() with a default, iterate with items(), and merge dicts with update()?",
+      "difficulty": "Easy",
+      "timeEstimate": 6,
+      "answer": "dict.get(key, default) safely retrieves a value without raising KeyError if the key is missing. items() returns key-value pairs for iteration. update() merges another dict into the current one, overwriting duplicate keys. defaultdict from collections auto-initializes missing keys with a factory function.",
+      "pseudoCode": "# get() with default value - avoids KeyError\nconfig = {'host': 'localhost', 'port': 5432}\ndb_name = config.get('database', 'default_db')  # 'default_db'\nhost = config.get('host', '127.0.0.1')           # 'localhost'\n\n# items() for iteration\nfor key, value in config.items():\n    print(f'{key} = {value}')\n\n# update() - merge dicts (overwrites duplicates)\noverrides = {'port': 3306, 'database': 'production'}\nconfig.update(overrides)\nprint(config)  # {'host': 'localhost', 'port': 3306, 'database': 'production'}\n\n# Merge with | operator (Python 3.9+)\nmerged = config | {'timeout': 30}\n\n# defaultdict - auto-initialize missing keys\nfrom collections import defaultdict\n\nword_count = defaultdict(int)  # missing keys start at 0\nfor word in ['apple', 'banana', 'apple', 'cherry', 'banana', 'apple']:\n    word_count[word] += 1\nprint(dict(word_count))  # {'apple': 3, 'banana': 2, 'cherry': 1}\n\n# defaultdict(list) for grouping\nby_dept = defaultdict(list)\nemployees = [('eng', 'Alice'), ('hr', 'Bob'), ('eng', 'Charlie')]\nfor dept, name in employees:\n    by_dept[dept].append(name)\nprint(dict(by_dept))  # {'eng': ['Alice', 'Charlie'], 'hr': ['Bob']}",
+      "aiApproach": "get() with a default is safer than direct access in production code -- it prevents KeyError crashes. defaultdict eliminates the 'if key not in dict' boilerplate that causes bugs in interviews. The | merge operator (Python 3.9+) is cleaner than update() when you want a new dict without mutating the original."
+    },
+    {
+      "id": 18,
+      "question": "How do set operations work in Python? Explain intersection, difference, union, and membership checks.",
+      "difficulty": "Easy",
+      "timeEstimate": 6,
+      "answer": "Sets support mathematical operations: union (|) combines all elements, intersection (&) finds common elements, difference (-) finds elements in one set but not another, and symmetric_difference (^) finds elements in either but not both. Membership check (in) is O(1) average time, making sets ideal for fast lookups.",
+      "pseudoCode": "backend_skills = {'Python', 'SQL', 'Docker', 'AWS'}\nfrontend_skills = {'JavaScript', 'React', 'CSS', 'AWS'}\n\n# Union - all unique skills combined\nall_skills = backend_skills | frontend_skills\n# or: backend_skills.union(frontend_skills)\nprint(all_skills)  # {'Python', 'SQL', 'Docker', 'AWS', 'JavaScript', 'React', 'CSS'}\n\n# Intersection - skills in both sets\nshared = backend_skills & frontend_skills\nprint(shared)  # {'AWS'}\n\n# Difference - in backend but not frontend\nbackend_only = backend_skills - frontend_skills\nprint(backend_only)  # {'Python', 'SQL', 'Docker'}\n\n# Symmetric difference - in either but not both\nexclusive = backend_skills ^ frontend_skills\nprint(exclusive)  # {'Python', 'SQL', 'Docker', 'JavaScript', 'React', 'CSS'}\n\n# Membership check - O(1) average\nprint('Python' in backend_skills)  # True\nprint('Java' in backend_skills)    # False\n\n# Practical: fast dedup while preserving order\nnames = ['alice', 'bob', 'alice', 'charlie', 'bob']\nseen = set()\nunique = []\nfor name in names:\n    if name not in seen:\n        seen.add(name)\n        unique.append(name)\nprint(unique)  # ['alice', 'bob', 'charlie']",
+      "aiApproach": "Sets are hash-based, so membership checks (in) are O(1) average vs O(n) for lists. This matters at scale -- checking 1M items against a set is instant, against a list is painfully slow. Use sets whenever you need fast lookups, deduplication, or mathematical set operations. frozenset is the immutable version that can be used as a dict key."
+    },
+    {
+      "id": 19,
+      "question": "How do you parse and manipulate strings in Python using split, join, strip, find, and replace?",
+      "difficulty": "Easy",
+      "timeEstimate": 6,
+      "answer": "Python strings have built-in methods for parsing: split() breaks a string into a list by delimiter, join() combines a list into a string with a separator, strip() removes leading/trailing whitespace, find() locates a substring (returns -1 if not found), and replace() substitutes all occurrences of a pattern.",
+      "pseudoCode": "# split - break string into list\nlog_line = '2024-01-15 ERROR db_connection timeout after 30s'\nparts = log_line.split()  # split on whitespace\nprint(parts)  # ['2024-01-15', 'ERROR', 'db_connection', 'timeout', 'after', '30s']\n\ncsv_row = 'alice,30,engineering'\nfields = csv_row.split(',')  # split on comma\nprint(fields)  # ['alice', '30', 'engineering']\n\n# split with maxsplit\nkey_val = 'name=Alice Johnson'\nkey, value = key_val.split('=', maxsplit=1)\nprint(key, value)  # 'name' 'Alice Johnson'\n\n# join - combine list into string\nwords = ['SELECT', '*', 'FROM', 'users']\nquery = ' '.join(words)\nprint(query)  # 'SELECT * FROM users'\n\npath = '/'.join(['home', 'user', 'data'])\nprint(path)  # 'home/user/data'\n\n# strip - remove whitespace (or specified chars)\nraw = '  hello world  \\n'\nprint(raw.strip())        # 'hello world'\nprint(raw.lstrip())       # 'hello world  \\n'\nprint('###data###'.strip('#'))  # 'data'\n\n# find - locate substring (returns -1 if not found)\nemail = 'alice@example.com'\nat_pos = email.find('@')\nprint(at_pos)             # 5\nprint(email[at_pos+1:])   # 'example.com'\nprint(email.find('xyz'))  # -1\n\n# replace - substitute all occurrences\ntext = 'Hello World, Hello Python'\nprint(text.replace('Hello', 'Hi'))  # 'Hi World, Hi Python'\nprint(text.replace('Hello', 'Hi', 1))  # 'Hi World, Hello Python' (max 1)",
+      "aiApproach": "Use split() for tokenizing log lines, CSVs, or key-value pairs. join() is the inverse of split and more efficient than string concatenation in loops. strip() is essential for cleaning user input or file data. find() returns -1 on failure (unlike index() which raises ValueError), making it safer for conditional checks. These methods are the foundation of string processing in Meta interviews."
+    },
+    {
+      "id": 20,
+      "question": "How do you count element frequencies in Python using collections.Counter?",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "collections.Counter is a dict subclass for counting hashable objects. It provides most_common(n) to get the top-N frequent elements, supports arithmetic operations between Counters, and can be initialized from any iterable. It is the standard tool for frequency counting in Python interviews.",
+      "pseudoCode": "from collections import Counter\n\n# Count word frequencies\nwords = ['apple', 'banana', 'apple', 'cherry', 'banana', 'apple', 'date']\nword_freq = Counter(words)\nprint(word_freq)\n# Counter({'apple': 3, 'banana': 2, 'cherry': 1, 'date': 1})\n\n# Top-N most common\nprint(word_freq.most_common(2))  # [('apple', 3), ('banana', 2)]\n\n# Count characters in a string\nchar_freq = Counter('mississippi')\nprint(char_freq)  # Counter({'s': 4, 'i': 4, 'p': 2, 'm': 1})\n\n# Counter arithmetic\nbasket1 = Counter({'apple': 3, 'banana': 2})\nbasket2 = Counter({'apple': 1, 'cherry': 5})\nprint(basket1 + basket2)  # Counter({'cherry': 5, 'apple': 4, 'banana': 2})\nprint(basket1 - basket2)  # Counter({'banana': 2, 'apple': 2})  (no negatives)\n\n# Practical: find most common error type in logs\nerror_logs = ['timeout', 'auth_fail', 'timeout', 'db_error',\n              'timeout', 'auth_fail', 'timeout']\nerror_counts = Counter(error_logs)\nmost_common_error, count = error_counts.most_common(1)[0]\nprint(f'Most common: {most_common_error} ({count} times)')\n# Most common: timeout (4 times)\n\n# Check if all elements in one Counter exist in another\ndef is_anagram(s1, s2):\n    return Counter(s1) == Counter(s2)\nprint(is_anagram('listen', 'silent'))  # True",
+      "aiApproach": "Counter is the go-to tool for frequency problems in Meta interviews. most_common() uses a heap internally for efficient top-K retrieval. Counter subtraction drops zero/negative counts, which is useful for finding missing elements. For grouped counting, combine Counter with defaultdict or iterate pre-grouped data."
     }
   ]
 }

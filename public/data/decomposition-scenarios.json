@@ -119,6 +119,76 @@
       "solutionApproach": "Implement a phased migration: (1) Audit the legacy schema and query patterns to map to Hive table designs, (2) Use Dataswarm to orchestrate Spark jobs that extract data from the legacy system, (3) Land data into Hive tables on HDFS with ORC format and appropriate partitioning, (4) Implement incremental sync using a watermark column (last_modified_date), (5) Run dual-write during transition so both old and new systems serve queries, (6) Validate with automated reconciliation queries comparing row counts and key metrics.",
       "pseudoCode": "# Spark job: Incremental migration from legacy DB to Hive\nfrom pyspark.sql import SparkSession\n\nspark = SparkSession.builder.appName(\"LegacyMigration\").getOrCreate()\n\n# Read the last successful watermark\nlast_load_date = spark.sql(\"\"\"\n    SELECT MAX(watermark_value) AS hw\n    FROM migration_metadata.load_watermarks\n    WHERE table_name = 'fact_orders'\n\"\"\").collect()[0]['hw']\n\n# Extract incremental data from legacy system via JDBC\nincremental_df = spark.read.format(\"jdbc\").options(\n    url=\"jdbc:postgresql://legacy-db:5432/warehouse\",\n    dbtable=f\"(SELECT * FROM fact_orders WHERE last_modified > '{last_load_date}') AS inc\",\n    driver=\"org.postgresql.Driver\"\n).load()\n\n# Transform: normalize types, add metadata\ntransformed_df = (\n    incremental_df\n    .withColumn(\"order_date\", col(\"order_date\").cast(\"date\"))\n    .withColumn(\"dbt_loaded_at\", current_timestamp())\n)\n\n# Load into Hive (UPSERT via INSERT OVERWRITE on the target partition)\ntransformed_df.write \\\n    .format(\"orc\") \\\n    .mode(\"overwrite\") \\\n    .partitionBy(\"order_date\") \\\n    .saveAsTable(\"warehouse.staging_fact_orders\")\n\n# Update watermark\nspark.sql(f\"\"\"\n    INSERT INTO migration_metadata.load_watermarks\n    VALUES ('fact_orders', '{new_watermark}', CURRENT_TIMESTAMP)\n\"\"\")\n\n-- Reconciliation query (Presto, run daily during parallel period)\nSELECT\n  'row_count' AS metric,\n  (SELECT COUNT(*) FROM legacy_warehouse.fact_orders) AS legacy_value,\n  (SELECT COUNT(*) FROM warehouse.fact_orders) AS new_value,\n  ABS(\n    (SELECT COUNT(*) FROM legacy_warehouse.fact_orders)\n    - (SELECT COUNT(*) FROM warehouse.fact_orders)\n  ) AS diff\nUNION ALL\nSELECT\n  'total_revenue' AS metric,\n  (SELECT CAST(SUM(order_amount) AS DOUBLE) FROM legacy_warehouse.fact_orders),\n  (SELECT CAST(SUM(order_amount) AS DOUBLE) FROM warehouse.fact_orders),\n  ABS(\n    (SELECT SUM(order_amount) FROM legacy_warehouse.fact_orders)\n    - (SELECT SUM(order_amount) FROM warehouse.fact_orders)\n  );",
       "aiApproach": "Consider a 'lift and improve' approach instead of 'lift and shift', using the migration as an opportunity to redesign problematic schemas and implement modern data patterns like slowly changing dimensions (SCD Type 2) in the Hive warehouse. At Meta's scale, the biggest risk is the cutover window — always run dual-write for at least 2 weeks with automated reconciliation before cutting over. Use Dataswarm to orchestrate both the migration jobs and the reconciliation checks as a single workflow with alerting on drift."
+    },
+    {
+      "id": 6,
+      "title": "Define Metrics for Instagram Reels Launch",
+      "description": "You're the DE for Instagram Reels. Define the north star metric, guardrail metrics, and counter metrics. Explain what data you'd need to instrument.",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "systemComponents": [
+        "Event Instrumentation (client-side logging for views, creates, shares)",
+        "Metric Definitions (north star, guardrail, counter metrics)",
+        "Data Pipeline (Scribe ingestion to Hive fact tables)",
+        "Dashboard Layer (Scuba / Presto for real-time and daily reporting)",
+        "Experimentation Framework (A/B test metric integration)"
+      ],
+      "keyConsiderations": [
+        "User engagement (time spent watching, completion rate, repeat views)",
+        "Creator retention (new creator onboarding rate, publishing frequency)",
+        "Ad revenue impact (ad load capacity, CPM on Reels vs. Feed)",
+        "Content quality (report rate, diversity of content, original vs. reshared)"
+      ],
+      "solutionApproach": "Define the north star metric as 'Daily Active Reels Viewers' — users who watch at least one Reel per day. Guardrail metrics protect against negative side effects: (1) Feed session time should not decrease by more than 5%, (2) Stories posting rate should remain stable, (3) App crash rate should not increase. Counter metrics capture risks: (1) Low-quality content ratio, (2) Creator burnout (declining post frequency among top creators). Instrument client events for reel_view_start, reel_view_complete, reel_create, reel_share, reel_skip, and reel_report. Build a fact_reel_views table partitioned by ds (date) with grain = one row per view event.",
+      "pseudoCode": "-- North Star: Daily Active Reels Viewers\nSELECT\n  ds,\n  COUNT(DISTINCT user_id) AS daily_active_reels_viewers\nFROM fact_reel_views\nWHERE ds = CURRENT_DATE\n  AND event_type = 'reel_view_start'\nGROUP BY ds;\n\n-- Guardrail: Feed session time trend (should not drop >5%)\nSELECT\n  ds,\n  AVG(session_duration_seconds) AS avg_feed_session_sec,\n  LAG(AVG(session_duration_seconds), 7) OVER (ORDER BY ds) AS avg_7d_ago,\n  (AVG(session_duration_seconds) - LAG(AVG(session_duration_seconds), 7) OVER (ORDER BY ds))\n    / NULLIF(LAG(AVG(session_duration_seconds), 7) OVER (ORDER BY ds), 0) * 100 AS pct_change\nFROM fact_sessions\nWHERE ds BETWEEN CURRENT_DATE - INTERVAL '14' DAY AND CURRENT_DATE\nGROUP BY ds;\n\n-- Counter Metric: Low-quality content ratio\nSELECT\n  ds,\n  COUNT(CASE WHEN is_reported = TRUE THEN 1 END) * 1.0 / COUNT(*) AS report_rate\nFROM fact_reel_views\nWHERE ds = CURRENT_DATE\nGROUP BY ds;",
+      "aiApproach": "When defining metrics for a new product launch, always think in terms of the metric tree: the north star sits at the top, decomposed into input metrics (e.g., DAU = new users + retained users + resurrected users). Guardrail metrics should be checked in every experiment to prevent cannibalization of existing surfaces. At Meta, the experimentation platform automatically flags when guardrail metrics move beyond a pre-defined threshold, so defining these upfront is critical for launch velocity."
+    },
+    {
+      "id": 7,
+      "title": "DAU Dropped 10% — Investigation Framework",
+      "description": "A key engagement metric dropped 10% yesterday. Walk through how you'd investigate: check logging/instrumentation, recent releases, segment by geo/platform/version, upstream data quality, user behavior shifts.",
+      "difficulty": "Medium",
+      "timeEstimate": 15,
+      "systemComponents": [
+        "Metric Monitoring (automated anomaly detection alerts)",
+        "Logging & Instrumentation Audit (verify data completeness)",
+        "Release Tracking (deploy logs, feature flag changes)",
+        "Segmentation Analysis (geo, platform, app version, user cohort)",
+        "Root Cause Resolution (fix + post-mortem)"
+      ],
+      "keyConsiderations": [
+        "Metric definition clarity (did the definition or logging change?)",
+        "Data quality checks (missing partitions, delayed pipelines, schema changes)",
+        "Segment analysis (is the drop global or concentrated in one geo/platform/version?)",
+        "Hypothesis testing (correlate with releases, experiments, external events)"
+      ],
+      "solutionApproach": "Follow a structured investigation framework: (1) Verify the metric — check if the pipeline ran successfully, partitions landed, and row counts are normal. (2) Check instrumentation — was there a client release that changed logging? Look at raw event volumes. (3) Segment the drop — break DAU by platform (iOS/Android/Web), geo (US/EU/APAC), app version, and user tenure. A 10% global drop concentrated in one segment is much more actionable. (4) Correlate with changes — check deploy logs, feature flag flips, and active experiments from yesterday. (5) Check external factors — holidays, outages, competitor launches. (6) Quantify and escalate — once root cause is identified, estimate the impact and decide if a rollback or hotfix is needed.",
+      "pseudoCode": "-- Step 1: Verify data completeness\nSELECT ds, COUNT(*) AS event_count\nFROM fact_active_users\nWHERE ds BETWEEN CURRENT_DATE - INTERVAL '7' DAY AND CURRENT_DATE\nGROUP BY ds\nORDER BY ds;\n\n-- Step 2: Segment the drop by platform\nSELECT\n  ds,\n  platform,\n  COUNT(DISTINCT user_id) AS dau\nFROM fact_active_users\nWHERE ds BETWEEN CURRENT_DATE - INTERVAL '7' DAY AND CURRENT_DATE\nGROUP BY ds, platform\nORDER BY ds, platform;\n\n-- Step 3: Segment by geo\nSELECT\n  ds,\n  country,\n  COUNT(DISTINCT user_id) AS dau\nFROM fact_active_users\nWHERE ds BETWEEN CURRENT_DATE - INTERVAL '7' DAY AND CURRENT_DATE\nGROUP BY ds, country\nORDER BY ds, dau DESC;\n\n-- Step 4: Check if a specific app version caused the drop\nSELECT\n  ds,\n  app_version,\n  COUNT(DISTINCT user_id) AS dau\nFROM fact_active_users\nWHERE ds BETWEEN CURRENT_DATE - INTERVAL '3' DAY AND CURRENT_DATE\n  AND platform = 'android'  -- if android segment dropped\nGROUP BY ds, app_version\nORDER BY ds, dau DESC;",
+      "aiApproach": "At Meta, metric investigations follow the 'DIME' framework: Definition (is the metric correctly defined?), Instrumentation (is logging working?), Methodology (did a pipeline or join change?), External (real-world events). The most common root causes are logging regressions from client releases and pipeline delays that cause partitions to appear empty. Always check the simplest explanations first before diving into complex behavioral analysis."
+    },
+    {
+      "id": 8,
+      "title": "Design a Star Schema for Marketplace Transactions",
+      "description": "Design a data model for Meta Marketplace with buyers, sellers, listings, and transactions. Define fact vs dimension tables, grain, and handle slowly changing dimensions.",
+      "difficulty": "Hard",
+      "timeEstimate": 20,
+      "systemComponents": [
+        "Fact Table (fact_transactions at transaction-level grain)",
+        "Dimension Tables (dim_users, dim_listings, dim_categories, dim_geography)",
+        "SCD Type 2 Implementation (track historical changes in dimensions)",
+        "ETL Pipeline (daily Spark jobs to load and transform data)",
+        "Query Layer (Presto for analytics, pre-aggregated summary tables)"
+      ],
+      "keyConsiderations": [
+        "Star schema design (centralized fact table surrounded by dimension tables)",
+        "Fact vs dimension separation (measurable events vs. descriptive attributes)",
+        "Grain definition (one row = one completed transaction)",
+        "SCD Type 2 for tracking seller rating changes and listing price history",
+        "Denormalization trade-offs (query performance vs. storage cost and ETL complexity)"
+      ],
+      "solutionApproach": "Design a star schema with fact_transactions at the grain of one row per completed transaction. Surrogate keys link to dimensions: (1) dim_users (SCD Type 2 — tracks changes to user trust_score, account_status, and location over time using effective_date/expiry_date columns), (2) dim_listings (SCD Type 2 — captures price changes, category reassignments), (3) dim_categories (Type 1 — category hierarchy rarely changes), (4) dim_geography (Type 1 — static country/region/city mapping), (5) dim_date (standard date dimension for time-based analysis). The fact table stores transaction_amount, shipping_cost, platform_fee, and foreign keys to all dimensions. For query performance, create a denormalized wide table (wide_transactions) that pre-joins fact + dimensions for common dashboard queries, accepting the storage trade-off.",
+      "pseudoCode": "-- Fact table: one row per completed transaction\nCREATE TABLE fact_transactions (\n  transaction_key   BIGINT,\n  buyer_key         BIGINT,   -- FK to dim_users (buyer snapshot)\n  seller_key        BIGINT,   -- FK to dim_users (seller snapshot)\n  listing_key       BIGINT,   -- FK to dim_listings\n  category_key      INT,      -- FK to dim_categories\n  geo_key           INT,      -- FK to dim_geography\n  date_key          INT,      -- FK to dim_date\n  transaction_amount DECIMAL(18,2),\n  shipping_cost     DECIMAL(18,2),\n  platform_fee      DECIMAL(18,2),\n  payment_method    VARCHAR(50),\n  transaction_status VARCHAR(20)\n)\nPARTITIONED BY (ds DATE)\nSTORED AS ORC;\n\n-- Dimension table with SCD Type 2\nCREATE TABLE dim_users (\n  user_key          BIGINT,        -- surrogate key\n  user_id           BIGINT,        -- natural key\n  username          VARCHAR(255),\n  trust_score       DECIMAL(5,2),\n  account_status    VARCHAR(20),\n  city              VARCHAR(100),\n  country           VARCHAR(100),\n  effective_date    DATE,\n  expiry_date       DATE,          -- '9999-12-31' for current\n  is_current        BOOLEAN\n)\nSTORED AS ORC;\n\n-- SCD Type 2 merge logic (daily Spark/SQL job)\nMERGE INTO dim_users AS target\nUSING staging_users AS source\nON target.user_id = source.user_id AND target.is_current = TRUE\nWHEN MATCHED AND (\n  target.trust_score <> source.trust_score\n  OR target.account_status <> source.account_status\n) THEN UPDATE SET\n  expiry_date = CURRENT_DATE - INTERVAL '1' DAY,\n  is_current = FALSE\nWHEN NOT MATCHED THEN INSERT VALUES (\n  generate_surrogate_key(),\n  source.user_id, source.username, source.trust_score,\n  source.account_status, source.city, source.country,\n  CURRENT_DATE, DATE '9999-12-31', TRUE\n);\n\n-- Common analytics query using the star schema\nSELECT\n  g.country,\n  c.category_name,\n  d.month_name,\n  COUNT(*) AS total_transactions,\n  SUM(f.transaction_amount) AS gmv,\n  AVG(f.transaction_amount) AS avg_order_value\nFROM fact_transactions f\nJOIN dim_geography g ON f.geo_key = g.geo_key\nJOIN dim_categories c ON f.category_key = c.category_key\nJOIN dim_date d ON f.date_key = d.date_key\nWHERE d.year = 2026\nGROUP BY g.country, c.category_name, d.month_name\nORDER BY gmv DESC;",
+      "aiApproach": "When designing star schemas at Meta's scale, the key trade-off is between normalized dimensions (less storage, simpler ETL, but slower queries due to joins) and denormalized wide tables (faster queries, but more complex ETL and higher storage). In practice, most teams maintain both: the star schema as the source of truth and a denormalized wide table materialized daily for dashboard performance. SCD Type 2 is essential for any dimension where historical accuracy matters (e.g., a seller's trust score at the time of transaction), but use Type 1 for attributes where only the current value matters to avoid dimension table bloat."
     }
   ]
 }
