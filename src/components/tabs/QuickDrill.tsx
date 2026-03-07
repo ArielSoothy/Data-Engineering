@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { createEmptyCard, fsrs, Rating, State, type Card as FSRSCard, type Grade } from 'ts-fsrs';
 import { Card, Badge, Button, ProgressBar, Spinner } from '../ui';
 import { pushProgressDebounced } from '../../services/progressSync';
 
@@ -36,6 +37,61 @@ const DIFF_OPTIONS = [
 
 const DIFF_LABELS: Record<number, string> = { 1: 'Easy', 2: 'Medium', 3: 'Hard' };
 const DIFF_BADGE: Record<number, 'Easy' | 'Medium' | 'Hard'> = { 1: 'Easy', 2: 'Medium', 3: 'Hard' };
+
+const FSRS_STORAGE_KEY = 'quick_drill_fsrs';
+const fsrsScheduler = fsrs({ request_retention: 0.9, enable_fuzz: true });
+type FSRSStateMap = Record<number, FSRSCard>;
+
+interface SerializedFSRSCard {
+  due: string;
+  stability: number;
+  difficulty: number;
+  elapsed_days: number;
+  scheduled_days: number;
+  learning_steps: number;
+  reps: number;
+  lapses: number;
+  state: number;
+  last_review?: string;
+}
+
+function loadFsrsState(): FSRSStateMap {
+  try {
+    const raw = localStorage.getItem(FSRS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, SerializedFSRSCard>;
+    const result: FSRSStateMap = {};
+    for (const [id, card] of Object.entries(parsed)) {
+      result[Number(id)] = {
+        ...card,
+        due: new Date(card.due),
+        state: card.state as State,
+        last_review: card.last_review ? new Date(card.last_review) : undefined,
+      };
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+function saveFsrsState(state: FSRSStateMap) {
+  try {
+    const serialized: Record<number, SerializedFSRSCard> = {};
+    for (const [id, card] of Object.entries(state)) {
+      serialized[Number(id)] = {
+        ...card,
+        due: card.due instanceof Date ? card.due.toISOString() : String(card.due),
+        state: card.state as number,
+        last_review: card.last_review instanceof Date ? card.last_review.toISOString() : undefined,
+      };
+    }
+    localStorage.setItem(FSRS_STORAGE_KEY, JSON.stringify(serialized));
+    pushProgressDebounced();
+  } catch (e) {
+    console.warn('[QuickDrill] Failed to save FSRS state:', e);
+  }
+}
 
 function loadProgress(): ProgressMap {
   try {
@@ -85,31 +141,27 @@ function shuffleArray<T>(arr: T[]): T[] {
   return shuffled;
 }
 
-function buildFlashcardDeck(cards: DrillCard[], progress: ProgressMap): DrillCard[] {
-  const unseen = cards.filter((c) => !progress[c.id]);
-  const weak = cards.filter((c) => progress[c.id] && progress[c.id].wrong > progress[c.id].correct);
-  const strong = cards.filter((c) => progress[c.id] && progress[c.id].correct >= 3);
-  const middle = cards.filter(
-    (c) =>
-      progress[c.id] &&
-      !(progress[c.id].wrong > progress[c.id].correct) &&
-      !(progress[c.id].correct >= 3),
-  );
+function buildFlashcardDeck(cards: DrillCard[], fsrsCards: FSRSStateMap): DrillCard[] {
+  const now = new Date();
+  const due: DrillCard[] = [];
+  const newCards: DrillCard[] = [];
+  const upcoming: DrillCard[] = [];
 
-  const sortByReview = (a: DrillCard, b: DrillCard) => {
-    const aToday = isToday(progress[a.id]?.lastReviewed);
-    const bToday = isToday(progress[b.id]?.lastReviewed);
-    if (aToday && !bToday) return 1;
-    if (!aToday && bToday) return -1;
-    return 0;
-  };
+  for (const card of cards) {
+    const fc = fsrsCards[card.id];
+    if (!fc) {
+      newCards.push(card);
+    } else if (fc.due <= now) {
+      due.push(card);
+    } else {
+      upcoming.push(card);
+    }
+  }
 
-  return [
-    ...unseen.sort(sortByReview),
-    ...weak.sort(sortByReview),
-    ...middle.sort(sortByReview),
-    ...strong.sort(sortByReview),
-  ];
+  due.sort((a, b) => fsrsCards[a.id]!.due.getTime() - fsrsCards[b.id]!.due.getTime());
+  upcoming.sort((a, b) => fsrsCards[a.id]!.due.getTime() - fsrsCards[b.id]!.due.getTime());
+
+  return [...due, ...newCards, ...upcoming];
 }
 
 function buildPuzzleDeck(cards: DrillCard[], progress: ProgressMap): DrillCard[] {
@@ -149,6 +201,7 @@ export default function QuickDrill() {
   const [progress, setProgress] = useState<ProgressMap>(loadProgress);
   const [diffFilter, setDiffFilter] = useState(0);
   const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, seen: 0 });
+  const [fsrsState, setFsrsState] = useState<FSRSStateMap>(loadFsrsState);
 
   // Puzzle-specific
   const [puzzleOriginal, setPuzzleOriginal] = useState<string[]>([]);
@@ -190,8 +243,13 @@ export default function QuickDrill() {
     const mastered = Object.values(progress).filter((v) => v.correct >= 3).length;
     const weak = Object.values(progress).filter((v) => v.wrong > v.correct).length;
     const unseen = total - Object.keys(progress).filter((id) => allCards.some((c) => c.id === Number(id))).length;
-    return { total, python, sql, mastered, weak, unseen };
-  }, [allCards, progress]);
+    const now = new Date();
+    const dueToday = allCards.filter(c => {
+      const fc = fsrsState[c.id];
+      return fc && fc.due <= now;
+    }).length;
+    return { total, python, sql, mastered, weak, unseen, dueToday };
+  }, [allCards, progress, fsrsState]);
 
   /* ── Persistence helper ──────────────────────────────────────────── */
 
@@ -212,7 +270,7 @@ export default function QuickDrill() {
       const ordered =
         studyMode === 'puzzle'
           ? buildPuzzleDeck(filtered, progress)
-          : buildFlashcardDeck(filtered, progress);
+          : buildFlashcardDeck(filtered, fsrsState);
 
       setDeck(ordered);
       setCurrentIndex(0);
@@ -228,7 +286,7 @@ export default function QuickDrill() {
       }
       setMode(studyMode);
     },
-    [allCards, diffFilter, progress],
+    [allCards, diffFilter, progress, fsrsState],
   );
 
   /* ── Card interactions ───────────────────────────────────────────── */
@@ -253,8 +311,16 @@ export default function QuickDrill() {
   }, [currentIndex, deck, mode]);
 
   const markFlashcard = useCallback(
-    (knew: boolean) => {
+    (grade: Grade) => {
       if (!currentCard) return;
+      const now = new Date();
+      const existingFsrs = fsrsState[currentCard.id] || createEmptyCard(now);
+      const result = fsrsScheduler.next(existingFsrs, now, grade);
+      const updatedFsrs: FSRSStateMap = { ...fsrsState, [currentCard.id]: result.card };
+      setFsrsState(updatedFsrs);
+      saveFsrsState(updatedFsrs);
+
+      const knew = grade >= Rating.Good;
       const prev = progress[currentCard.id] || { seen: 0, correct: 0, wrong: 0 };
       const updated: ProgressMap = {
         ...progress,
@@ -262,7 +328,7 @@ export default function QuickDrill() {
           seen: prev.seen + 1,
           correct: prev.correct + (knew ? 1 : 0),
           wrong: prev.wrong + (knew ? 0 : 1),
-          lastReviewed: new Date().toISOString(),
+          lastReviewed: now.toISOString(),
         },
       };
       persistProgress(updated);
@@ -273,7 +339,7 @@ export default function QuickDrill() {
       }));
       advanceCard();
     },
-    [currentCard, progress, persistProgress, advanceCard],
+    [currentCard, fsrsState, progress, persistProgress, advanceCard],
   );
 
   const placePuzzleLine = useCallback((idx: number) => {
@@ -321,6 +387,11 @@ export default function QuickDrill() {
 
   const resetProgress = useCallback(() => {
     persistProgress({});
+    setFsrsState({});
+    try {
+      localStorage.removeItem(FSRS_STORAGE_KEY);
+      pushProgressDebounced();
+    } catch { /* ignore */ }
   }, [persistProgress]);
 
   /* ── Loading / Error ─────────────────────────────────────────────── */
@@ -364,6 +435,29 @@ export default function QuickDrill() {
             <span className="text-red-500 dark:text-red-400 font-bold">{sessionStats.wrong} wrong</span>
             <span className="text-gray-400">{sessionStats.seen} cards</span>
           </div>
+          {(() => {
+            const reviewed = deck.slice(0, sessionStats.seen);
+            const nextDues = reviewed
+              .map(c => fsrsState[c.id])
+              .filter((fc): fc is FSRSCard => !!fc)
+              .map(fc => fc.due)
+              .sort((a, b) => a.getTime() - b.getTime());
+            if (nextDues.length === 0) return null;
+            const earliest = nextDues[0];
+            const diffMs = earliest.getTime() - Date.now();
+            const diffMins = Math.round(diffMs / 60000);
+            const diffHours = Math.round(diffMs / 3600000);
+            const diffDays = Math.round(diffMs / 86400000);
+            const timeStr = diffMins < 1 ? 'now' :
+              diffMins < 60 ? `${diffMins}m` :
+              diffHours < 24 ? `${diffHours}h` :
+              `${diffDays}d`;
+            return (
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
+                Next review: {timeStr === 'now' ? 'now' : `in ${timeStr}`}
+              </p>
+            );
+          })()}
           <div className="mt-6">
             <Button variant="secondary" size="lg" onClick={() => setMode('menu')}>
               Back to Menu
@@ -441,6 +535,38 @@ export default function QuickDrill() {
       <div className="max-w-lg mx-auto px-4 pt-4 pb-32">
         <TopBar />
         <CardMeta card={currentCard} />
+        {/* FSRS status */}
+        {(() => {
+          const fc = fsrsState[currentCard.id];
+          const now = new Date();
+          if (!fc) return (
+            <div className="flex items-center gap-2 mb-2">
+              <Badge label="New" color="gray" size="sm" />
+            </div>
+          );
+          const isDue = fc.due <= now;
+          const stability = Math.round(fc.stability * 10) / 10;
+          return (
+            <div className="flex items-center gap-2 mb-2">
+              <Badge
+                label={isDue ? 'Due' : fc.state === State.Learning || fc.state === State.Relearning ? 'Learning' : 'Scheduled'}
+                color={isDue ? 'blue' : 'green'}
+                size="sm"
+              />
+              {stability > 0 && (
+                <div className="flex items-center gap-1.5 ml-1">
+                  <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400"
+                      style={{ width: `${Math.min(100, (stability / 30) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-gray-400">{stability}d</span>
+                </div>
+              )}
+            </div>
+          );
+        })()}
         <ProgressBar
           value={((currentIndex + 1) / deck.length) * 100}
           color="blue"
@@ -479,22 +605,38 @@ export default function QuickDrill() {
         </Card>
 
         {showAnswer && (
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-2 mt-4">
             <Button
               variant="danger"
               size="lg"
               className="flex-1 min-h-[48px]"
-              onClick={() => markFlashcard(false)}
+              onClick={() => markFlashcard(Rating.Again)}
             >
-              Didn't know
+              Again
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              className="flex-1 min-h-[48px] !bg-orange-500 hover:!bg-orange-600 dark:!bg-orange-600 dark:hover:!bg-orange-700 !text-white"
+              onClick={() => markFlashcard(Rating.Hard)}
+            >
+              Hard
             </Button>
             <Button
               variant="primary"
               size="lg"
               className="flex-1 min-h-[48px] !bg-green-600 hover:!bg-green-700 dark:!bg-green-700 dark:hover:!bg-green-800"
-              onClick={() => markFlashcard(true)}
+              onClick={() => markFlashcard(Rating.Good)}
             >
-              Knew it
+              Good
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              className="flex-1 min-h-[48px] !bg-sky-600 hover:!bg-sky-700 dark:!bg-sky-700 dark:hover:!bg-sky-800"
+              onClick={() => markFlashcard(Rating.Easy)}
+            >
+              Easy
             </Button>
           </div>
         )}
@@ -658,6 +800,12 @@ export default function QuickDrill() {
               Unseen
             </p>
           </div>
+          <div className="text-center">
+            <p className="text-xl font-bold text-blue-500 dark:text-blue-400">{stats.dueToday}</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">
+              Due
+            </p>
+          </div>
         </div>
         {stats.total > 0 && (
           <ProgressBar
@@ -695,7 +843,7 @@ export default function QuickDrill() {
           Flashcards
         </h2>
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
-          Tap to reveal. Unseen first, then weak.
+          FSRS spaced repetition. Due cards first, then new.
         </p>
         <div className="flex gap-2">
           <Button
