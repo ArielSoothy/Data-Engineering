@@ -8,6 +8,7 @@ const SYNC_KEYS = [
   'msInterviewPreferences',
   'quick_drill_progress',
   'quick_drill_fsrs',
+  'study_hub_fsrs',
   'daily_plan_completion',
   'daily_plan_streak',
 ];
