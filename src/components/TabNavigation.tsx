@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import {
   LayoutDashboard, Database, Code, Braces, BarChart,
   Cloud, Video, Book, Moon, Sun, Target, GraduationCap,
-  Briefcase, Zap, Building2, BookOpen, Timer, Menu, X, RefreshCw
+  Briefcase, Zap, Building2, BookOpen, Timer, Menu, X, RefreshCw, BarChart3
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -43,8 +43,9 @@ const TabNavigation = () => {
     { id: 'python-advanced', label: 'Python Advanced', icon: <Braces size={20} />, path: '/python-advanced' },
     { id: 'adaptive', label: 'Adaptive Practice', icon: <Zap size={20} />, path: '/adaptive' },
     { id: 'timed-assessment', label: 'Timed Assessment', icon: <Timer size={20} />, path: '/timed-assessment' },
+    { id: 'daily-assessment', label: 'Daily Assessment', icon: <BarChart3 size={20} />, path: '/daily-assessment' },
     { id: 'trivia', label: 'Trivia', icon: <Target size={20} />, path: '/trivia' },
-    { id: 'decomposition', label: 'Decomposition', icon: <BarChart size={20} />, path: '/decomposition' },
+    { id: 'decomposition', label: 'Product Sense', icon: <BarChart size={20} />, path: '/decomposition' },
     { id: 'tech-stack', label: 'Meta Tech Stack', icon: <Cloud size={20} />, path: '/tech-stack' },
     { id: 'mock-interview', label: 'Mock Interview', icon: <Video size={20} />, path: '/mock-interview' },
     { id: 'my-projects', label: 'My Projects', icon: <Briefcase size={20} />, path: '/my-projects' },

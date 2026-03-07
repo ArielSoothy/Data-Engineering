@@ -34,10 +34,10 @@ const Decomposition = () => {
   return (
     <div className="container mx-auto px-4 py-8 pb-36 md:pb-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Problem Decomposition</h1>
+        <h1 className="text-2xl font-bold mb-2">Product Sense & Data Modeling</h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Meta-scale system design scenarios. Practice breaking down petabyte-scale pipeline
-          challenges into structured architectures with clear tradeoffs.
+          Meta-focused product sense, metric design, and data modeling scenarios. Practice defining
+          north star metrics, investigating metric changes, and designing star schemas.
         </p>
       </div>
 

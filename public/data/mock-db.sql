@@ -389,3 +389,204 @@ INSERT OR IGNORE INTO stock_prices (price_id, stock_symbol, date_recorded, stock
     (8, 'XYZ', '2023-01-03', 74.50, 480000),
     (9, 'XYZ', '2023-01-04', 77.00, 520000),
     (10, 'XYZ', '2023-01-05', 76.50, 510000);
+
+-- ============================================================
+-- Meta DE Interview Practice: Bookstore Schema
+-- ============================================================
+-- SQLite-compatible (sql.js): TEXT for dates, REAL for decimals
+-- Designed for Meta Official SQL question patterns:
+--   1. Authors with 5+ books
+--   2. Sales on same day as registration
+--   3. Customers with 3+ books on first AND last purchase day
+--   4. Referral chains (self-join)
+--   5. Running totals per user
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS authors (
+    author_id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    website_url TEXT
+);
+
+CREATE TABLE IF NOT EXISTS books (
+    book_id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    author_id INTEGER REFERENCES authors(author_id),
+    price REAL,
+    published_date TEXT
+);
+
+CREATE TABLE IF NOT EXISTS bookstore_customers (
+    customer_id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
+    registration_date TEXT,
+    referred_by INTEGER REFERENCES bookstore_customers(customer_id)
+);
+
+CREATE TABLE IF NOT EXISTS bookstore_transactions (
+    transaction_id INTEGER PRIMARY KEY,
+    customer_id INTEGER REFERENCES bookstore_customers(customer_id),
+    book_id INTEGER REFERENCES books(book_id),
+    purchase_date TEXT,
+    payment_type TEXT,
+    amount REAL
+);
+
+-- ============================================================
+-- Authors (10 rows)
+-- Some with .com URLs, some with other TLDs, some NULL
+-- ============================================================
+INSERT OR IGNORE INTO authors (author_id, name, website_url) VALUES
+    (1, 'Elena Rodriguez', 'https://elenarodriguez.com'),
+    (2, 'James Chen', 'https://jameschen.com'),
+    (3, 'Amara Okafor', NULL),
+    (4, 'Mikhail Petrov', 'https://mikhailwrites.org'),
+    (5, 'Sarah Mitchell', 'https://sarahmitchell.com'),
+    (6, 'Raj Patel', NULL),
+    (7, 'Lina Bergstrom', 'https://linabergstrom.net'),
+    (8, 'David Kim', 'https://davidkim.com'),
+    (9, 'Fatima Al-Hassan', NULL),
+    (10, 'Carlos Mendoza', 'https://carlosmendoza.com');
+
+-- ============================================================
+-- Books (25 rows)
+-- Authors 1, 2, 5 have 5+ books each (for "authors with 5+ books" queries)
+-- Distributed publication dates across 2020-2024
+-- ============================================================
+INSERT OR IGNORE INTO books (book_id, title, author_id, price, published_date) VALUES
+    -- Elena Rodriguez: 6 books
+    (1, 'The Silent Algorithm', 1, 24.99, '2020-03-15'),
+    (2, 'Echoes of Tomorrow', 1, 19.99, '2020-09-01'),
+    (3, 'Data Dreams', 1, 29.99, '2021-06-12'),
+    (4, 'Parallel Worlds', 1, 22.50, '2022-01-20'),
+    (5, 'The Last Variable', 1, 27.99, '2023-04-10'),
+    (6, 'Code of Silence', 1, 18.99, '2024-02-28'),
+    -- James Chen: 5 books
+    (7, 'Midnight in Shanghai', 2, 21.99, '2020-05-22'),
+    (8, 'The Jade Garden', 2, 16.99, '2021-02-14'),
+    (9, 'Silk Road Stories', 2, 25.50, '2021-11-30'),
+    (10, 'Dragon Gate', 2, 23.99, '2022-08-15'),
+    (11, 'The Paper Lantern', 2, 20.00, '2023-07-04'),
+    -- Amara Okafor: 2 books
+    (12, 'Savannah Sunrise', 3, 14.99, '2021-03-08'),
+    (13, 'The Baobab Tree', 3, 17.50, '2023-01-15'),
+    -- Mikhail Petrov: 1 book
+    (14, 'Winter in Moscow', 4, 26.99, '2022-12-01'),
+    -- Sarah Mitchell: 5 books
+    (15, 'Ocean Breeze', 5, 15.99, '2020-07-19'),
+    (16, 'Mountain Echo', 5, 18.50, '2021-04-25'),
+    (17, 'Desert Storm', 5, 22.99, '2022-03-11'),
+    (18, 'River Song', 5, 19.99, '2023-06-30'),
+    (19, 'Forest Fire', 5, 24.50, '2024-01-15'),
+    -- Raj Patel: 2 books
+    (20, 'Spice Market', 6, 13.99, '2022-05-20'),
+    (21, 'The Monsoon', 6, 16.50, '2023-09-12'),
+    -- Lina Bergstrom: 1 book
+    (22, 'Northern Lights', 7, 28.99, '2023-03-22'),
+    -- David Kim: 1 book
+    (23, 'Seoul Searching', 8, 21.50, '2022-10-05'),
+    -- Fatima Al-Hassan: 1 book
+    (24, 'Oasis Dreams', 9, 17.99, '2023-11-18'),
+    -- Carlos Mendoza: 1 book
+    (25, 'Tango at Midnight', 10, 19.50, '2024-03-01');
+
+-- ============================================================
+-- Bookstore Customers (15 rows)
+-- Referral chains: 2->1, 3->1, 5->2, 8->5, 9->5, 11->3, 14->8
+-- Various registration dates for "same day as purchase" queries
+-- ============================================================
+INSERT OR IGNORE INTO bookstore_customers (customer_id, name, email, phone, registration_date, referred_by) VALUES
+    (1,  'Olivia Harper',    'olivia.harper@gmail.com',    '555-0101', '2023-01-10', NULL),
+    (2,  'Noah Bennett',     'noah.bennett@yahoo.com',     '555-0102', '2023-01-25', 1),
+    (3,  'Emma Sullivan',    'emma.sullivan@gmail.com',    '555-0103', '2023-02-05', 1),
+    (4,  'Liam Foster',      'liam.foster@outlook.com',    '555-0104', '2023-02-14', NULL),
+    (5,  'Ava Richardson',   'ava.richardson@gmail.com',   '555-0105', '2023-03-01', 2),
+    (6,  'Lucas Hayes',      'lucas.hayes@hotmail.com',    '555-0106', '2023-03-18', NULL),
+    (7,  'Sophia Coleman',   'sophia.coleman@gmail.com',   '555-0107', '2023-04-02', NULL),
+    (8,  'Mason Brooks',     'mason.brooks@yahoo.com',     '555-0108', '2023-04-15', 5),
+    (9,  'Isabella Reed',    'isabella.reed@gmail.com',    '555-0109', '2023-05-10', 5),
+    (10, 'Ethan Price',      'ethan.price@outlook.com',    '555-0110', '2023-05-28', NULL),
+    (11, 'Mia Turner',       'mia.turner@gmail.com',       '555-0111', '2023-06-12', 3),
+    (12, 'Alexander Ward',   'alex.ward@hotmail.com',      '555-0112', '2023-07-01', NULL),
+    (13, 'Charlotte Morgan', 'charlotte.morgan@gmail.com', '555-0113', '2023-08-20', NULL),
+    (14, 'Benjamin Cooper',  'ben.cooper@yahoo.com',       '555-0114', '2023-09-05', 8),
+    (15, 'Amelia Gray',      'amelia.gray@gmail.com',      '555-0115', '2023-10-15', NULL);
+
+-- ============================================================
+-- Bookstore Transactions (40 rows)
+-- Key data patterns:
+--   - Customers 1,5,7 purchase ON their registration_date (same-day purchase)
+--   - Customer 1: first purchase day 2023-01-10 has 4 books, last day 2023-09-20 has 3 books
+--   - Customer 5: first purchase day 2023-03-01 has 3 books, last day 2023-11-08 has 3 books
+--   - Customer 7: first purchase day 2023-04-02 has 3 books, last day 2023-10-25 has 3 books
+--   - Multiple transactions per customer for running totals
+--   - Mix of payment types: credit_card, debit_card, paypal
+-- ============================================================
+INSERT OR IGNORE INTO bookstore_transactions (transaction_id, customer_id, book_id, purchase_date, payment_type, amount) VALUES
+    -- Customer 1 (Olivia Harper) - reg: 2023-01-10
+    -- First day: 4 books on 2023-01-10 (same as registration)
+    (1,  1, 1,  '2023-01-10', 'credit_card', 24.99),
+    (2,  1, 7,  '2023-01-10', 'credit_card', 21.99),
+    (3,  1, 15, '2023-01-10', 'credit_card', 15.99),
+    (4,  1, 12, '2023-01-10', 'credit_card', 14.99),
+    (5,  1, 3,  '2023-04-22', 'debit_card',  29.99),
+    (6,  1, 10, '2023-06-15', 'paypal',      23.99),
+    -- Last day: 3 books on 2023-09-20
+    (7,  1, 18, '2023-09-20', 'credit_card', 19.99),
+    (8,  1, 22, '2023-09-20', 'credit_card', 28.99),
+    (9,  1, 24, '2023-09-20', 'debit_card',  17.99),
+
+    -- Customer 2 (Noah Bennett) - reg: 2023-01-25
+    (10, 2, 2,  '2023-02-03', 'debit_card',  19.99),
+    (11, 2, 8,  '2023-03-14', 'credit_card', 16.99),
+    (12, 2, 14, '2023-05-22', 'paypal',      26.99),
+
+    -- Customer 3 (Emma Sullivan) - reg: 2023-02-05
+    (13, 3, 5,  '2023-02-18', 'credit_card', 27.99),
+    (14, 3, 11, '2023-04-10', 'debit_card',  20.00),
+    (15, 3, 17, '2023-07-30', 'credit_card', 22.99),
+
+    -- Customer 4 (Liam Foster) - reg: 2023-02-14
+    (16, 4, 9,  '2023-02-28', 'paypal',      25.50),
+    (17, 4, 20, '2023-06-05', 'credit_card', 13.99),
+
+    -- Customer 5 (Ava Richardson) - reg: 2023-03-01
+    -- First day: 3 books on 2023-03-01 (same as registration)
+    (18, 5, 4,  '2023-03-01', 'credit_card', 22.50),
+    (19, 5, 16, '2023-03-01', 'credit_card', 18.50),
+    (20, 5, 23, '2023-03-01', 'debit_card',  21.50),
+    (21, 5, 6,  '2023-05-18', 'paypal',      18.99),
+    (22, 5, 13, '2023-07-22', 'credit_card', 17.50),
+    (23, 5, 19, '2023-09-10', 'debit_card',  24.50),
+    -- Last day: 3 books on 2023-11-08
+    (24, 5, 21, '2023-11-08', 'credit_card', 16.50),
+    (25, 5, 25, '2023-11-08', 'paypal',      19.50),
+    (26, 5, 2,  '2023-11-08', 'credit_card', 19.99),
+
+    -- Customer 6 (Lucas Hayes) - reg: 2023-03-18
+    (27, 6, 1,  '2023-04-01', 'debit_card',  24.99),
+    (28, 6, 14, '2023-08-12', 'credit_card', 26.99),
+
+    -- Customer 7 (Sophia Coleman) - reg: 2023-04-02
+    -- First day: 3 books on 2023-04-02 (same as registration)
+    (29, 7, 3,  '2023-04-02', 'paypal',      29.99),
+    (30, 7, 7,  '2023-04-02', 'paypal',      21.99),
+    (31, 7, 20, '2023-04-02', 'paypal',      13.99),
+    (32, 7, 9,  '2023-06-20', 'credit_card', 25.50),
+    -- Last day: 3 books on 2023-10-25
+    (33, 7, 11, '2023-10-25', 'debit_card',  20.00),
+    (34, 7, 15, '2023-10-25', 'credit_card', 15.99),
+    (35, 7, 24, '2023-10-25', 'debit_card',  17.99),
+
+    -- Customer 8 (Mason Brooks) - reg: 2023-04-15
+    (36, 8, 5,  '2023-04-28', 'credit_card', 27.99),
+
+    -- Customer 9 (Isabella Reed) - reg: 2023-05-10
+    (37, 9, 22, '2023-05-15', 'debit_card',  28.99),
+    (38, 9, 10, '2023-08-03', 'paypal',      23.99),
+
+    -- Customer 10 (Ethan Price) - reg: 2023-05-28
+    (39, 10, 17, '2023-06-10', 'credit_card', 22.99),
+    (40, 10, 25, '2023-09-30', 'debit_card',  19.50);

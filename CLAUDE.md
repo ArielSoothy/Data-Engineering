@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**DE Prep** — a React learning platform for Meta Data Engineer technical screen preparation (March 31, 2026). Covers SQL (PostgreSQL) and Python with 260+ questions, flashcards, timed mocks, adaptive practice, and a 26-day structured study plan.
+**DE Prep** — a React learning platform for Meta Data Engineer technical screen preparation (March 31, 2026). Covers SQL (PostgreSQL) and Python with 260+ questions, flashcards, timed mocks, adaptive practice, and a 24-day structured study plan.
 
 **Live:** https://data-engineering-nine.vercel.app
 
@@ -57,7 +57,7 @@ All exported from `src/components/ui/index.ts`.
 ### Key Features
 | Feature | File(s) | Storage |
 |---------|---------|---------|
-| 26-day study plan | `src/data/dailyPlan.ts`, `src/hooks/useDailyPlan.ts` | `daily_plan_completion` |
+| 24-day study plan | `src/data/dailyPlan.ts`, `src/hooks/useDailyPlan.ts` | `daily_plan_completion` |
 | Quick Drill (113 flashcards) | `src/components/tabs/QuickDrill.tsx` | `quick_drill_progress` |
 | Timed Assessment (50-min mock) | `src/components/tabs/TimedAssessment.tsx` | Session only |
 | Adaptive Practice (AI-generated) | `src/components/tabs/AdaptivePractice.tsx` | localStorage per subject |

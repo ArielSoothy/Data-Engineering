@@ -60,8 +60,8 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-2">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-              {currentDay >= 1 && currentDay <= 26
-                ? `Day ${currentDay} of 26`
+              {currentDay >= 1 && currentDay <= 24
+                ? `Day ${currentDay} of 24`
                 : currentDay < 1
                   ? 'Getting Ready'
                   : 'Interview Time!'}
@@ -91,9 +91,9 @@ const Dashboard = () => {
         {/* Phase progress bar */}
         <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
           {STUDY_PHASES.map((sp, i) => {
-            const phaseStart = [1, 6, 13, 19, 25][i];
-            const phaseEnd = [5, 12, 18, 24, 26][i];
-            const width = ((phaseEnd - phaseStart + 1) / 26) * 100;
+            const phaseStart = [1, 8, 15, 22][i];
+            const phaseEnd = [7, 14, 21, 24][i];
+            const width = ((phaseEnd - phaseStart + 1) / 24) * 100;
             const fill = currentDay >= phaseEnd ? 100 : currentDay >= phaseStart ? ((currentDay - phaseStart + 1) / (phaseEnd - phaseStart + 1)) * 100 : 0;
             const barColors: Record<string, string> = { blue: 'bg-blue-500', purple: 'bg-purple-500', yellow: 'bg-yellow-500', red: 'bg-red-500', green: 'bg-green-500' };
             return (
@@ -138,8 +138,8 @@ const Dashboard = () => {
                 )}
               </div>
               <button
-                onClick={() => setViewDay(Math.min(26, displayDay + 1))}
-                disabled={displayDay >= 26}
+                onClick={() => setViewDay(Math.min(24, displayDay + 1))}
+                disabled={displayDay >= 24}
                 className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <ChevronRight size={20} />
@@ -147,7 +147,7 @@ const Dashboard = () => {
             </div>
 
             {/* Jump to today */}
-            {!viewingToday && currentDay >= 1 && currentDay <= 26 && (
+            {!viewingToday && currentDay >= 1 && currentDay <= 24 && (
               <button
                 onClick={() => setViewDay(null)}
                 className="w-full text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mb-3"
@@ -174,9 +174,16 @@ const Dashboard = () => {
                           ? <CheckCircle size={20} className="text-green-500" />
                           : <Circle size={20} className="text-gray-300 dark:text-gray-600" />}
                       </button>
-                      <span className={`flex-1 text-sm ${completedTasks[task.id] ? 'line-through text-gray-400' : ''}`}>
-                        {task.label}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-sm ${completedTasks[task.id] ? 'line-through text-gray-400' : ''}`}>
+                          {task.label}
+                        </span>
+                        {task.speedTarget && (
+                          <span className="block text-xs text-blue-500 dark:text-blue-400 mt-0.5">
+                            <Timer size={10} className="inline mr-1" />{task.speedTarget}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1.5">
                         {task.mobile && <Smartphone size={14} className="text-gray-400" />}
                         {task.extra && <Star size={14} className="text-yellow-400" />}
@@ -192,9 +199,10 @@ const Dashboard = () => {
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                <div className="flex items-center gap-4 mt-3 text-xs text-gray-400 flex-wrap">
                   <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile-friendly</span>
                   <span className="flex items-center gap-1"><Star size={12} /> Bonus</span>
+                  <span className="flex items-center gap-1"><Timer size={12} /> Speed target</span>
                 </div>
               </>
             ) : (
@@ -232,7 +240,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-7 gap-2">
               {Array.from({ length: 7 }, (_, i) => {
                 const dayNum = currentDay - (new Date().getDay()) + i;
-                const dayData = dayNum >= 1 && dayNum <= 26;
+                const dayData = dayNum >= 1 && dayNum <= 24;
                 const dayCompleted = dayData && completedTasks[`streak_${dayNum}`];
                 const isToday = dayNum === currentDay;
                 return (
