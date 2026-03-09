@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     quantity INTEGER,
     unit_price DECIMAL(10,2),
     FOREIGN KEY (order_id) REFERENCES orders(order_id),
-    FOREIGN KEY (product_id) REFERENCES products(product_id)
+    FOREIGN KEY (product_id) REFERENCES catalog_products(product_id)
 );
 
 -- Order summary table for denormalization examples
@@ -111,8 +111,8 @@ CREATE TABLE IF NOT EXISTS stock_prices (
     volume INTEGER
 );
 
--- Products table
-CREATE TABLE IF NOT EXISTS products (
+-- Catalog products table (renamed from 'products' to avoid conflict with Meta grocery schema)
+CREATE TABLE IF NOT EXISTS catalog_products (
     product_id INTEGER PRIMARY KEY,
     product_name TEXT,
     category TEXT,
@@ -276,7 +276,7 @@ INSERT OR IGNORE INTO orders (order_id, customer_id, order_date, amount, created
     (10, 4, '2023-04-20', 95.75, '2023-04-20 10:05:00');
 
 -- Products data
-INSERT OR IGNORE INTO products (product_id, product_name, category, price, inventory) VALUES
+INSERT OR IGNORE INTO catalog_products (product_id, product_name, category, price, inventory) VALUES
     (1, 'Laptop Pro', 'Electronics', 1200.00, 50),
     (2, 'Smartphone X', 'Electronics', 800.00, 100),
     (3, 'Office Chair', 'Furniture', 120.00, 30),
@@ -590,3 +590,155 @@ INSERT OR IGNORE INTO bookstore_transactions (transaction_id, customer_id, book_
     -- Customer 10 (Ethan Price) - reg: 2023-05-28
     (39, 10, 17, '2023-06-10', 'credit_card', 22.99),
     (40, 10, 25, '2023-09-30', 'debit_card',  19.50);
+
+-- ============================================================
+-- Meta DE Interview Practice: Grocery Store Schema
+-- ============================================================
+-- Matches the exact schema from Meta's SQL interview platform.
+-- Tables: products, product_classes, sales, promotions
+--
+-- Supports Meta Official questions:
+--   16. Filter: % of products both low fat AND recyclable (= 15.38%)
+--   17. Rank: Top 5 single-channel media types by promo spend
+--   18. Case: % of valid promo transactions on first/last day
+--   19. Join pt 1: Units sold by product family with promo ratio
+--   20. Join pt 2: % of product categories never sold
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS product_classes (
+    product_class_id INTEGER PRIMARY KEY,
+    product_subcategory TEXT,
+    product_category TEXT,
+    product_department TEXT,
+    product_family TEXT
+);
+
+CREATE TABLE IF NOT EXISTS products (
+    product_id INTEGER PRIMARY KEY,
+    product_class_id INTEGER REFERENCES product_classes(product_class_id),
+    brand_name TEXT,
+    product_name TEXT,
+    is_low_fat_flg TINYINT,
+    is_recyclable_flg TINYINT,
+    gross_weight DECIMAL(10,2),
+    net_weight DECIMAL(10,2)
+);
+
+CREATE TABLE IF NOT EXISTS promotions (
+    promotion_id INTEGER PRIMARY KEY,
+    promotion_name TEXT,
+    media_type TEXT,
+    cost DECIMAL(10,2),
+    start_date DATE,
+    end_date DATE
+);
+
+CREATE TABLE IF NOT EXISTS sales (
+    product_id INTEGER REFERENCES products(product_id),
+    store_id INTEGER,
+    customer_id INTEGER,
+    promotion_id INTEGER REFERENCES promotions(promotion_id),
+    store_sales DECIMAL(10,2),
+    store_cost DECIMAL(10,2),
+    units_sold DECIMAL(10,2),
+    transaction_date DATE
+);
+
+-- ============================================================
+-- Product Classes (12 classes, 9 distinct categories)
+-- Categories with sales: Snacks, Dairy, Beverages, Hot Beverages, Cleaning, Paper Products
+-- Categories never sold: Personal Care, Supplements, Pet Food
+-- ============================================================
+INSERT OR IGNORE INTO product_classes (product_class_id, product_subcategory, product_category, product_department, product_family) VALUES
+    (1,  'Potato Chips',       'Snacks',         'Packaged Foods', 'Food'),
+    (2,  'Crackers',           'Snacks',         'Packaged Foods', 'Food'),
+    (3,  'Whole Milk',         'Dairy',          'Refrigerated',   'Food'),
+    (4,  'Yogurt',             'Dairy',          'Refrigerated',   'Food'),
+    (5,  'Orange Juice',       'Beverages',      'Refrigerated',   'Drink'),
+    (6,  'Soda',               'Beverages',      'Packaged Foods', 'Drink'),
+    (7,  'Ground Coffee',      'Hot Beverages',  'Packaged Foods', 'Drink'),
+    (8,  'Laundry Detergent',  'Cleaning',       'Household',      'Non-Food'),
+    (9,  'Paper Towels',       'Paper Products', 'Household',      'Non-Food'),
+    (10, 'Shampoo',            'Personal Care',  'Health & Beauty','Non-Food'),
+    (11, 'Vitamins',           'Supplements',    'Health & Beauty','Non-Food'),
+    (12, 'Dog Food',           'Pet Food',       'Pet',            'Non-Food');
+
+-- ============================================================
+-- Products (13 total — exactly 2 are both low_fat AND recyclable → 15.38%)
+-- ============================================================
+INSERT OR IGNORE INTO products (product_id, product_class_id, brand_name, product_name, is_low_fat_flg, is_recyclable_flg, gross_weight, net_weight) VALUES
+    (1,  1,  'Lays',            'Classic Chips',        0, 1, 300.0,  250.0),
+    (2,  1,  'Pringles',        'Light Crisps',         1, 1, 150.0,  130.0),  -- both ✓
+    (3,  2,  'Ritz',            'Original Crackers',    0, 1, 200.0,  180.0),
+    (4,  3,  'Horizon',         'Organic Whole Milk',   0, 1, 1000.0, 946.0),
+    (5,  4,  'Chobani',         'Greek Yogurt',         1, 0, 170.0,  150.0),
+    (6,  5,  'Tropicana',       'Orange Juice',         1, 1, 500.0,  473.0),  -- both ✓
+    (7,  5,  'Minute Maid',     'Apple Juice',          1, 0, 500.0,  473.0),
+    (8,  6,  'Coca-Cola',       'Classic Coke',         0, 1, 355.0,  355.0),
+    (9,  6,  'Pepsi',           'Diet Pepsi',           1, 0, 355.0,  355.0),
+    (10, 7,  'Folgers',         'Classic Roast',        0, 0, 500.0,  450.0),
+    (11, 8,  'Tide',            'Liquid Detergent',     0, 1, 2000.0, 1800.0),
+    (12, 9,  'Bounty',          'Paper Towels',         0, 0, 500.0,  450.0),
+    (13, 10, 'Head & Shoulders','Classic Shampoo',      0, 1, 400.0,  350.0);
+    -- Note: No products in classes 11 (Supplements) or 12 (Pet Food)
+    -- Product 13 (Personal Care) exists but has no sales
+
+-- ============================================================
+-- Promotions (10 total: 7 single-channel, 3 multi-channel)
+-- Single-channel = media_type without commas
+-- ============================================================
+INSERT OR IGNORE INTO promotions (promotion_id, promotion_name, media_type, cost, start_date, end_date) VALUES
+    (1,  'Summer Sale',       'TV',                    5000.00,  '2023-06-01', '2023-06-30'),
+    (2,  'Back to School',    'Radio',                 3000.00,  '2023-08-15', '2023-09-15'),
+    (3,  'Holiday Special',   'TV, Radio',             8000.00,  '2023-12-01', '2023-12-31'),
+    (4,  'Spring Clearance',  'Newspaper',             2000.00,  '2023-03-01', '2023-03-31'),
+    (5,  'Flash Friday',      'Email',                 1500.00,  '2023-07-07', '2023-07-14'),
+    (6,  'Weekend Deal',      'Social Media',          2500.00,  '2023-09-01', '2023-09-03'),
+    (7,  'Bundle Bonanza',    'Email, Social Media',   4000.00,  '2023-10-01', '2023-10-31'),
+    (8,  'Morning Special',   'In-Store',              1000.00,  '2023-04-01', '2023-04-30'),
+    (9,  'Super Bowl',        'TV, Radio, Newspaper', 12000.00,  '2023-02-10', '2023-02-13'),
+    (10, 'New Year Kick-off', 'In-Store',               800.00,  '2023-01-01', '2023-01-31');
+
+-- ============================================================
+-- Sales (25 rows)
+-- Mix of promoted and non-promoted sales across product families.
+-- Some transactions land on promo start/end dates (for Q18).
+-- No sales for product 13 (Personal Care) → never sold category.
+-- ============================================================
+INSERT INTO sales (product_id, store_id, customer_id, promotion_id, store_sales, store_cost, units_sold, transaction_date) VALUES
+    -- Promo 1: Summer Sale (TV, 2023-06-01 to 2023-06-30)
+    (1,  1, 101, 1, 4.99,  2.50, 3.0, '2023-06-01'),   -- start date
+    (2,  1, 102, 1, 3.99,  2.00, 2.0, '2023-06-15'),   -- middle
+    (6,  2, 103, 1, 5.49,  3.00, 4.0, '2023-06-30'),   -- end date
+
+    -- Promo 2: Back to School (Radio, 2023-08-15 to 2023-09-15)
+    (3,  1, 104, 2, 3.29,  1.50, 5.0, '2023-08-15'),   -- start date
+    (10, 2, 105, 2, 8.99,  5.00, 2.0, '2023-09-01'),   -- middle
+
+    -- Promo 4: Spring Clearance (Newspaper, 2023-03-01 to 2023-03-31)
+    (4,  3, 106, 4, 4.49,  2.50, 3.0, '2023-03-15'),   -- middle
+    (5,  1, 107, 4, 1.29,  0.60, 6.0, '2023-03-31'),   -- end date
+
+    -- Promo 5: Flash Friday (Email, 2023-07-07 to 2023-07-14)
+    (8,  2, 108, 5, 1.99,  0.80, 10.0, '2023-07-07'),  -- start date
+    (9,  3, 109, 5, 1.79,  0.70,  8.0, '2023-07-14'),  -- end date
+
+    -- Promo 8: Morning Special (In-Store, 2023-04-01 to 2023-04-30)
+    (11, 1, 110, 8, 12.99, 7.00, 2.0, '2023-04-10'),   -- middle
+
+    -- Non-promoted sales (promotion_id = NULL)
+    (1,  2, 111, NULL, 4.99,  2.50, 2.0, '2023-02-10'),
+    (2,  3, 112, NULL, 3.99,  2.00, 1.0, '2023-03-05'),
+    (4,  1, 113, NULL, 4.49,  2.50, 2.0, '2023-05-20'),
+    (5,  2, 114, NULL, 1.29,  0.60, 4.0, '2023-06-12'),
+    (6,  3, 115, NULL, 5.49,  3.00, 3.0, '2023-07-22'),
+    (7,  1, 116, NULL, 4.99,  2.80, 2.0, '2023-08-05'),
+    (8,  2, 117, NULL, 1.99,  0.80, 6.0, '2023-09-18'),
+    (9,  3, 118, NULL, 1.79,  0.70, 5.0, '2023-10-03'),
+    (10, 1, 119, NULL, 8.99,  5.00, 1.0, '2023-11-15'),
+    (11, 2, 120, NULL, 12.99, 7.00, 1.0, '2023-01-20'),
+    (12, 3, 121, NULL, 6.99,  3.50, 3.0, '2023-04-22'),
+    (3,  1, 122, NULL, 3.29,  1.50, 2.0, '2023-05-10'),
+    (7,  2, 123, NULL, 4.99,  2.80, 5.0, '2023-12-01'),
+    (1,  3, 124, NULL, 4.99,  2.50, 4.0, '2023-11-28'),
+    (12, 1, 125, NULL, 6.99,  3.50, 2.0, '2023-08-30');
