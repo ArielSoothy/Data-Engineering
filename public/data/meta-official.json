@@ -239,6 +239,87 @@
       "pseudoCode": "def first_recurring(s: str) -> str | None:\n    seen = set()\n    for char in s:\n        if char in seen:\n            return char\n        seen.add(char)\n    return None\n\n\n# Example usage\nprint(first_recurring(\"abcdebc\"))  # Output: 'b'\nprint(first_recurring(\"abcdef\"))   # Output: None\nprint(first_recurring(\"aabb\"))     # Output: 'a'",
       "explanation": "A set provides O(1) average-case lookup and insertion. As we iterate through the string, we check whether each character has been seen before. The first character that is already in the set is the first recurring character, so we return it immediately. If we finish the loop without finding a repeat, we return None. Total time complexity is O(n) and space complexity is O(k) where k is the size of the character alphabet (at most n).",
       "tags": ["set", "O(1) lookup", "early return"]
+    },
+    {
+      "id": 16,
+      "question": "Given a grocery store database with tables: products (product_id, product_class_id, brand_name, product_name, is_low_fat_flg TINYINT, is_recyclable_flg TINYINT, gross_weight, net_weight), product_classes (product_class_id, product_subcategory, product_category, product_department, product_family), sales (product_id, store_id, customer_id, promotion_id, store_sales, store_cost, units_sold, transaction_date), promotions (promotion_id, promotion_name, media_type, cost, start_date, end_date).\n\nWhat percent of all products in the grocery chain's catalog are both low fat and recyclable?",
+      "category": "sql",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "hints": [
+        "How do we get products that are both low fat AND recyclable?",
+        "How do we convert the result into a percentage?",
+        "Use AVG with a CASE expression — AVG of 1s and 0s gives you a proportion."
+      ],
+      "answer": "Use AVG with a CASE expression (or just AVG directly on the flag product) to compute the percentage of products where both is_low_fat_flg = 1 AND is_recyclable_flg = 1.",
+      "pseudoCode": "SELECT\n    AVG(\n        CASE\n            WHEN is_low_fat_flg = 1 AND is_recyclable_flg = 1\n            THEN 1.0\n            ELSE 0.0\n        END\n    ) * 100 AS pct_low_fat_and_recyclable\nFROM products;\n\n-- Alternative approach:\n-- SELECT\n--     COUNT(CASE WHEN is_low_fat_flg = 1 AND is_recyclable_flg = 1 THEN 1 END) * 100.0\n--     / COUNT(*) AS pct_low_fat_and_recyclable\n-- FROM products;",
+      "explanation": "AVG of a CASE that returns 1.0 when both conditions are true and 0.0 otherwise gives the proportion directly. Multiplying by 100 converts it to a percentage. The alternative COUNT/COUNT approach is equally valid — count rows meeting both conditions divided by total rows. Both produce 15.384615384615385 for this dataset. Key insight: AVG(CASE WHEN ... THEN 1.0 ELSE 0.0 END) is a common Meta SQL pattern for computing percentages without needing a subquery.",
+      "tags": ["AVG", "CASE", "percentage", "conditional aggregation"]
+    },
+    {
+      "id": 17,
+      "question": "Given the same grocery store schema (sales, products, product_classes, promotions tables).\n\nWhat are the top five (ranked in decreasing order) single-channel media types that correspond to the most money the grocery chain had spent on its promotional campaigns?\n\nSingle Media Channel Types are promotions that contain only one media type (i.e., the media_type field does not contain a comma).",
+      "category": "sql",
+      "difficulty": "Medium",
+      "timeEstimate": 8,
+      "hints": [
+        "How do you find promotions that contain only one media type?",
+        "Use NOT LIKE '%,%' or check that media_type does not contain a comma.",
+        "SUM the cost column grouped by media_type, then ORDER BY DESC and LIMIT 5."
+      ],
+      "answer": "Filter promotions to single-channel types (media_type NOT LIKE '%,%'), then sum costs grouped by media_type and return the top 5.",
+      "pseudoCode": "SELECT\n    media_type,\n    SUM(cost) AS total_cost\nFROM promotions\nWHERE media_type NOT LIKE '%,%'\nGROUP BY media_type\nORDER BY total_cost DESC\nLIMIT 5;",
+      "explanation": "The key insight is identifying 'single-channel' — promotions whose media_type field contains only one type (no commas). NOT LIKE '%,%' filters out multi-channel entries. Then it's a standard GROUP BY + SUM aggregation sorted descending with LIMIT 5. In PostgreSQL you could also use POSITION(',' IN media_type) = 0 or STRPOS(media_type, ',') = 0 as alternatives to LIKE. Meta interviewers want to see that you read the prompt carefully — 'single-channel' is the filtering trick.",
+      "tags": ["LIKE", "GROUP BY", "SUM", "ORDER BY", "LIMIT", "string filtering"]
+    },
+    {
+      "id": 18,
+      "question": "Given the same grocery store schema (sales, products, product_classes, promotions tables).\n\nOf sales that had a valid promotion, the VP of Marketing wants to know what percentage of transactions occur on either the very first day or the very last day of a promotion campaign.",
+      "category": "sql",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "hints": [
+        "How do you find sales with valid promotions? Join sales and promotions on promotion_id.",
+        "A sale has a valid promotion if transaction_date falls BETWEEN start_date AND end_date.",
+        "Use CASE to flag transactions on start_date or end_date, then compute the percentage."
+      ],
+      "answer": "Join sales to promotions, filter to valid promotions (transaction within date range), then use conditional aggregation to compute the % on the first or last day.",
+      "pseudoCode": "SELECT\n    ROUND(\n        SUM(\n            CASE\n                WHEN s.transaction_date = p.start_date\n                  OR s.transaction_date = p.end_date\n                THEN 1\n                ELSE 0\n            END\n        ) * 100.0 / COUNT(*),\n        2\n    ) AS pct_first_or_last_day\nFROM sales s\nJOIN promotions p\n    ON s.promotion_id = p.promotion_id\nWHERE s.transaction_date BETWEEN p.start_date AND p.end_date;",
+      "explanation": "Step 1: JOIN sales to promotions on promotion_id. Step 2: Filter to valid promotions — transaction_date must be BETWEEN start_date AND end_date. Step 3: CASE flags each row as 1 if the transaction happened on the first day (start_date) or last day (end_date), else 0. SUM of these flags divided by COUNT(*) gives the percentage. Multiply by 100.0 (not 100) to avoid integer division truncation. The WHERE clause is critical — without it, you'd include sales outside the promotion window.",
+      "tags": ["JOIN", "CASE", "BETWEEN", "percentage", "date comparison"]
+    },
+    {
+      "id": 19,
+      "question": "Given the same grocery store schema (sales, products, product_classes, promotions tables).\n\nThe CMO is interested in understanding how the sales of different product families are affected by promotional campaigns. For each product family, show the total number of units sold, as well as the ratio of units sold with a valid promotion to units sold without a promotion, ranked by total units sold in descending order.",
+      "category": "sql",
+      "difficulty": "Medium",
+      "timeEstimate": 12,
+      "hints": [
+        "You need product_family from product_classes — join through products.",
+        "A sale had a promotion if promotion_id IS NOT NULL.",
+        "Use CASE to split units_sold into promoted vs non-promoted buckets, then divide.",
+        "Use NULLIF to avoid division by zero if all sales had promotions."
+      ],
+      "answer": "Join sales → products → product_classes to get product_family. Use conditional aggregation to compute promoted vs non-promoted units, then take the ratio.",
+      "pseudoCode": "SELECT\n    pc.product_family,\n    SUM(s.units_sold) AS total_units_sold,\n    ROUND(\n        SUM(CASE WHEN s.promotion_id IS NOT NULL THEN s.units_sold ELSE 0 END)\n        / NULLIF(\n            SUM(CASE WHEN s.promotion_id IS NULL THEN s.units_sold ELSE 0 END),\n            0\n          ),\n        2\n    ) AS promo_to_no_promo_ratio\nFROM sales s\nJOIN products p ON s.product_id = p.product_id\nJOIN product_classes pc ON p.product_class_id = pc.product_class_id\nGROUP BY pc.product_family\nORDER BY total_units_sold DESC;",
+      "explanation": "This requires a three-table join: sales → products → product_classes to access product_family. The ratio is computed using conditional aggregation: SUM units where promotion_id IS NOT NULL (promoted) divided by SUM units where promotion_id IS NULL (not promoted). NULLIF prevents division by zero if a product family had only promoted sales. A ratio > 1 means more units sold with promotions than without. Meta interviewers look for clean conditional aggregation and proper NULL handling.",
+      "tags": ["JOIN", "CASE", "NULLIF", "conditional aggregation", "ratio"]
+    },
+    {
+      "id": 20,
+      "question": "Given the same grocery store schema (sales, products, product_classes, promotions tables).\n\nThe VP of Sales feels that some product categories don't sell and can be completely removed from the inventory. Find what percentage of product categories have never been sold.",
+      "category": "sql",
+      "difficulty": "Medium",
+      "timeEstimate": 10,
+      "hints": [
+        "Can we use the percentage of product categories that DID sell to compute this?",
+        "Use LEFT JOIN from product_classes through products to sales — categories with no sales will have NULL.",
+        "COUNT(DISTINCT) categories with sales vs total distinct categories gives the sold percentage; subtract from 100."
+      ],
+      "answer": "Find the percentage of distinct product categories that appear in the sales table, then subtract from 100% to get the unsold percentage.",
+      "pseudoCode": "SELECT\n    ROUND(\n        (\n            1.0 - COUNT(DISTINCT CASE WHEN s.product_id IS NOT NULL THEN pc.product_category END)\n                  * 1.0 / COUNT(DISTINCT pc.product_category)\n        ) * 100,\n        2\n    ) AS pct_never_sold\nFROM product_classes pc\nLEFT JOIN products p ON pc.product_class_id = p.product_class_id\nLEFT JOIN sales s ON p.product_id = s.product_id;\n\n-- Alternative with subqueries:\n-- SELECT ROUND(\n--     (1.0 - (\n--         SELECT COUNT(DISTINCT pc.product_category)\n--         FROM product_classes pc\n--         JOIN products p ON pc.product_class_id = p.product_class_id\n--         JOIN sales s ON p.product_id = s.product_id\n--     ) * 1.0 / (\n--         SELECT COUNT(DISTINCT product_category)\n--         FROM product_classes\n--     )) * 100, 2\n-- ) AS pct_never_sold;",
+      "explanation": "The trick is computing '% that sold' and subtracting from 100. LEFT JOIN from product_classes through products to sales ensures all categories appear — even those with no sales (NULL s.product_id). COUNT(DISTINCT CASE WHEN s.product_id IS NOT NULL THEN pc.product_category END) counts only categories that had at least one sale. Dividing by total distinct categories and subtracting from 1 gives the unsold fraction. The subquery alternative is more readable but less efficient. Meta interviewers like seeing LEFT JOIN awareness and the 1 - x complement pattern.",
+      "tags": ["LEFT JOIN", "COUNT DISTINCT", "CASE", "percentage", "complement"]
     }
   ]
 }
