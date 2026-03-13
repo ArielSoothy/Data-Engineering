@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { pullProgress, pushProgressDebounced, flushSync } from '../services/progressSync';
+import { pullProgress, pushProgress, pushProgressDebounced, flushSync } from '../services/progressSync';
 import { CATEGORY_TOTALS } from '../config';
 
 // Define types
@@ -186,19 +186,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return totalMinutes;
   }, [progress]);
   
-  // Restore from cloud backup only if localStorage is empty (e.g., new browser / cleared cache)
+  // Auto-sync: pull from cloud, merge with local, reload state, push merged result back
   const hasPulled = useRef(false);
   useEffect(() => {
     if (hasPulled.current) return;
     hasPulled.current = true;
-    pullProgress().then(restored => {
-      if (restored) {
+    pullProgress().then(merged => {
+      if (merged) {
+        // Reload state from localStorage (which pullProgress just merged)
         const saved = localStorage.getItem('msInterviewProgress');
         if (saved) setProgress(prev => ({ ...prev, ...JSON.parse(saved) }));
         const savedPrefs = localStorage.getItem('msInterviewPreferences');
         if (savedPrefs) setPreferences(prev => ({ ...prev, ...JSON.parse(savedPrefs) }));
+        // Push the merged result back so cloud has the union too
+        pushProgress();
       }
-    }).catch(() => { /* offline — localStorage is the source of truth */ });
+    }).catch(() => { /* offline — localStorage works fine */ });
   }, []);
 
   // Flush pending sync when user leaves the page
