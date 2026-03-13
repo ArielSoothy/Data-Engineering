@@ -74,7 +74,7 @@ const TabNavigation = () => {
             {/* Divider */}
             <div className="my-2 w-px bg-gray-200 dark:bg-gray-700 shrink-0" />
 
-            {allTabs.map((tab) => (
+            {primaryTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabClick(tab)}
@@ -88,6 +88,39 @@ const TabNavigation = () => {
                 {tab.label}
               </button>
             ))}
+
+            {/* More dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setDrawerOpen(!drawerOpen)}
+                className={`flex items-center px-4 py-3 whitespace-nowrap border-b-2 font-medium text-sm ${
+                  drawerOpen || !primaryTabs.some(p => p.id === activeTab.id)
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <span className="mr-2"><Menu size={20} /></span>
+                More
+              </button>
+              {drawerOpen && (
+                <div className="absolute top-full right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 py-1">
+                  {secondaryTabs.map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabClick(tab)}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                        activeTab.id === tab.id
+                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {tab.icon}
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Dark mode */}
             <button

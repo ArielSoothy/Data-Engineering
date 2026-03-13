@@ -1,6 +1,7 @@
 import type { UnifiedQuestion, QuestionSource, Subject, Difficulty } from '../types/studyHub';
 import type { CategoryProgress } from '../context/AppContext';
 import { getTopicForQuestion } from '../data/topicMappings';
+import { canonicalizeTopic } from '../data/topics';
 
 // --- Raw JSON shapes ---
 
@@ -72,7 +73,7 @@ function normalizeStandard(
     difficulty: q.difficulty,
     timeEstimate: q.timeEstimate,
     pseudoCode: q.pseudoCode,
-    topic: getTopicForQuestion(source, q.id),
+    topic: canonicalizeTopic(getTopicForQuestion(source, q.id)),
     progressKey,
     progressId: q.id,
   }));
@@ -89,7 +90,7 @@ function normalizeMeta(questions: RawMetaQuestion[]): UnifiedQuestion[] {
     difficulty: q.difficulty,
     timeEstimate: q.timeEstimate,
     pseudoCode: q.pseudoCode,
-    topic: q.tags?.[0] || getTopicForQuestion('metaOfficial', q.id),
+    topic: canonicalizeTopic(q.tags?.[0] || getTopicForQuestion('metaOfficial', q.id)),
     tags: q.tags,
     hints: q.hints,
     progressKey: 'metaOfficial',
@@ -109,7 +110,7 @@ function normalizeDrill(cards: RawDrillCard[]): UnifiedQuestion[] {
     subject: (c.cat.toLowerCase() === 'python' ? 'python' : 'sql') as Subject,
     difficulty: DRILL_DIFF_MAP[c.difficulty] || 'Medium',
     timeEstimate: 2,
-    topic: c.topic,
+    topic: canonicalizeTopic(c.topic),
     // Quick Drill uses its own progress system, not AppContext
     progressKey: 'sqlBasics', // placeholder — actual progress is in quick_drill_progress
     progressId: c.id,
