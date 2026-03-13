@@ -1,6 +1,7 @@
 interface BadgeProps {
-  label: string;
-  variant?: 'difficulty' | 'custom';
+  label?: string;
+  children?: React.ReactNode;
+  variant?: 'difficulty' | 'custom' | 'success' | 'warning' | 'danger' | 'info';
   difficulty?: 'Easy' | 'Medium' | 'Hard';
   color?: 'blue' | 'green' | 'yellow' | 'red' | 'gray' | 'purple';
   size?: 'sm' | 'md';
@@ -27,8 +28,16 @@ const sizeClasses: Record<NonNullable<BadgeProps['size']>, string> = {
   md: 'text-xs px-2 py-1',
 };
 
+const semanticMap: Record<string, string> = {
+  success: 'green',
+  warning: 'yellow',
+  danger: 'red',
+  info: 'blue',
+};
+
 export const Badge = ({
   label,
+  children,
   variant = 'custom',
   difficulty,
   color = 'gray',
@@ -39,6 +48,8 @@ export const Badge = ({
 
   if (variant === 'difficulty' && difficulty) {
     colorStyle = difficultyClasses[difficulty];
+  } else if (variant in semanticMap) {
+    colorStyle = colorClasses[semanticMap[variant] as keyof typeof colorClasses];
   } else {
     colorStyle = colorClasses[color];
   }
@@ -54,7 +65,7 @@ export const Badge = ({
         .filter(Boolean)
         .join(' ')}
     >
-      {label}
+      {children ?? label}
     </span>
   );
 };

@@ -1,5 +1,6 @@
 import type { UnifiedQuestion, QuestionSource, Subject, Difficulty } from '../types/studyHub';
 import type { CategoryProgress } from '../context/AppContext';
+import { getTopicForQuestion } from '../data/topicMappings';
 
 // --- Raw JSON shapes ---
 
@@ -71,6 +72,7 @@ function normalizeStandard(
     difficulty: q.difficulty,
     timeEstimate: q.timeEstimate,
     pseudoCode: q.pseudoCode,
+    topic: getTopicForQuestion(source, q.id),
     progressKey,
     progressId: q.id,
   }));
@@ -87,7 +89,7 @@ function normalizeMeta(questions: RawMetaQuestion[]): UnifiedQuestion[] {
     difficulty: q.difficulty,
     timeEstimate: q.timeEstimate,
     pseudoCode: q.pseudoCode,
-    topic: q.tags?.[0],
+    topic: q.tags?.[0] || getTopicForQuestion('metaOfficial', q.id),
     tags: q.tags,
     hints: q.hints,
     progressKey: 'metaOfficial',

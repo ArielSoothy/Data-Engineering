@@ -4,7 +4,8 @@ import type { ReactNode } from 'react';
 import {
   LayoutDashboard, BarChart, Cloud,
   Video, Book, Moon, Sun, GraduationCap,
-  Briefcase, Timer, Menu, X, BarChart3, Layers
+  Briefcase, Menu, X,
+  Zap, Code2, Target
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -23,20 +24,20 @@ const TabNavigation = () => {
   const isOnline = useOnlineStatus();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Primary mobile tabs (bottom nav)
+  // Primary tabs (mobile bottom nav + desktop top bar)
   const primaryTabs: TabItem[] = [
     { id: 'dashboard', label: 'Home', icon: <LayoutDashboard size={20} />, path: '/' },
-    { id: 'study', label: 'Study', icon: <Layers size={20} />, path: '/study' },
-    { id: 'timed-assessment', label: 'Timed', icon: <Timer size={20} />, path: '/timed-assessment' },
-    { id: 'daily-assessment', label: 'Daily', icon: <BarChart3 size={20} />, path: '/daily-assessment' },
+    { id: 'quick', label: 'Quick', icon: <Zap size={20} />, path: '/quick' },
+    { id: 'deep', label: 'Deep', icon: <Code2 size={20} />, path: '/deep' },
+    { id: 'practice', label: 'Practice', icon: <Target size={20} />, path: '/practice' },
   ];
 
-  // All tabs for desktop and More drawer (consolidated — 8 question tabs merged into Study Hub)
+  // All tabs for desktop and More drawer
   const allTabs: TabItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
-    { id: 'study', label: 'Study Hub', icon: <Layers size={20} />, path: '/study' },
-    { id: 'timed-assessment', label: 'Timed Assessment', icon: <Timer size={20} />, path: '/timed-assessment' },
-    { id: 'daily-assessment', label: 'Daily Assessment', icon: <BarChart3 size={20} />, path: '/daily-assessment' },
+    { id: 'quick', label: 'Quick Mode', icon: <Zap size={20} />, path: '/quick' },
+    { id: 'deep', label: 'Deep Mode', icon: <Code2 size={20} />, path: '/deep' },
+    { id: 'practice', label: 'Practice', icon: <Target size={20} />, path: '/practice' },
     { id: 'decomposition', label: 'Product Sense', icon: <BarChart size={20} />, path: '/decomposition' },
     { id: 'tech-stack', label: 'Meta Tech Stack', icon: <Cloud size={20} />, path: '/tech-stack' },
     { id: 'mock-interview', label: 'Mock Interview', icon: <Video size={20} />, path: '/mock-interview' },
@@ -47,7 +48,9 @@ const TabNavigation = () => {
   // Secondary tabs for More drawer (exclude primary tabs)
   const secondaryTabs = allTabs.filter(t => !primaryTabs.some(p => p.id === t.id));
 
-  const activeTab = allTabs.find(tab => tab.path === location.pathname) || allTabs[0];
+  const activeTab = allTabs.find(tab => tab.path === location.pathname)
+    || allTabs.find(tab => tab.path !== '/' && location.pathname.startsWith(tab.path))
+    || allTabs[0];
 
   const handleTabClick = (tab: TabItem) => {
     navigate(tab.path);
