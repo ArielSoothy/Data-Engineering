@@ -2,8 +2,38 @@ import { useState, useCallback } from 'react';
 import { CheckCircle, XCircle, SkipForward, RotateCcw, Play } from 'lucide-react';
 import { Button, Card, Badge, ProgressBar } from '../ui';
 import { generateTriviaAnswers, type TriviaAnswer } from '../../services/triviaService';
+import { pushProgressDebounced } from '../../services/progressSync';
+import { useAppContext } from '../../context/AppContext';
 import type { Question } from '../../hooks/useQuestions';
 import type { UnifiedQuestion } from '../../types/studyHub';
+
+// --- Quiz progress persistence ---
+const QUIZ_PROGRESS_KEY = 'quick_drill_progress';
+
+interface CardProgress { seen: number; correct: number; wrong: number; lastReviewed?: string }
+type ProgressMap = Record<string, CardProgress>;
+
+function loadProgress(): ProgressMap {
+  try {
+    const raw = localStorage.getItem(QUIZ_PROGRESS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveQuizProgress(uid: string, correct: boolean) {
+  try {
+    const progress = loadProgress();
+    const prev = progress[uid] || { seen: 0, correct: 0, wrong: 0 };
+    progress[uid] = {
+      seen: prev.seen + 1,
+      correct: prev.correct + (correct ? 1 : 0),
+      wrong: prev.wrong + (correct ? 0 : 1),
+      lastReviewed: new Date().toISOString(),
+    };
+    localStorage.setItem(QUIZ_PROGRESS_KEY, JSON.stringify(progress));
+    pushProgressDebounced();
+  } catch { /* ignore */ }
+}
 
 interface QuizItem { q: UnifiedQuestion; answers: TriviaAnswer[] }
 
@@ -23,6 +53,7 @@ function toTriviaQuestion(q: UnifiedQuestion): Question {
 interface Props { questions: UnifiedQuestion[]; allQuestions: UnifiedQuestion[] }
 
 export default function QuickQuiz({ questions, allQuestions }: Props) {
+  const { updateProgress } = useAppContext();
   const [quizItems, setQuizItems] = useState<QuizItem[]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -62,12 +93,18 @@ export default function QuickQuiz({ questions, allQuestions }: Props) {
     if (showResult) return;
     setSelected(answerId);
     setShowResult(true);
+    const q = quizItems[index].q;
     const correct = quizItems[index].answers.find(a => a.id === answerId)?.isCorrect ?? false;
     if (correct) {
       setScore(s => s + 1);
       setStreak(s => s + 1);
     } else {
       setStreak(0);
+    }
+    // Persist progress
+    saveQuizProgress(q.uid, correct);
+    if (correct) {
+      updateProgress(q.progressKey, q.progressId, true);
     }
   };
 

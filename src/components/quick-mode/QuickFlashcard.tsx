@@ -3,6 +3,7 @@ import { createEmptyCard, fsrs, Rating, State, type Card as FSRSCard, type Grade
 import { SkipForward, RotateCcw } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { pushProgressDebounced } from '../../services/progressSync';
+import { useAppContext } from '../../context/AppContext';
 import type { UnifiedQuestion } from '../../types/studyHub';
 
 // --- FSRS persistence (shared keys with QuickDrill and StudyHub FlashcardMode) ---
@@ -72,6 +73,7 @@ function getFsrsKey(q: UnifiedQuestion): string {
 interface Props { questions: UnifiedQuestion[] }
 
 export default function QuickFlashcard({ questions }: Props) {
+  const { updateProgress } = useAppContext();
   const [drillFsrs, setDrillFsrs] = useState<FSRSStateMap>(() => loadFsrs(FSRS_KEY_DRILL));
   const [hubFsrs, setHubFsrs] = useState<FSRSStateMap>(() => loadFsrs(FSRS_KEY_HUB));
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -145,8 +147,12 @@ export default function QuickFlashcard({ questions }: Props) {
 
     const knew = grade >= Rating.Good;
     setStats(s => ({ seen: s.seen + 1, correct: s.correct + (knew ? 1 : 0), wrong: s.wrong + (knew ? 0 : 1) }));
+    // Update AppContext progress so Dashboard reflects it
+    if (knew) {
+      updateProgress(current.progressKey, current.progressId, true);
+    }
     advance();
-  }, [current, drillFsrs, hubFsrs, advance]);
+  }, [current, drillFsrs, hubFsrs, advance, updateProgress]);
 
   const reset = () => {
     setCurrentIndex(0);

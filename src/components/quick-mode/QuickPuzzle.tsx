@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { SkipForward, RotateCcw, CheckCircle, XCircle, Play } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { pushProgressDebounced } from '../../services/progressSync';
+import { useAppContext } from '../../context/AppContext';
 import type { UnifiedQuestion } from '../../types/studyHub';
 
 // --- Puzzle logic (extracted from QuickDrill.tsx) ---
@@ -52,6 +53,7 @@ function saveProgress(p: ProgressMap) {
 interface Props { questions: UnifiedQuestion[] }
 
 export default function QuickPuzzle({ questions }: Props) {
+  const { updateProgress } = useAppContext();
   const puzzleQuestions = useMemo(() => questions.filter(isPuzzleCard), [questions]);
 
   const [started, setStarted] = useState(false);
@@ -122,6 +124,11 @@ export default function QuickPuzzle({ questions }: Props) {
       lastReviewed: new Date().toISOString(),
     };
     saveProgress(progress);
+
+    // Update AppContext progress so Dashboard reflects it
+    if (isCorrect) {
+      updateProgress(deck[index].progressKey, deck[index].progressId, true);
+    }
 
     setStats(s => ({
       seen: s.seen + 1,
