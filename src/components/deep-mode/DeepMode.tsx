@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Play, Send, Eye, EyeOff, Lightbulb, Code2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Play, Send, Eye, EyeOff, Lightbulb, Code2, PanelLeftClose, PanelLeftOpen, Database } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import { Button, Badge, Spinner } from '../ui';
 import { useUnifiedQuestions } from '../../hooks/useUnifiedQuestions';
-import { useCodeRuntime } from '../../hooks/useCodeRuntime';
+import { useCodeRuntime, type SQLResult } from '../../hooks/useCodeRuntime';
 import { useAppContext } from '../../context/AppContext';
 import { generateFeedback, getLastUsedModel } from '../../services/aiService';
 import { getTopicsForSubject } from '../../data/topics';
@@ -28,8 +28,11 @@ export default function DeepMode() {
 
   // Editor state
   const [code, setCode] = useState('');
-  const [output, setOutput] = useState('');
+  const [sqlResult, setSqlResult] = useState<SQLResult | null>(null);
+  const [pythonOutput, setPythonOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const [showSchema, setShowSchema] = useState(false);
+  const [schemaResult, setSchemaResult] = useState<SQLResult | null>(null);
   const [feedback, setFeedback] = useState('');
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackModel, setFeedbackModel] = useState<string | null>(null);
@@ -87,7 +90,8 @@ export default function DeepMode() {
   useEffect(() => {
     if (!current) return;
     setCode(current.subject === 'python' ? '# Write your Python solution here\n' : '-- Write your SQL query here\n');
-    setOutput('');
+    setSqlResult(null);
+    setPythonOutput('');
     setShowAnswer(false);
     setFeedback('');
     setFeedbackModel(null);
@@ -113,11 +117,24 @@ export default function DeepMode() {
   const runCode = useCallback(async () => {
     if (!current) return;
     setIsRunning(true);
-    setOutput('Running...');
-    const result = current.subject === 'python' ? await runtime.runPython(code) : await runtime.runSQL(code);
-    setOutput(result);
+    setSqlResult(null);
+    setPythonOutput('');
+    if (current.subject === 'python') {
+      const result = await runtime.runPython(code);
+      setPythonOutput(result);
+    } else {
+      const result = await runtime.runSQL(code);
+      setSqlResult(result);
+    }
     setIsRunning(false);
   }, [current, code, runtime]);
+
+  const loadSchema = useCallback(async () => {
+    if (showSchema && schemaResult) { setShowSchema(false); return; }
+    const result = await runtime.getSchema();
+    setSchemaResult(result);
+    setShowSchema(true);
+  }, [runtime, showSchema, schemaResult]);
 
   const checkAnswer = useCallback(async () => {
     if (!current) return;
@@ -232,6 +249,11 @@ export default function DeepMode() {
               <Button variant="secondary" size="sm" onClick={checkAnswer} loading={feedbackLoading} icon={<Send size={14} />}>
                 Check Answer
               </Button>
+              {lang === 'sql' && (
+                <Button variant="ghost" size="sm" onClick={loadSchema} disabled={!runtime.ready} icon={<Database size={14} />}>
+                  {showSchema ? 'Hide Schema' : 'Schema'}
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={() => setShowAnswer(!showAnswer)} icon={showAnswer ? <EyeOff size={14} /> : <Eye size={14} />}>
                 {showAnswer ? 'Hide Solution' : 'Solution'}
               </Button>
@@ -259,12 +281,69 @@ export default function DeepMode() {
                 </div>
               )}
 
-              {/* Output */}
-              {output && (
+              {/* Schema */}
+              {showSchema && schemaResult && (
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-indigo-900/10">
+                  <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-2">Available Tables ({schemaResult.rowCount})</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {schemaResult.rows.map((r, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCode(prev => prev.trimEnd() + (prev.trim().endsWith('--') || prev.trim() === '-- Write your SQL query here' ? ` SELECT * FROM ${r[0]} LIMIT 10;\n` : `\n-- SELECT * FROM ${r[0]} LIMIT 10;\n`))}
+                        className="px-2 py-1 text-xs font-mono bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 rounded text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
+                      >
+                        {r[0]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* SQL Table Output */}
+              {sqlResult && (
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                    Output {sqlResult.error ? '' : `(${sqlResult.rowCount} row${sqlResult.rowCount !== 1 ? 's' : ''})`}
+                  </p>
+                  {sqlResult.error ? (
+                    <pre className="text-xs font-mono text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 p-2 rounded-lg">{sqlResult.error}</pre>
+                  ) : sqlResult.columns.length > 0 ? (
+                    <div className="overflow-x-auto max-h-48 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <table className="w-full text-xs font-mono">
+                        <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0">
+                          <tr>
+                            {sqlResult.columns.map((col, i) => (
+                              <th key={i} className="px-3 py-1.5 text-left font-bold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 whitespace-nowrap">
+                                {col}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sqlResult.rows.map((row, ri) => (
+                            <tr key={ri} className={ri % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800/50'}>
+                              {row.map((cell, ci) => (
+                                <td key={ci} className="px-3 py-1 text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800 whitespace-nowrap">
+                                  {cell === null ? <span className="text-gray-400 italic">NULL</span> : String(cell)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg">Query executed successfully (no rows returned)</p>
+                  )}
+                </div>
+              )}
+
+              {/* Python Output */}
+              {pythonOutput && (
                 <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                   <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Output</p>
                   <pre className="text-xs font-mono whitespace-pre-wrap text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg max-h-32 overflow-y-auto">
-                    {output}
+                    {pythonOutput}
                   </pre>
                 </div>
               )}

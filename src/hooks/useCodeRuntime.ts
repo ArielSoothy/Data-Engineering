@@ -3,12 +3,20 @@ import { loadPyodide } from 'pyodide';
 import type { Database } from 'sql.js';
 import initSqlJs from 'sql.js';
 
+export interface SQLResult {
+  columns: string[];
+  rows: any[][];
+  rowCount: number;
+  error?: string;
+}
+
 interface CodeRuntime {
   ready: boolean;
   loading: boolean;
   error: string | null;
-  runSQL: (code: string) => Promise<string>;
+  runSQL: (code: string) => Promise<SQLResult>;
   runPython: (code: string) => Promise<string>;
+  getSchema: () => Promise<SQLResult>;
   initFor: (subject: 'sql' | 'python') => void;
 }
 
@@ -61,18 +69,25 @@ export function useCodeRuntime(): CodeRuntime {
     })();
   }, []);
 
-  const runSQL = useCallback(async (code: string): Promise<string> => {
-    if (!sqlRef.current) return 'SQL runtime not initialized';
+  const runSQL = useCallback(async (code: string): Promise<SQLResult> => {
+    if (!sqlRef.current) return { columns: [], rows: [], rowCount: 0, error: 'SQL runtime not initialized' };
     try {
       const results = sqlRef.current.exec(code);
-      if (results.length === 0) return 'Query executed successfully (no rows returned)';
-      const cols = results[0].columns.join('\t');
-      const rows = results[0].values.map((r: any[]) => r.join('\t')).join('\n');
-      return `${cols}\n${'─'.repeat(cols.length)}\n${rows}\n\n(${results[0].values.length} row${results[0].values.length !== 1 ? 's' : ''})`;
+      if (results.length === 0) return { columns: [], rows: [], rowCount: 0 };
+      return {
+        columns: results[0].columns,
+        rows: results[0].values,
+        rowCount: results[0].values.length,
+      };
     } catch (e: any) {
-      return `SQL Error: ${e.message}`;
+      return { columns: [], rows: [], rowCount: 0, error: e.message };
     }
   }, []);
+
+  const getSchema = useCallback(async (): Promise<SQLResult> => {
+    if (!sqlRef.current) return { columns: [], rows: [], rowCount: 0, error: 'SQL runtime not initialized' };
+    return runSQL("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY name");
+  }, [runSQL]);
 
   const runPython = useCallback(async (code: string): Promise<string> => {
     if (!pyodideRef.current) return 'Python runtime not initialized';
@@ -87,5 +102,5 @@ export function useCodeRuntime(): CodeRuntime {
     }
   }, []);
 
-  return { ready, loading, error, runSQL, runPython, initFor };
+  return { ready, loading, error, runSQL, runPython, getSchema, initFor };
 }
