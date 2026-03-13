@@ -3,17 +3,51 @@ import { useSearchParams } from 'react-router-dom';
 import { Layers, Zap, HelpCircle, Puzzle } from 'lucide-react';
 import { Spinner, Badge, ProgressBar } from '../ui';
 import { useUnifiedQuestions } from '../../hooks/useUnifiedQuestions';
+import { useAppContext } from '../../context/AppContext';
 import { getTopicsForSubject } from '../../data/topics';
 import QuickFlashcard from './QuickFlashcard';
 import QuickQuiz from './QuickQuiz';
 import QuickPuzzle from './QuickPuzzle';
-import type { Subject } from '../../types/studyHub';
+import type { UnifiedQuestion, Subject } from '../../types/studyHub';
+
+// --- Read FSRS + drill progress from localStorage for stats ---
+function getCompletedSet(): Set<string> {
+  const completed = new Set<string>();
+  // From quick_drill_progress
+  try {
+    const raw = localStorage.getItem('quick_drill_progress');
+    if (raw) {
+      const data = JSON.parse(raw) as Record<string, { correct?: number }>;
+      for (const [uid, entry] of Object.entries(data)) {
+        if (entry.correct && entry.correct > 0) completed.add(uid);
+      }
+    }
+  } catch { /* ignore */ }
+  // From FSRS state (cards that have been reviewed at least once)
+  for (const key of ['quick_drill_fsrs', 'study_hub_fsrs']) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const data = JSON.parse(raw) as Record<string, { reps?: number }>;
+        for (const [id, card] of Object.entries(data)) {
+          if (card.reps && card.reps > 0) completed.add(id);
+        }
+      }
+    } catch { /* ignore */ }
+  }
+  return completed;
+}
+
+function isQuestionCompleted(q: UnifiedQuestion, completedSet: Set<string>): boolean {
+  return completedSet.has(q.uid) || completedSet.has(String(q.sourceId));
+}
 
 type QuickModeType = 'flashcard' | 'quiz' | 'puzzle';
 type SubjectFilter = 'all' | Subject;
 
 export default function QuickMode() {
   const { questions: allQuestions, loading, error } = useUnifiedQuestions();
+  const { progress } = useAppContext();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initialSubject = (searchParams.get('subject') as SubjectFilter) || 'all';
@@ -85,12 +119,23 @@ export default function QuickMode() {
     [subjectFiltered, topic],
   );
 
-  // Stats
-  const stats = useMemo(() => ({
-    total: filtered.length,
-    sql: filtered.filter(q => q.subject === 'sql').length,
-    python: filtered.filter(q => q.subject === 'python').length,
-  }), [filtered]);
+  // Stats — read actual progress from localStorage + AppContext
+  const stats = useMemo(() => {
+    const completedSet = getCompletedSet();
+    // Also count AppContext completions
+    for (const [, entries] of Object.entries(progress)) {
+      for (const e of entries) {
+        if (e.completed) completedSet.add(String(e.id));
+      }
+    }
+    const mastered = filtered.filter(q => isQuestionCompleted(q, completedSet)).length;
+    return {
+      total: filtered.length,
+      sql: filtered.filter(q => q.subject === 'sql').length,
+      python: filtered.filter(q => q.subject === 'python').length,
+      mastered,
+    };
+  }, [filtered, progress]);
 
   if (loading) return <div className="flex justify-center pt-16"><Spinner size="lg" /></div>;
   if (error) return <div className="text-red-500 text-center pt-16">{error}</div>;
@@ -113,7 +158,7 @@ export default function QuickMode() {
       <div className="flex items-center gap-3 mb-6">
         <Zap size={24} className="text-amber-500" />
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quick Mode</h1>
-        <Badge variant="info">{stats.total} cards</Badge>
+        <Badge variant="info">{stats.mastered}/{stats.total} mastered</Badge>
       </div>
 
       {/* Subject tabs */}
@@ -181,8 +226,8 @@ export default function QuickMode() {
       {filtered.length > 0 && (
         <div className="mb-6">
           <ProgressBar
-            value={0}
-            label={`${stats.sql} SQL  |  ${stats.python} Python  |  ${stats.total} total`}
+            value={stats.total > 0 ? Math.round((stats.mastered / stats.total) * 100) : 0}
+            label={`${stats.mastered} mastered  |  ${stats.total - stats.mastered} remaining  |  ${stats.sql} SQL · ${stats.python} Python`}
           />
         </div>
       )}
