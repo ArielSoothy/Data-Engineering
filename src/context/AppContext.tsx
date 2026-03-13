@@ -186,20 +186,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return totalMinutes;
   }, [progress]);
   
-  // Pull cloud progress on first mount
+  // Restore from cloud backup only if localStorage is empty (e.g., new browser / cleared cache)
   const hasPulled = useRef(false);
   useEffect(() => {
     if (hasPulled.current) return;
     hasPulled.current = true;
     pullProgress().then(restored => {
       if (restored) {
-        // Reload state from localStorage (which pullProgress just updated)
         const saved = localStorage.getItem('msInterviewProgress');
         if (saved) setProgress(prev => ({ ...prev, ...JSON.parse(saved) }));
         const savedPrefs = localStorage.getItem('msInterviewPreferences');
         if (savedPrefs) setPreferences(prev => ({ ...prev, ...JSON.parse(savedPrefs) }));
       }
-    }).catch(() => { /* offline — localStorage is fine */ });
+    }).catch(() => { /* offline — localStorage is the source of truth */ });
   }, []);
 
   // Flush pending sync when user leaves the page
