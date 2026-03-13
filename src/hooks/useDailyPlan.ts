@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { dailyPlan, STUDY_PHASES } from '../data/dailyPlan';
 import type { DayPlan } from '../data/dailyPlan';
 import { INTERVIEW_DATE } from '../config';
 import { getFromLocalStorage, saveToLocalStorage } from '../utils/helpers';
+import { pushProgressDebounced } from '../services/progressSync';
 
 const COMPLETION_KEY = 'daily_plan_completion';
 const STREAK_KEY = 'daily_plan_streak';
+const STREAK_DAYS_KEY = 'streak_days';
 
 export interface DailyPlanState {
   currentDay: number; // 1-24, or 0 if before start, or 25+ if past
@@ -13,6 +15,7 @@ export interface DailyPlanState {
   todayPlan: DayPlan | null;
   phase: typeof STUDY_PHASES[number] | null;
   completedTasks: Record<string, boolean>;
+  streakDays: Record<string, boolean>;
   streak: number;
   allPlans: DayPlan[];
   toggleTask: (taskId: string) => void;
@@ -40,31 +43,47 @@ export function useDailyPlan(): DailyPlanState {
     return STUDY_PHASES[3];
   }, [currentDay]);
 
-  const completedTasks = getFromLocalStorage<Record<string, boolean>>(COMPLETION_KEY, {});
-  const streak = getFromLocalStorage<number>(STREAK_KEY, 0);
+  const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(
+    () => getFromLocalStorage<Record<string, boolean>>(COMPLETION_KEY, {})
+  );
+  const [streak, setStreak] = useState<number>(
+    () => getFromLocalStorage<number>(STREAK_KEY, 0)
+  );
+  const [streakDays, setStreakDays] = useState<Record<string, boolean>>(
+    () => getFromLocalStorage<Record<string, boolean>>(STREAK_DAYS_KEY, {})
+  );
 
-  const toggleTask = (taskId: string) => {
-    const updated = { ...completedTasks, [taskId]: !completedTasks[taskId] };
-    saveToLocalStorage(COMPLETION_KEY, updated);
+  const toggleTask = useCallback((taskId: string) => {
+    setCompletedTasks(prev => {
+      const updated = { ...prev, [taskId]: !prev[taskId] };
+      saveToLocalStorage(COMPLETION_KEY, updated);
 
-    // Update streak: check if all non-extra tasks for today are done
-    if (todayPlan) {
-      const requiredTasks = todayPlan.tasks.filter(t => !t.extra);
-      const allDone = requiredTasks.every(t => updated[t.id]);
-      if (allDone) {
-        const todayKey = `streak_${currentDay}`;
-        const streakDays = getFromLocalStorage<Record<string, boolean>>('streak_days', {});
-        if (!streakDays[todayKey]) {
-          streakDays[todayKey] = true;
-          saveToLocalStorage('streak_days', streakDays);
-          saveToLocalStorage(STREAK_KEY, streak + 1);
+      // Update streak: check if all non-extra tasks for today are done
+      if (todayPlan) {
+        const requiredTasks = todayPlan.tasks.filter(t => !t.extra);
+        const allDone = requiredTasks.every(t => updated[t.id]);
+        if (allDone) {
+          const todayKey = `streak_${currentDay}`;
+          setStreakDays(prevDays => {
+            if (!prevDays[todayKey]) {
+              const updatedDays = { ...prevDays, [todayKey]: true };
+              saveToLocalStorage(STREAK_DAYS_KEY, updatedDays);
+              setStreak(prevStreak => {
+                const newStreak = prevStreak + 1;
+                saveToLocalStorage(STREAK_KEY, newStreak);
+                return newStreak;
+              });
+              return updatedDays;
+            }
+            return prevDays;
+          });
         }
       }
-    }
 
-    // Force re-render by dispatching storage event
-    window.dispatchEvent(new Event('storage'));
-  };
+      pushProgressDebounced();
+      return updated;
+    });
+  }, [todayPlan, currentDay]);
 
   const todayProgress = useMemo(() => {
     if (!todayPlan) return 0;
@@ -79,6 +98,7 @@ export function useDailyPlan(): DailyPlanState {
     todayPlan,
     phase,
     completedTasks,
+    streakDays,
     streak,
     allPlans: dailyPlan,
     toggleTask,

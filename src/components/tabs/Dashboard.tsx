@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Calendar, Clock, ChevronRight, ChevronLeft, Database, Code, Braces,
   CheckCircle, Zap, Flame,
-  BookOpen, Timer, Circle, Smartphone, Star, Target
+  Timer, Circle, Smartphone, Star, Target
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { useDailyPlan } from '../../hooks/useDailyPlan';
@@ -15,7 +15,7 @@ import type { CategoryProgress } from '../../context/AppContext';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { getCategoryProgress, getTotalProgress } = useAppContext();
-  const { currentDay, daysRemaining, allPlans, phase, completedTasks, streak, toggleTask } = useDailyPlan();
+  const { currentDay, daysRemaining, allPlans, phase, completedTasks, streakDays, streak, toggleTask } = useDailyPlan();
   const isOnline = useOnlineStatus();
   const [viewDay, setViewDay] = useState<number | null>(null);
 
@@ -226,10 +226,10 @@ const Dashboard = () => {
             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Quick Launch</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { label: 'Quick Drill', icon: <BookOpen size={20} />, path: '/quick-drill', color: 'bg-indigo-500' },
-                { label: 'Adaptive', icon: <Zap size={20} />, path: '/adaptive', color: 'bg-orange-500' },
-                { label: 'Timed Mock', icon: <Timer size={20} />, path: '/timed-assessment', color: 'bg-red-500' },
-                { label: 'Trivia', icon: <Target size={20} />, path: '/trivia', color: 'bg-emerald-500' },
+                { label: 'Quick Mode', icon: <Zap size={20} />, path: '/quick', color: 'bg-amber-500' },
+                { label: 'Deep Mode', icon: <Code size={20} />, path: '/deep', color: 'bg-purple-500' },
+                { label: 'Timed Mock', icon: <Timer size={20} />, path: '/practice/timed', color: 'bg-red-500' },
+                { label: 'Daily Quiz', icon: <Target size={20} />, path: '/practice/daily', color: 'bg-emerald-500' },
               ].map(item => (
                 <button
                   key={item.path}
@@ -249,7 +249,7 @@ const Dashboard = () => {
               {Array.from({ length: 7 }, (_, i) => {
                 const dayNum = currentDay - (new Date().getDay()) + i;
                 const dayData = dayNum >= 1 && dayNum <= 24;
-                const dayCompleted = dayData && completedTasks[`streak_${dayNum}`];
+                const dayCompleted = dayData && streakDays[`streak_${dayNum}`];
                 const isToday = dayNum === currentDay;
                 return (
                   <div

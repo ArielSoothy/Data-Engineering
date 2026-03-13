@@ -87,7 +87,6 @@ function saveFsrsState(state: FSRSStateMap) {
       };
     }
     localStorage.setItem(FSRS_STORAGE_KEY, JSON.stringify(serialized));
-    pushProgressDebounced();
   } catch (e) {
     console.warn('[QuickDrill] Failed to save FSRS state:', e);
   }
@@ -105,7 +104,6 @@ function loadProgress(): ProgressMap {
 function saveProgress(p: ProgressMap) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-    pushProgressDebounced();
   } catch (e) {
     console.warn('[QuickDrill] Failed to save progress:', e);
   }
@@ -332,6 +330,8 @@ export default function QuickDrill() {
         },
       };
       persistProgress(updated);
+      // Single push after both FSRS + progress are saved to localStorage
+      pushProgressDebounced();
       setSessionStats((s) => ({
         seen: s.seen + 1,
         correct: s.correct + (knew ? 1 : 0),
@@ -378,6 +378,7 @@ export default function QuickDrill() {
       },
     };
     persistProgress(updated);
+    pushProgressDebounced();
     setSessionStats((s) => ({
       seen: s.seen + 1,
       correct: s.correct + (isCorrect ? 1 : 0),

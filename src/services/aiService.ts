@@ -5,9 +5,11 @@ import * as groqProvider from './providers/groqProvider';
 import * as claudeProvider from './providers/claudeProvider';
 import * as geminiProvider from './providers/geminiProvider';
 import * as claudeCliProvider from './providers/claudeCliProvider';
+import * as codexCliProvider from './providers/codexCliProvider';
+import * as geminiCliProvider from './providers/geminiCliProvider';
 import { AI_MODELS } from '../config';
 
-export type AIProvider = 'groq' | 'claude' | 'gemini' | 'claude-cli';
+export type AIProvider = 'groq' | 'claude' | 'gemini' | 'claude-cli' | 'codex-cli' | 'gemini-cli';
 
 export interface AIServiceConfig {
   provider: AIProvider;
@@ -17,13 +19,21 @@ export interface AIServiceConfig {
 
 const STORAGE_PROVIDER_KEY = 'ai_provider';
 
-const VALID_PROVIDERS: AIProvider[] = ['groq', 'claude', 'gemini', 'claude-cli'];
+// CLI providers only available in dev mode
+const CLI_PROVIDERS: AIProvider[] = ['claude-cli', 'codex-cli', 'gemini-cli'];
+const API_PROVIDERS: AIProvider[] = ['groq', 'claude', 'gemini'];
+const VALID_PROVIDERS: AIProvider[] = [
+  ...API_PROVIDERS,
+  ...(import.meta.env.DEV ? CLI_PROVIDERS : []),
+];
 
 const PROVIDER_API_KEY_MAP: Record<AIProvider, string> = {
   groq: 'groq_api_key',
   claude: 'claude_api_key',
   gemini: 'gemini_api_key',
-  'claude-cli': ''
+  'claude-cli': '',
+  'codex-cli': '',
+  'gemini-cli': '',
 };
 
 export function getActiveProvider(): AIProvider {
@@ -43,7 +53,7 @@ export function setActiveProvider(provider: AIProvider): void {
 }
 
 export function getProviderApiKey(provider: AIProvider): string {
-  if (provider === 'claude-cli') return '';
+  if (CLI_PROVIDERS.includes(provider)) return '';
   const storageKey = PROVIDER_API_KEY_MAP[provider];
   return localStorage.getItem(storageKey) ?? '';
 }
@@ -71,6 +81,10 @@ async function callProvider(
       return geminiProvider.generateFeedback(question, userAnswer, correctAnswer, pseudoCode);
     case 'claude-cli':
       return claudeCliProvider.generateFeedback(question, userAnswer, correctAnswer, pseudoCode);
+    case 'codex-cli':
+      return codexCliProvider.generateFeedback(question, userAnswer, correctAnswer, pseudoCode);
+    case 'gemini-cli':
+      return geminiCliProvider.generateFeedback(question, userAnswer, correctAnswer, pseudoCode);
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
@@ -86,6 +100,10 @@ async function callProviderRaw(provider: AIProvider, prompt: string): Promise<st
       return geminiProvider.generateRaw(prompt);
     case 'claude-cli':
       return claudeCliProvider.generateRaw(prompt);
+    case 'codex-cli':
+      return codexCliProvider.generateRaw(prompt);
+    case 'gemini-cli':
+      return geminiCliProvider.generateRaw(prompt);
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
@@ -100,6 +118,8 @@ const PROVIDER_MODEL_NAMES: Record<AIProvider, string> = {
   claude: AI_MODELS.claude,
   gemini: AI_MODELS.gemini,
   'claude-cli': 'claude-cli',
+  'codex-cli': 'codex-cli',
+  'gemini-cli': 'gemini-cli',
 };
 export function getLastUsedModel(): string | null {
   if (!_lastProvider) return null;

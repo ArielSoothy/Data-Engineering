@@ -75,7 +75,7 @@ export default function CodeModeView({ questions }: Props) {
 
   // Reset state when changing question
   useEffect(() => {
-    setCode(q?.pseudoCode || '');
+    setCode(q?.subject === 'python' ? '# Write your Python solution here\n' : '-- Write your SQL query here\n');
     setOutput('');
     setShowAnswer(false);
     setFeedback('');

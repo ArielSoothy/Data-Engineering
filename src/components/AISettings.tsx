@@ -53,12 +53,28 @@ const PROVIDER_META: Record<AIProvider, ProviderMeta> = {
     badgeColor: 'green',
     keyPlaceholder: '(no key needed)',
     description: 'Uses local claude CLI — free, no API key, dev only'
+  },
+  'codex-cli': {
+    label: 'Codex CLI',
+    badge: 'Local',
+    badgeColor: 'green',
+    keyPlaceholder: '(no key needed)',
+    description: 'Uses local codex CLI (OpenAI) — dev only'
+  },
+  'gemini-cli': {
+    label: 'Gemini CLI',
+    badge: 'Local',
+    badgeColor: 'green',
+    keyPlaceholder: '(no key needed)',
+    description: 'Uses local gemini CLI (Google) — dev only'
   }
 };
 
+const CLI_PROVIDER_IDS: AIProvider[] = ['claude-cli', 'codex-cli', 'gemini-cli'];
+
 const PROVIDERS: AIProvider[] = [
   'groq', 'gemini', 'claude',
-  ...(import.meta.env.DEV ? ['claude-cli' as AIProvider] : [])
+  ...(import.meta.env.DEV ? CLI_PROVIDER_IDS : [])
 ];
 
 export const AISettings = () => {
@@ -71,7 +87,9 @@ export const AISettings = () => {
     groq: !!getProviderApiKey('groq'),
     claude: !!getProviderApiKey('claude'),
     gemini: !!getProviderApiKey('gemini'),
-    'claude-cli': true
+    'claude-cli': true,
+    'codex-cli': true,
+    'gemini-cli': true,
   } as Record<AIProvider, boolean>));
 
   // Load the key for the currently selected provider whenever it changes
@@ -94,7 +112,7 @@ export const AISettings = () => {
 
   const currentProvider = getActiveProvider();
   const currentKey = getProviderApiKey(currentProvider);
-  const isConfigured = currentProvider === 'claude-cli' || !!currentKey;
+  const isConfigured = CLI_PROVIDER_IDS.includes(currentProvider) || !!currentKey;
   const selectedMeta = PROVIDER_META[selectedProvider];
 
   return (
@@ -166,9 +184,9 @@ export const AISettings = () => {
 
           {/* API key input */}
           <div>
-            {selectedProvider === 'claude-cli' ? (
+            {CLI_PROVIDER_IDS.includes(selectedProvider) ? (
               <div className="rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-3 py-2 text-sm text-green-700 dark:text-green-400">
-                Uses local claude CLI — no key needed. Available in dev mode only.
+                Uses local {selectedMeta.label} — no key needed. Available in dev mode only.
               </div>
             ) : (
               <>
