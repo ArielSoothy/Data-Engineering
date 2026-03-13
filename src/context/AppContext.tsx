@@ -134,7 +134,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         });
       }
 
-      return { ...prev, [category]: categoryQuestions };
+      const next = { ...prev, [category]: categoryQuestions };
+      // Write synchronously so data survives immediate refresh
+      try { localStorage.setItem('msInterviewProgress', JSON.stringify(next)); } catch { /* full */ }
+      return next;
     });
   }, []);
 

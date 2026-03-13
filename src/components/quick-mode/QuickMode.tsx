@@ -8,39 +8,7 @@ import { getTopicsForSubject } from '../../data/topics';
 import QuickFlashcard from './QuickFlashcard';
 import QuickQuiz from './QuickQuiz';
 import QuickPuzzle from './QuickPuzzle';
-import type { UnifiedQuestion, Subject } from '../../types/studyHub';
-
-// --- Read FSRS + drill progress from localStorage for stats ---
-function getCompletedSet(): Set<string> {
-  const completed = new Set<string>();
-  // From quick_drill_progress
-  try {
-    const raw = localStorage.getItem('quick_drill_progress');
-    if (raw) {
-      const data = JSON.parse(raw) as Record<string, { correct?: number }>;
-      for (const [uid, entry] of Object.entries(data)) {
-        if (entry.correct && entry.correct > 0) completed.add(uid);
-      }
-    }
-  } catch { /* ignore */ }
-  // From FSRS state (cards that have been reviewed at least once)
-  for (const key of ['quick_drill_fsrs', 'study_hub_fsrs']) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const data = JSON.parse(raw) as Record<string, { reps?: number }>;
-        for (const [id, card] of Object.entries(data)) {
-          if (card.reps && card.reps > 0) completed.add(id);
-        }
-      }
-    } catch { /* ignore */ }
-  }
-  return completed;
-}
-
-function isQuestionCompleted(q: UnifiedQuestion, completedSet: Set<string>): boolean {
-  return completedSet.has(q.uid) || completedSet.has(String(q.sourceId));
-}
+import type { Subject } from '../../types/studyHub';
 
 type QuickModeType = 'flashcard' | 'quiz' | 'puzzle';
 type SubjectFilter = 'all' | Subject;
@@ -119,16 +87,13 @@ export default function QuickMode() {
     [subjectFiltered, topic],
   );
 
-  // Stats — read actual progress from localStorage + AppContext
+  // Stats — computed directly from AppContext progress (persists to localStorage)
   const stats = useMemo(() => {
-    const completedSet = getCompletedSet();
-    // Also count AppContext completions
-    for (const [, entries] of Object.entries(progress)) {
-      for (const e of entries) {
-        if (e.completed) completedSet.add(String(e.id));
-      }
+    let mastered = 0;
+    for (const q of filtered) {
+      const cat = progress[q.progressKey] ?? [];
+      if (cat.some(p => p.id === q.progressId && p.completed)) mastered++;
     }
-    const mastered = filtered.filter(q => isQuestionCompleted(q, completedSet)).length;
     return {
       total: filtered.length,
       sql: filtered.filter(q => q.subject === 'sql').length,
