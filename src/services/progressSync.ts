@@ -2,7 +2,6 @@ import { createClient } from '../lib/supabase/client';
 import { DEFAULT_SYNC_CODE } from '../config';
 
 const DEVICE_ID_KEY = 'de_prep_device_id';
-const LOCAL_UPDATED_KEY = 'de_prep_local_updated';
 const SYNC_KEYS = [
   'msInterviewProgress',
   'msInterviewPreferences',
@@ -13,15 +12,7 @@ const SYNC_KEYS = [
   'daily_plan_streak',
 ];
 
-export function getSyncCode(): string | null {
-  return localStorage.getItem(DEVICE_ID_KEY);
-}
-
-export function setSyncCode(code: string) {
-  localStorage.setItem(DEVICE_ID_KEY, code.trim().toLowerCase());
-}
-
-function getOrCreateDeviceId(): string {
+function getDeviceId(): string {
   let id = localStorage.getItem(DEVICE_ID_KEY);
   if (!id) {
     id = DEFAULT_SYNC_CODE;
@@ -49,19 +40,28 @@ function applyCloudData(cloud: Record<string, unknown>) {
   }
 }
 
-function markLocalUpdated() {
-  localStorage.setItem(LOCAL_UPDATED_KEY, new Date().toISOString());
+/** Check if localStorage already has meaningful progress data */
+function hasLocalProgress(): boolean {
+  const saved = localStorage.getItem('msInterviewProgress');
+  if (!saved) return false;
+  try {
+    const parsed = JSON.parse(saved);
+    // Check if any category has at least one entry
+    return Object.values(parsed).some(
+      (arr) => Array.isArray(arr) && arr.length > 0
+    );
+  } catch {
+    return false;
+  }
 }
 
-function getLocalUpdatedAt(): string | null {
-  return localStorage.getItem(LOCAL_UPDATED_KEY);
-}
+// --- Push (silent backup) ---
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 export async function pushProgress(): Promise<void> {
   const supabase = createClient();
-  const deviceId = getOrCreateDeviceId();
+  const deviceId = getDeviceId();
   const data = gatherLocalData();
   const now = new Date().toISOString();
 
@@ -71,22 +71,19 @@ export async function pushProgress(): Promise<void> {
 
   if (error) {
     console.warn('[sync] push failed:', error.message);
-  } else {
-    localStorage.setItem(LOCAL_UPDATED_KEY, now);
   }
 }
 
 export function pushProgressDebounced(): void {
-  markLocalUpdated();
   if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => pushProgress(), 2000);
+  debounceTimer = setTimeout(() => pushProgress(), 3000);
 }
 
 export function flushSync(): void {
   if (debounceTimer) {
     clearTimeout(debounceTimer);
     debounceTimer = null;
-    const deviceId = getOrCreateDeviceId();
+    const deviceId = getDeviceId();
     const data = gatherLocalData();
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -108,9 +105,14 @@ export function flushSync(): void {
   }
 }
 
+// --- Pull (only when localStorage is empty — restores from cloud backup) ---
+
 export async function pullProgress(): Promise<boolean> {
+  // If we already have local progress, don't overwrite — localStorage is the source of truth
+  if (hasLocalProgress()) return false;
+
   const supabase = createClient();
-  const deviceId = getOrCreateDeviceId();
+  const deviceId = getDeviceId();
 
   const { data: row, error } = await supabase
     .from('user_progress')
@@ -120,18 +122,9 @@ export async function pullProgress(): Promise<boolean> {
 
   if (error || !row) return false;
 
-  // Only apply cloud data if it's newer than local
-  const localUpdated = getLocalUpdatedAt();
-  const cloudUpdated = row.updated_at as string;
-
-  if (localUpdated && new Date(localUpdated) > new Date(cloudUpdated)) {
-    // Local is newer — push local to cloud instead
-    await pushProgress();
-    return false;
-  }
-
   const cloud = row.data as Record<string, unknown>;
+  if (!cloud || Object.keys(cloud).length === 0) return false;
+
   applyCloudData(cloud);
-  localStorage.setItem(LOCAL_UPDATED_KEY, cloudUpdated);
   return true;
 }
