@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Play, Send, Eye, EyeOff, Lightbulb, Code2, PanelLeftClose, PanelLeftOpen, Database } from 'lucide-react';
+import { Play, Send, Eye, EyeOff, Lightbulb, Code2, PanelLeftClose, PanelLeftOpen, Database, ChevronRight, ChevronDown, Table2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import { Button, Badge, Spinner } from '../ui';
 import { useUnifiedQuestions } from '../../hooks/useUnifiedQuestions';
-import { useCodeRuntime, type SQLResult } from '../../hooks/useCodeRuntime';
+import { useCodeRuntime, type SQLResult, type TableSchema } from '../../hooks/useCodeRuntime';
 import { useAppContext } from '../../context/AppContext';
 import { generateFeedback, getLastUsedModel } from '../../services/aiService';
 import { getTopicsForSubject } from '../../data/topics';
@@ -31,8 +31,9 @@ export default function DeepMode() {
   const [sqlResult, setSqlResult] = useState<SQLResult | null>(null);
   const [pythonOutput, setPythonOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
-  const [showSchema, setShowSchema] = useState(false);
-  const [schemaResult, setSchemaResult] = useState<SQLResult | null>(null);
+  const [showSchema, setShowSchema] = useState(true); // Open by default for SQL
+  const [detailedSchema, setDetailedSchema] = useState<TableSchema[]>([]);
+  const [expandedTable, setExpandedTable] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackModel, setFeedbackModel] = useState<string | null>(null);
@@ -86,6 +87,13 @@ export default function DeepMode() {
     if (current) runtime.initFor(current.subject);
   }, [current?.subject]);
 
+  // Auto-load schema when SQL runtime becomes ready
+  useEffect(() => {
+    if (runtime.ready && current?.subject !== 'python' && detailedSchema.length === 0) {
+      runtime.getDetailedSchema().then(setDetailedSchema);
+    }
+  }, [runtime.ready, current?.subject]);
+
   // Reset editor when question changes
   useEffect(() => {
     if (!current) return;
@@ -129,12 +137,9 @@ export default function DeepMode() {
     setIsRunning(false);
   }, [current, code, runtime]);
 
-  const loadSchema = useCallback(async () => {
-    if (showSchema && schemaResult) { setShowSchema(false); return; }
-    const result = await runtime.getSchema();
-    setSchemaResult(result);
-    setShowSchema(true);
-  }, [runtime, showSchema, schemaResult]);
+  const toggleSchema = useCallback(() => {
+    setShowSchema(prev => !prev);
+  }, []);
 
   const checkAnswer = useCallback(async () => {
     if (!current) return;
@@ -222,6 +227,56 @@ export default function DeepMode() {
               <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{current.question}</p>
             </div>
 
+            {/* Schema Browser (between question and editor — Meta interview style) */}
+            {showSchema && lang === 'sql' && detailedSchema.length > 0 && (
+              <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-indigo-900/10 shrink-0">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                    <Table2 size={12} /> Database Schema ({detailedSchema.length} tables) — click a table to explore
+                  </p>
+                  <button
+                    onClick={() => setShowSchema(false)}
+                    className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    Hide
+                  </button>
+                </div>
+                <div className="space-y-0.5 max-h-44 overflow-y-auto">
+                  {detailedSchema.map(table => (
+                    <div key={table.name}>
+                      <button
+                        onClick={() => setExpandedTable(expandedTable === table.name ? null : table.name)}
+                        className="w-full flex items-center gap-1 px-2 py-1 text-xs font-mono rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300"
+                      >
+                        {expandedTable === table.name ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                        <span className="font-bold">{table.name}</span>
+                        <span className="text-gray-400 ml-1">({table.columns.length} cols)</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCode(`SELECT *\nFROM ${table.name}\nLIMIT 10;\n`);
+                          }}
+                          className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-indigo-200 dark:bg-indigo-800 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-300 dark:hover:bg-indigo-700"
+                        >
+                          SELECT *
+                        </button>
+                      </button>
+                      {expandedTable === table.name && (
+                        <div className="ml-6 pl-2 border-l-2 border-indigo-200 dark:border-indigo-800 mb-1">
+                          {table.columns.map(col => (
+                            <div key={col.name} className="flex items-center gap-2 py-0.5 text-[11px] font-mono text-gray-600 dark:text-gray-400">
+                              <span className="text-gray-800 dark:text-gray-200">{col.name}</span>
+                              <span className="text-gray-400 dark:text-gray-500 text-[10px] uppercase">{col.type || 'TEXT'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Editor */}
             <div className="flex-1 min-h-[200px]">
               {runtime.loading ? (
@@ -250,8 +305,8 @@ export default function DeepMode() {
                 Check Answer
               </Button>
               {lang === 'sql' && (
-                <Button variant="ghost" size="sm" onClick={loadSchema} disabled={!runtime.ready} icon={<Database size={14} />}>
-                  {showSchema ? 'Hide Schema' : 'Schema'}
+                <Button variant="ghost" size="sm" onClick={toggleSchema} disabled={!runtime.ready} icon={<Database size={14} />}>
+                  {showSchema ? 'Hide Schema' : 'Show Schema'}
                 </Button>
               )}
               <Button variant="ghost" size="sm" onClick={() => setShowAnswer(!showAnswer)} icon={showAnswer ? <EyeOff size={14} /> : <Eye size={14} />}>
@@ -278,24 +333,6 @@ export default function DeepMode() {
                       <Lightbulb size={12} className="inline mr-1" />Hint {i + 1}: {hint}
                     </p>
                   ))}
-                </div>
-              )}
-
-              {/* Schema */}
-              {showSchema && schemaResult && (
-                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-indigo-900/10">
-                  <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-2">Available Tables ({schemaResult.rowCount})</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {schemaResult.rows.map((r, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCode(prev => prev.trimEnd() + (prev.trim().endsWith('--') || prev.trim() === '-- Write your SQL query here' ? ` SELECT * FROM ${r[0]} LIMIT 10;\n` : `\n-- SELECT * FROM ${r[0]} LIMIT 10;\n`))}
-                        className="px-2 py-1 text-xs font-mono bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 rounded text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
-                      >
-                        {r[0]}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               )}
 

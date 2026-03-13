@@ -10,10 +10,18 @@ interface Props {
   onSelect: (uid: string) => void;
 }
 
+const SOURCE_SHORT: Record<string, string> = {
+  sqlBasics: 'Basics',
+  sqlAdvanced: 'Adv',
+  pythonBasics: 'Basics',
+  pythonAdvanced: 'Adv',
+  metaOfficial: 'Meta',
+};
+
 export default function DeepSidebar({ questions, currentUid, onSelect }: Props) {
   const { progress } = useAppContext();
 
-  // Group questions by topic
+  // Group questions by topic, sort numerically, detect duplicate sourceIds
   const grouped = useMemo(() => {
     const map = new Map<string, UnifiedQuestion[]>();
     for (const q of questions) {
@@ -21,8 +29,26 @@ export default function DeepSidebar({ questions, currentUid, onSelect }: Props) 
       if (!map.has(t)) map.set(t, []);
       map.get(t)!.push(q);
     }
-    return Array.from(map.entries());
+    // Sort each group by sourceId ascending
+    for (const [, qs] of map) {
+      qs.sort((a, b) => a.sourceId - b.sourceId);
+    }
+    // Sort topic groups alphabetically
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [questions]);
+
+  // Build set of sourceIds that appear more than once within their topic group
+  const needsSourceLabel = useMemo(() => {
+    const dupes = new Set<string>();
+    for (const [, qs] of grouped) {
+      const seen = new Map<number, number>();
+      for (const q of qs) seen.set(q.sourceId, (seen.get(q.sourceId) || 0) + 1);
+      for (const q of qs) {
+        if ((seen.get(q.sourceId) || 0) > 1) dupes.add(q.uid);
+      }
+    }
+    return dupes;
+  }, [grouped]);
 
   const isCompleted = (q: UnifiedQuestion): boolean => {
     const cat = progress[q.progressKey] ?? [];
@@ -55,7 +81,14 @@ export default function DeepSidebar({ questions, currentUid, onSelect }: Props) 
                     ? <CheckCircle size={14} className="text-green-500 shrink-0" />
                     : <Circle size={14} className="text-gray-300 dark:text-gray-600 shrink-0" />
                   }
-                  <span className="truncate flex-1">Q{q.sourceId}</span>
+                  <span className="truncate flex-1">
+                    Q{q.sourceId}
+                    {needsSourceLabel.has(q.uid) && (
+                      <span className="text-gray-400 dark:text-gray-500 ml-1">
+                        · {SOURCE_SHORT[q.source] || q.source}
+                      </span>
+                    )}
+                  </span>
                   <Badge variant={q.difficulty === 'Easy' ? 'success' : q.difficulty === 'Medium' ? 'warning' : 'danger'} className="text-[10px] px-1.5 py-0">
                     {q.difficulty[0]}
                   </Badge>

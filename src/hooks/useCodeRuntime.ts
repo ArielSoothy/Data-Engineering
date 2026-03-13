@@ -10,6 +10,11 @@ export interface SQLResult {
   error?: string;
 }
 
+export interface TableSchema {
+  name: string;
+  columns: { name: string; type: string }[];
+}
+
 interface CodeRuntime {
   ready: boolean;
   loading: boolean;
@@ -17,6 +22,7 @@ interface CodeRuntime {
   runSQL: (code: string) => Promise<SQLResult>;
   runPython: (code: string) => Promise<string>;
   getSchema: () => Promise<SQLResult>;
+  getDetailedSchema: () => Promise<TableSchema[]>;
   initFor: (subject: 'sql' | 'python') => void;
 }
 
@@ -89,6 +95,30 @@ export function useCodeRuntime(): CodeRuntime {
     return runSQL("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY name");
   }, [runSQL]);
 
+  const getDetailedSchema = useCallback(async (): Promise<TableSchema[]> => {
+    if (!sqlRef.current) return [];
+    try {
+      const tables = sqlRef.current.exec(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+      );
+      if (tables.length === 0) return [];
+      const result: TableSchema[] = [];
+      for (const row of tables[0].values) {
+        const tableName = row[0] as string;
+        const cols = sqlRef.current!.exec(`PRAGMA table_info("${tableName}")`);
+        if (cols.length > 0) {
+          result.push({
+            name: tableName,
+            columns: cols[0].values.map(c => ({ name: c[1] as string, type: c[2] as string })),
+          });
+        }
+      }
+      return result;
+    } catch {
+      return [];
+    }
+  }, []);
+
   const runPython = useCallback(async (code: string): Promise<string> => {
     if (!pyodideRef.current) return 'Python runtime not initialized';
     try {
@@ -102,5 +132,5 @@ export function useCodeRuntime(): CodeRuntime {
     }
   }, []);
 
-  return { ready, loading, error, runSQL, runPython, getSchema, initFor };
+  return { ready, loading, error, runSQL, runPython, getSchema, getDetailedSchema, initFor };
 }
