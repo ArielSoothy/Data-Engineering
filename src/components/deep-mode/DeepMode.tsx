@@ -36,17 +36,23 @@ export default function DeepMode() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [hintsShown, setHintsShown] = useState(0);
 
-  // Filter questions (only code-suitable: those with pseudoCode or longer answers)
+  // Filter: only coding questions (exclude conceptual "What is...", "Explain..." questions)
+  const CONCEPTUAL_PATTERN = /^(What is|What are|What's the|Explain|Describe|How does|How do|Name |List |Define|Why )/i;
+  const codingQuestions = useMemo(
+    () => allQuestions.filter(q => q.source !== 'quickDrill' && !CONCEPTUAL_PATTERN.test(q.question)),
+    [allQuestions],
+  );
+
   const filtered = useMemo(() => {
-    let result = allQuestions.filter(q => q.source !== 'quickDrill');
+    let result = codingQuestions;
     if (subject !== 'all') result = result.filter(q => q.subject === subject);
     if (topic !== 'all') result = result.filter(q => (q.topic || 'Other') === topic);
     return result;
-  }, [allQuestions, subject, topic]);
+  }, [codingQuestions, subject, topic]);
 
-  // Available topics
+  // Available topics (from coding questions only)
   const availableTopics = useMemo(() => {
-    let qs = allQuestions.filter(q => q.source !== 'quickDrill');
+    let qs = codingQuestions;
     if (subject !== 'all') qs = qs.filter(q => q.subject === subject);
     const map = new Map<string, number>();
     for (const q of qs) map.set(q.topic || 'Other', (map.get(q.topic || 'Other') || 0) + 1);
@@ -59,7 +65,7 @@ export default function DeepMode() {
     }
     for (const [name, count] of map) sorted.push({ name, count });
     return sorted;
-  }, [allQuestions, subject]);
+  }, [codingQuestions, subject]);
 
   // Current question
   const [currentUid, setCurrentUid] = useState<string | null>(null);
