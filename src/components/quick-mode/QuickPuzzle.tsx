@@ -48,6 +48,12 @@ function saveProgress(p: ProgressMap) {
   } catch { /* ignore */ }
 }
 
+// --- Session persistence ---
+const PZ_SESSION_KEY = 'quick_puzzle_session';
+interface PZSession { index: number; stats: { correct: number; wrong: number; seen: number } }
+function savePZSession(s: PZSession) { try { sessionStorage.setItem(PZ_SESSION_KEY, JSON.stringify(s)); } catch {} }
+function clearPZSession() { sessionStorage.removeItem(PZ_SESSION_KEY); }
+
 // --- Component ---
 
 interface Props { questions: UnifiedQuestion[] }
@@ -130,11 +136,11 @@ export default function QuickPuzzle({ questions }: Props) {
       updateProgress(deck[index].progressKey, deck[index].progressId, true);
     }
 
-    setStats(s => ({
-      seen: s.seen + 1,
-      correct: s.correct + (isCorrect ? 1 : 0),
-      wrong: s.wrong + (isCorrect ? 0 : 1),
-    }));
+    setStats(s => {
+      const next = { seen: s.seen + 1, correct: s.correct + (isCorrect ? 1 : 0), wrong: s.wrong + (isCorrect ? 0 : 1) };
+      savePZSession({ index, stats: next });
+      return next;
+    });
   };
 
   const nextCard = () => {
@@ -142,7 +148,9 @@ export default function QuickPuzzle({ questions }: Props) {
     if (next < deck.length) {
       setIndex(next);
       setupCard(deck[next]);
+      savePZSession({ index: next, stats });
     } else {
+      clearPZSession();
       setStarted(false);
     }
   };

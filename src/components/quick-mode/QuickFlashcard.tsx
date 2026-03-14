@@ -68,6 +68,14 @@ function getFsrsKey(q: UnifiedQuestion): string {
   return q.source === 'quickDrill' ? FSRS_KEY_DRILL : FSRS_KEY_HUB;
 }
 
+// --- Session persistence (survives refresh, not tab close) ---
+const FC_SESSION_KEY = 'quick_flashcard_session';
+interface FCSession { currentIndex: number; stats: { correct: number; wrong: number; seen: number }; deckLen: number }
+
+function saveFCSession(s: FCSession) { try { sessionStorage.setItem(FC_SESSION_KEY, JSON.stringify(s)); } catch {} }
+function loadFCSession(): FCSession | null { try { const r = sessionStorage.getItem(FC_SESSION_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
+function clearFCSession() { sessionStorage.removeItem(FC_SESSION_KEY); }
+
 // --- Component ---
 
 interface Props { questions: UnifiedQuestion[] }
@@ -76,9 +84,9 @@ export default function QuickFlashcard({ questions }: Props) {
   const { updateProgress } = useAppContext();
   const [drillFsrs, setDrillFsrs] = useState<FSRSStateMap>(() => loadFsrs(FSRS_KEY_DRILL));
   const [hubFsrs, setHubFsrs] = useState<FSRSStateMap>(() => loadFsrs(FSRS_KEY_HUB));
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => { const s = loadFCSession(); return s ? s.currentIndex : 0; });
   const [showAnswer, setShowAnswer] = useState(false);
-  const [stats, setStats] = useState({ correct: 0, wrong: 0, seen: 0 });
+  const [stats, setStats] = useState(() => { const s = loadFCSession(); return s ? s.stats : { correct: 0, wrong: 0, seen: 0 }; });
   const [done, setDone] = useState(false);
 
   // Build deck: due → new → scheduled
@@ -126,8 +134,14 @@ export default function QuickFlashcard({ questions }: Props) {
 
   const advance = useCallback(() => {
     setShowAnswer(false);
-    if (currentIndex + 1 < deck.length) setCurrentIndex(i => i + 1);
-    else setDone(true);
+    if (currentIndex + 1 < deck.length) {
+      const nextIdx = currentIndex + 1;
+      setCurrentIndex(nextIdx);
+      setStats(s => { saveFCSession({ currentIndex: nextIdx, stats: s, deckLen: deck.length }); return s; });
+    } else {
+      clearFCSession();
+      setDone(true);
+    }
   }, [currentIndex, deck.length]);
 
   const markCard = useCallback((grade: Grade) => {
@@ -146,7 +160,11 @@ export default function QuickFlashcard({ questions }: Props) {
     pushProgressDebounced();
 
     const knew = grade >= Rating.Good;
-    setStats(s => ({ seen: s.seen + 1, correct: s.correct + (knew ? 1 : 0), wrong: s.wrong + (knew ? 0 : 1) }));
+    setStats(s => {
+      const next = { seen: s.seen + 1, correct: s.correct + (knew ? 1 : 0), wrong: s.wrong + (knew ? 0 : 1) };
+      saveFCSession({ currentIndex, stats: next, deckLen: deck.length });
+      return next;
+    });
     // Update AppContext progress so Dashboard reflects it
     if (knew) {
       updateProgress(current.progressKey, current.progressId, true);
@@ -155,6 +173,7 @@ export default function QuickFlashcard({ questions }: Props) {
   }, [current, drillFsrs, hubFsrs, advance, updateProgress]);
 
   const reset = () => {
+    clearFCSession();
     setCurrentIndex(0);
     setShowAnswer(false);
     setStats({ correct: 0, wrong: 0, seen: 0 });

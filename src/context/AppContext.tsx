@@ -101,14 +101,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       metaOfficial: []
     };
     const savedProgress = localStorage.getItem('msInterviewProgress');
-    if (savedProgress) {
-      const parsed = JSON.parse(savedProgress);
-      const completed = Object.values(parsed).flat().filter((e: any) => e?.completed).length;
-      console.log('[AppContext] init from localStorage:', completed, 'completed entries');
-      return { ...defaults, ...parsed };
-    }
-    console.log('[AppContext] init with defaults (no saved progress)');
-    return defaults;
+    return savedProgress ? { ...defaults, ...JSON.parse(savedProgress) } : defaults;
   });
   
   const [currentSession, setCurrentSession] = useState<TimerSession | null>(null);
@@ -143,11 +136,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       const next = { ...prev, [category]: categoryQuestions };
       // Write synchronously so data survives immediate refresh
-      try {
-        localStorage.setItem('msInterviewProgress', JSON.stringify(next));
-        const total = Object.values(next).flat().filter((e: any) => e?.completed).length;
-        console.log(`[AppContext] updateProgress: ${category}:${questionId} → ${total} total completed (sync write)`);
-      } catch { /* full */ }
+      try { localStorage.setItem('msInterviewProgress', JSON.stringify(next)); } catch { /* full */ }
       return next;
     });
   }, []);
@@ -209,20 +198,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (merged) {
         // Reload state from localStorage (which pullProgress just merged)
         const saved = localStorage.getItem('msInterviewProgress');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          const completed = Object.values(parsed).flat().filter((e: any) => e?.completed).length;
-          console.log('[AppContext] pullProgress merged → localStorage has', completed, 'completed entries');
-          setProgress(prev => ({ ...prev, ...parsed }));
-        }
+        if (saved) setProgress(prev => ({ ...prev, ...JSON.parse(saved) }));
         const savedPrefs = localStorage.getItem('msInterviewPreferences');
         if (savedPrefs) setPreferences(prev => ({ ...prev, ...JSON.parse(savedPrefs) }));
         // Push the merged result back so cloud has the union too
         pushProgress();
-      } else {
-        console.log('[AppContext] pullProgress: no cloud data or offline');
       }
-    }).catch(() => { console.log('[AppContext] pullProgress: offline/error'); });
+    }).catch(() => { /* offline — localStorage works fine */ });
   }, []);
 
   // Flush pending sync when user leaves the page
