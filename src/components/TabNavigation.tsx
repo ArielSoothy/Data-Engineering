@@ -38,10 +38,10 @@ const TabNavigation = () => {
     { id: 'quick', label: 'Quick Mode', icon: <Zap size={20} />, path: '/quick' },
     { id: 'deep', label: 'Deep Mode', icon: <Code2 size={20} />, path: '/deep' },
     { id: 'practice', label: 'Practice', icon: <Target size={20} />, path: '/practice' },
+    { id: 'my-projects', label: 'My Projects', icon: <Briefcase size={20} />, path: '/my-projects' },
     { id: 'decomposition', label: 'Product Sense', icon: <BarChart size={20} />, path: '/decomposition' },
     { id: 'tech-stack', label: 'Meta Tech Stack', icon: <Cloud size={20} />, path: '/tech-stack' },
     { id: 'mock-interview', label: 'Mock Interview', icon: <Video size={20} />, path: '/mock-interview' },
-    { id: 'my-projects', label: 'My Projects', icon: <Briefcase size={20} />, path: '/my-projects' },
     { id: 'glossary', label: 'Glossary', icon: <Book size={20} />, path: '/glossary' },
   ];
 

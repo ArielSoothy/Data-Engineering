@@ -2,15 +2,15 @@
   {
     "id": 1001,
     "cat": "Python",
-    "topic": "Syntax Rules",
+    "topic": "Syntax",
     "q": "What MUST come after def, for, if, else, while?",
-    "a": "A colon :\n\ndef my_func():    # colon\nfor x in items:   # colon\nif x > 5:         # colon\nelse:             # colon",
+    "a": "A colon :\n\ndef my_func():    # colon\nfor x in items:   # colon\nif x > 5:         # colon",
     "difficulty": 1
   },
   {
     "id": 1002,
     "cat": "Python",
-    "topic": "Syntax Rules",
+    "topic": "Syntax",
     "q": "What's wrong?\ncount = {}\nfor x in items:\n    count.append(x)",
     "a": "Dicts don't have .append()\n\n.append() → lists\n.add() → sets\nd[key] = value → dicts",
     "difficulty": 1
@@ -18,39 +18,39 @@
   {
     "id": 1003,
     "cat": "Python",
-    "topic": "Syntax Rules",
+    "topic": "Syntax",
     "q": "What's the difference between += and =+ ?",
-    "a": "+= means 'add to existing'\ncount += 1  →  count = count + 1\n\n=+ means 'assign positive value'\ncount =+ 1  →  count = 1  (WRONG!)",
+    "a": "+= adds to existing: count += 1\n=+ assigns positive: count =+ 1 → count = 1 (WRONG!)",
     "difficulty": 1
   },
   {
     "id": 1004,
     "cat": "Python",
-    "topic": "Syntax Rules",
-    "q": "Why NEVER name a variable:\ndict, list, set, str, int?",
-    "a": "They shadow Python built-ins.\n\ndict = {}  # breaks dict() function\nlist = []  # breaks list() function\n\nUse: counts, items, values, result",
+    "topic": "Syntax",
+    "q": "Why NEVER name a variable dict, list, set, str, int?",
+    "a": "They shadow built-ins.\ndict = {} breaks dict() forever.\n\nUse: counts, items, values, result",
     "difficulty": 1
   },
   {
     "id": 1005,
     "cat": "Python",
-    "topic": "Syntax Rules",
+    "topic": "Syntax",
     "q": "What's wrong?\ndef process(data):\n    data = {}\n    for x in data:",
-    "a": "You overwrote your input!\n'data' was the parameter, then you\nreplaced it with empty dict.\n\nFix: use a DIFFERENT name:\ncounts = {}\nfor x in data:",
+    "a": "You overwrote your input parameter!\nFix: use a different name:\ncounts = {}\nfor x in data:",
     "difficulty": 1
   },
   {
     "id": 1006,
     "cat": "Python",
-    "topic": "Syntax Rules",
+    "topic": "Syntax",
     "q": "What does a function return if you forget return?",
-    "a": "None\n\ndef add(a, b):\n    result = a + b\n    # forgot return!\n\nx = add(1, 2)\nprint(x)  # None",
+    "a": "None.\n\ndef add(a, b):\n    result = a + b  # forgot return!\nx = add(1, 2)  # x is None",
     "difficulty": 1
   },
   {
     "id": 1007,
     "cat": "Python",
-    "topic": "Syntax Rules",
+    "topic": "Syntax",
     "q": "How many spaces for indentation?",
     "a": "4 spaces (convention)\n\ndef func():\n    for x in items:     # 4\n        if x > 0:       # 8\n            print(x)    # 12",
     "difficulty": 1
@@ -58,23 +58,23 @@
   {
     "id": 1008,
     "cat": "Python",
-    "topic": "Syntax Rules",
-    "q": "3 data structures:\nWhich uses [], {}, set()?",
-    "a": "list = []       → ordered, duplicates OK\ndict = {}       → key:value pairs\nset = set()     → unordered, NO dupes\n\nNote: {} alone = dict, NOT set",
+    "topic": "Data Structures",
+    "q": "Which data structure uses [], {}, set()?",
+    "a": "list = [] → ordered, dupes OK\ndict = {} → key:value pairs\nset = set() → unique, O(1) lookup\n\nNote: {} alone = dict, NOT set",
     "difficulty": 1
   },
   {
     "id": 1009,
     "cat": "Python",
-    "topic": "Syntax Rules",
-    "q": "3 ways to add items:\nlists, dicts, sets",
+    "topic": "Data Structures",
+    "q": "3 ways to add items: lists, dicts, sets",
     "a": "my_list.append(item)\nmy_dict[key] = value\nmy_set.add(item)\n\nNEVER mix these up!",
     "difficulty": 1
   },
   {
     "id": 1,
     "cat": "Python",
-    "topic": "Loops",
+    "topic": "Loops/Control Flow",
     "q": "Write a for loop that prints each item in 'names'",
     "a": "for name in names:\n    print(name)",
     "difficulty": 1
@@ -82,7 +82,7 @@
   {
     "id": 2,
     "cat": "Python",
-    "topic": "Loops",
+    "topic": "Loops/Control Flow",
     "q": "Loop through numbers 0 to 9",
     "a": "for i in range(10):\n    print(i)",
     "difficulty": 1
@@ -90,7 +90,7 @@
   {
     "id": 3,
     "cat": "Python",
-    "topic": "Loops",
+    "topic": "Loops/Control Flow",
     "q": "Loop through a list with both index and value",
     "a": "for i, val in enumerate(my_list):\n    print(i, val)",
     "difficulty": 2
@@ -98,7 +98,7 @@
   {
     "id": 1010,
     "cat": "Python",
-    "topic": "Loops",
+    "topic": "Loops/Control Flow",
     "q": "What's the skeleton for 80% of problems?",
     "a": "def solve(items):\n    result = []  # or {}\n    for x in items:\n        if condition:\n            result.append(x)\n    return result",
     "difficulty": 1
@@ -106,7 +106,7 @@
   {
     "id": 1027,
     "cat": "Python",
-    "topic": "Loops",
+    "topic": "Loops/Control Flow",
     "q": "Loop through a string character by character",
     "a": "for char in my_string:\n    print(char)\n\n# 'hello' → h, e, l, l, o",
     "difficulty": 1
@@ -114,7 +114,7 @@
   {
     "id": 1028,
     "cat": "Python",
-    "topic": "Loops",
+    "topic": "Loops/Control Flow",
     "q": "while loop: count down from 5",
     "a": "n = 5\nwhile n > 0:\n    print(n)\n    n -= 1",
     "difficulty": 1
@@ -132,13 +132,13 @@
     "cat": "Python",
     "topic": "Functions",
     "q": "Function with default parameter",
-    "a": "def greet(name, greeting='Hello'):\n    return f'{greeting}, {name}!'\n\ngreet('Ariel')        → 'Hello, Ariel!'\ngreet('Ariel', 'Hi')  → 'Hi, Ariel!'",
+    "a": "def greet(name, greeting='Hello'):\n    return f'{greeting}, {name}!'\n\ngreet('Ariel') → 'Hello, Ariel!'",
     "difficulty": 1
   },
   {
     "id": 5,
     "cat": "Python",
-    "topic": "Modulo",
+    "topic": "Loops/Control Flow",
     "q": "Check if a number is even",
     "a": "if num % 2 == 0:\n    # even",
     "difficulty": 1
@@ -146,7 +146,7 @@
   {
     "id": 6,
     "cat": "Python",
-    "topic": "Modulo",
+    "topic": "Loops/Control Flow",
     "q": "What does % (modulo) do?",
     "a": "Returns the remainder after division.\n7 % 2 = 1\n8 % 2 = 0\n10 % 3 = 1",
     "difficulty": 1
@@ -154,7 +154,7 @@
   {
     "id": 1011,
     "cat": "Python",
-    "topic": "Patterns",
+    "topic": "Lists/Comprehensions",
     "q": "Filter pattern: return only even numbers",
     "a": "def even_finder(numbers):\n    result = []\n    for num in numbers:\n        if num % 2 == 0:\n            result.append(num)\n    return result",
     "difficulty": 1
@@ -162,7 +162,7 @@
   {
     "id": 7,
     "cat": "Python",
-    "topic": "Dicts",
+    "topic": "Dicts/Counters",
     "q": "Create a dict and add a key-value pair",
     "a": "d = {}\nd['name'] = 'Ariel'",
     "difficulty": 1
@@ -170,7 +170,7 @@
   {
     "id": 8,
     "cat": "Python",
-    "topic": "Dicts",
+    "topic": "Dicts/Counters",
     "q": "Loop through dict keys and values",
     "a": "for key, val in d.items():\n    print(key, val)",
     "difficulty": 1
@@ -178,15 +178,15 @@
   {
     "id": 9,
     "cat": "Python",
-    "topic": "Dicts",
-    "q": "Frequency counter pattern:\nCount occurrences of each word in a list",
-    "a": "counts = {}\nfor word in words:\n    if word not in counts:\n        counts[word] = 1\n    else:\n        counts[word] += 1",
+    "topic": "Dicts/Counters",
+    "q": "Frequency counter: count occurrences of each word",
+    "a": "counts = {}\nfor word in words:\n    counts[word] = counts.get(word, 0) + 1",
     "difficulty": 2
   },
   {
     "id": 10,
     "cat": "Python",
-    "topic": "Dicts",
+    "topic": "Dicts/Counters",
     "q": "Shorter frequency counter using .get()",
     "a": "counts = {}\nfor word in words:\n    counts[word] = counts.get(word, 0) + 1",
     "difficulty": 2
@@ -194,7 +194,7 @@
   {
     "id": 11,
     "cat": "Python",
-    "topic": "Dicts",
+    "topic": "Dicts/Counters",
     "q": "Check if a key exists in a dict",
     "a": "if 'name' in d:\n    print(d['name'])",
     "difficulty": 1
@@ -202,23 +202,23 @@
   {
     "id": 1012,
     "cat": "Python",
-    "topic": "Dicts",
+    "topic": "Dicts/Counters",
     "q": "What does .items() return?",
-    "a": "Key-value pairs as tuples.\n\nd = {'a': 1, 'b': 2}\nfor key, val in d.items():\n    # key='a', val=1\n    # key='b', val=2\n\n.keys() → just keys\n.values() → just values\n.items() → both",
+    "a": "Key-value pairs as tuples.\n.keys() → just keys\n.values() → just values\n.items() → both as (key, val)",
     "difficulty": 1
   },
   {
     "id": 1013,
     "cat": "Python",
-    "topic": "Dicts",
+    "topic": "Dicts/Counters",
     "q": "What does .get(key, default) do?",
-    "a": "Returns value if key exists,\notherwise returns default.\n\nd = {'a': 1}\nd.get('a', 0)  → 1\nd.get('b', 0)  → 0\nd['b']         → KeyError!",
+    "a": "Returns value if key exists, else default.\nd.get('a', 0) → value or 0\nd['missing'] → KeyError!",
     "difficulty": 1
   },
   {
     "id": 1030,
     "cat": "Python",
-    "topic": "Dicts",
+    "topic": "Dicts/Counters",
     "q": "Delete a key from a dict",
     "a": "del d['key']\n\n# Safe delete (no error if missing):\nd.pop('key', None)",
     "difficulty": 1
@@ -226,47 +226,47 @@
   {
     "id": 1014,
     "cat": "Python",
-    "topic": "Patterns",
-    "q": "Find-max pattern:\nFind item with highest count in a dict",
-    "a": "best = None\nbest_count = 0\nfor item, count in d.items():\n    if count > best_count:\n        best_count = count\n        best = item\nreturn best",
+    "topic": "Dicts/Counters",
+    "q": "Find-max pattern: item with highest count",
+    "a": "best = None\nbest_count = 0\nfor item, count in d.items():\n    if count > best_count:\n        best_count = count\n        best = item",
     "difficulty": 2
   },
   {
     "id": 1015,
     "cat": "Python",
-    "topic": "Patterns",
-    "q": "Most common element:\nFrequency counter + find-max combined",
-    "a": "def most_common(numbers):\n    count = {}\n    for num in numbers:\n        if num not in count:\n            count[num] = 1\n        else:\n            count[num] += 1\n    best = None\n    best_count = 0\n    for num, times in count.items():\n        if times > best_count:\n            best_count = times\n            best = num\n    return best",
+    "topic": "Dicts/Counters",
+    "q": "Most common element: freq counter + find-max",
+    "a": "counts = {}\nfor x in items:\n    counts[x] = counts.get(x, 0) + 1\nbest = max(counts, key=counts.get)",
     "difficulty": 2
   },
   {
     "id": 29,
     "cat": "Python",
-    "topic": "Patterns",
-    "q": "Group items by a key\n(e.g. group people by city)",
-    "a": "groups = {}\nfor person in people:\n    city = person['city']\n    if city not in groups:\n        groups[city] = []\n    groups[city].append(person)",
+    "topic": "Dicts/Counters",
+    "q": "Group items by a key (e.g. people by city)",
+    "a": "groups = {}\nfor p in people:\n    city = p['city']\n    if city not in groups:\n        groups[city] = []\n    groups[city].append(p)",
     "difficulty": 2
   },
   {
     "id": 28,
     "cat": "Python",
-    "topic": "Patterns",
+    "topic": "Data Structures",
     "q": "Two-sum: find pair that sums to target",
-    "a": "def two_sum(nums, target):\n    seen = {}\n    for num in nums:\n        diff = target - num\n        if diff in seen:\n            return [seen[diff], num]\n        seen[num] = num",
+    "a": "seen = {}\nfor num in nums:\n    diff = target - num\n    if diff in seen:\n        return [diff, num]\n    seen[num] = num",
     "difficulty": 3
   },
   {
     "id": 1024,
     "cat": "Python",
-    "topic": "Patterns",
+    "topic": "Syntax",
     "q": "Think out loud order for Meta interview",
-    "a": "1. Clarify: 'Input is... output is...'\n2. Edge cases: 'What if empty?'\n3. Approach: 'I'll use a dict to count'\n4. Code it\n5. Test with example\n6. Optimize if asked",
+    "a": "1. Clarify inputs/outputs\n2. Edge cases (empty? dupes?)\n3. State approach\n4. Code it\n5. Test with example\n6. Optimize if asked",
     "difficulty": 1
   },
   {
     "id": 12,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "Add an item to end of a list",
     "a": "my_list.append(item)",
     "difficulty": 1
@@ -274,7 +274,7 @@
   {
     "id": 13,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "Get a sublist from index 2 to 5",
     "a": "my_list[2:5]\n# Returns items at index 2, 3, 4\n# End index is exclusive",
     "difficulty": 1
@@ -282,7 +282,7 @@
   {
     "id": 1016,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "Get the last element of a list",
     "a": "my_list[-1]\n\n# Negative indexing:\n# -1 = last, -2 = second to last",
     "difficulty": 1
@@ -290,7 +290,7 @@
   {
     "id": 1017,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "Get the length of a list",
     "a": "len(my_list)\n\n# Works on strings too:\nlen('hello')  → 5",
     "difficulty": 1
@@ -298,15 +298,15 @@
   {
     "id": 1018,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "Check if a list is empty",
-    "a": "if not my_list:\n    print('empty')\n\n# or:\nif len(my_list) == 0:\n    print('empty')",
+    "a": "if not my_list:\n    print('empty')\n\n# or: if len(my_list) == 0:",
     "difficulty": 1
   },
   {
     "id": 14,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "List comprehension: get even numbers",
     "a": "[x for x in numbers if x % 2 == 0]",
     "difficulty": 2
@@ -314,7 +314,7 @@
   {
     "id": 15,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "List comprehension: square each number",
     "a": "[x**2 for x in numbers]",
     "difficulty": 2
@@ -322,7 +322,7 @@
   {
     "id": 16,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "Remove duplicates (preserve order)",
     "a": "seen = set()\nresult = []\nfor x in items:\n    if x not in seen:\n        seen.add(x)\n        result.append(x)",
     "difficulty": 2
@@ -330,23 +330,23 @@
   {
     "id": 1031,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "Reverse a list",
-    "a": "# In place:\nmy_list.reverse()\n\n# New list:\nreversed_list = my_list[::-1]",
+    "a": "my_list.reverse()      # in place\nmy_list[::-1]          # new list",
     "difficulty": 1
   },
   {
     "id": 1032,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "Find min, max, sum of a list",
-    "a": "min(my_list)  → smallest\nmax(my_list)  → largest\nsum(my_list)  → total\n\n# Average:\nsum(my_list) / len(my_list)",
+    "a": "min(nums), max(nums), sum(nums)\nAverage: sum(nums) / len(nums)",
     "difficulty": 1
   },
   {
     "id": 1033,
     "cat": "Python",
-    "topic": "Lists",
+    "topic": "Lists/Comprehensions",
     "q": "Check if element exists in a list",
     "a": "if 'apple' in my_list:\n    print('found')\n\nif 'apple' not in my_list:\n    print('not found')",
     "difficulty": 1
@@ -372,7 +372,7 @@
     "cat": "Python",
     "topic": "Sets",
     "q": "Find common elements between two lists",
-    "a": "set_a = set(list_a)\nset_b = set(list_b)\ncommon = set_a & set_b\n# or: set_a.intersection(set_b)",
+    "a": "common = set(list_a) & set(list_b)\n# or: set(list_a).intersection(set(list_b))",
     "difficulty": 2
   },
   {
@@ -420,7 +420,7 @@
     "cat": "Python",
     "topic": "Strings",
     "q": "Check if string contains substring",
-    "a": "if 'hello' in my_string:\n    print('found')\n\nmy_string.startswith('he')\nmy_string.endswith('lo')",
+    "a": "if 'hello' in my_string: # found\n\nmy_string.startswith('he')  → True\nmy_string.endswith('lo')    → True",
     "difficulty": 1
   },
   {
@@ -428,7 +428,7 @@
     "cat": "Python",
     "topic": "Strings",
     "q": "Count character frequency in a string",
-    "a": "# Same frequency counter pattern!\ncount = {}\nfor char in my_string:\n    if char not in count:\n        count[char] = 1\n    else:\n        count[char] += 1",
+    "a": "count = {}\nfor char in s:\n    count[char] = count.get(char, 0) + 1",
     "difficulty": 2
   },
   {
@@ -452,13 +452,13 @@
     "cat": "Python",
     "topic": "Sorting",
     "q": "sort() vs sorted()",
-    "a": "# In place (modifies original):\nmy_list.sort()\n\n# New list (original unchanged):\nnew = sorted(my_list)\n\n# Reverse either:\nmy_list.sort(reverse=True)\nsorted(my_list, reverse=True)",
+    "a": ".sort() modifies in place.\nsorted() returns new list.\nBoth accept reverse=True.",
     "difficulty": 1
   },
   {
     "id": 26,
     "cat": "Python",
-    "topic": "Counter",
+    "topic": "Dicts/Counters",
     "q": "Count occurrences using Counter",
     "a": "from collections import Counter\ncounts = Counter(my_list)\n# Counter(['a','b','a']) → {'a':2,'b':1}",
     "difficulty": 2
@@ -466,7 +466,7 @@
   {
     "id": 27,
     "cat": "Python",
-    "topic": "Counter",
+    "topic": "Dicts/Counters",
     "q": "Get the 3 most common items",
     "a": "from collections import Counter\ncounts = Counter(items)\ntop3 = counts.most_common(3)",
     "difficulty": 2
@@ -474,15 +474,15 @@
   {
     "id": 1025,
     "cat": "Python",
-    "topic": "Types",
+    "topic": "Data Structures",
     "q": "Convert between types",
-    "a": "int('42')     → 42\nstr(42)       → '42'\nfloat('3.14') → 3.14\nlist('abc')   → ['a','b','c']\nset([1,2,2])  → {1, 2}",
+    "a": "int('42') → 42\nstr(42) → '42'\nfloat('3.14') → 3.14\nlist('abc') → ['a','b','c']\nset([1,2,2]) → {1,2}",
     "difficulty": 1
   },
   {
     "id": 30,
     "cat": "Python",
-    "topic": "Edge Cases",
+    "topic": "Syntax",
     "q": "What should you always ask before coding?",
     "a": "1. What if input is empty?\n2. What if there are duplicates?\n3. What if all values same?\n4. What about None/null?\n5. What about negative numbers?",
     "difficulty": 1
@@ -490,7 +490,7 @@
   {
     "id": 1023,
     "cat": "Python",
-    "topic": "Edge Cases",
+    "topic": "Syntax",
     "q": "Handle empty input at start of function",
     "a": "def solve(items):\n    if not items:\n        return []  # or 0, None, {}\n    # rest of logic...",
     "difficulty": 1
@@ -498,7 +498,7 @@
   {
     "id": 101,
     "cat": "SQL",
-    "topic": "Basics",
+    "topic": "SELECT/WHERE",
     "q": "Select all columns from 'users' table",
     "a": "SELECT *\nFROM users;",
     "difficulty": 1
@@ -506,7 +506,7 @@
   {
     "id": 102,
     "cat": "SQL",
-    "topic": "Basics",
+    "topic": "SELECT/WHERE",
     "q": "Select users where age > 25, ordered by name",
     "a": "SELECT *\nFROM users\nWHERE age > 25\nORDER BY name;",
     "difficulty": 1
@@ -514,15 +514,15 @@
   {
     "id": 201,
     "cat": "SQL",
-    "topic": "Basics",
+    "topic": "SELECT/WHERE",
     "q": "SQL clause order (must memorize)",
-    "a": "SELECT\nFROM\nJOIN\nWHERE\nGROUP BY\nHAVING\nORDER BY\nLIMIT\n\nMnemonic: S-F-J-W-G-H-O-L",
+    "a": "SELECT → FROM → JOIN → WHERE →\nGROUP BY → HAVING → ORDER BY → LIMIT\n\nMnemonic: S-F-J-W-G-H-O-L",
     "difficulty": 1
   },
   {
     "id": 202,
     "cat": "SQL",
-    "topic": "Basics",
+    "topic": "SELECT/WHERE",
     "q": "Select only unique cities from users",
     "a": "SELECT DISTINCT city\nFROM users;\n\n-- DISTINCT removes duplicate rows",
     "difficulty": 1
@@ -530,15 +530,15 @@
   {
     "id": 203,
     "cat": "SQL",
-    "topic": "Basics",
+    "topic": "SELECT/WHERE",
     "q": "Rename a column in the output",
-    "a": "SELECT name AS full_name,\n  salary * 12 AS annual_salary\nFROM employees;\n\n-- AS creates an alias",
+    "a": "SELECT name AS full_name,\n  salary * 12 AS annual_salary\nFROM employees;",
     "difficulty": 1
   },
   {
     "id": 103,
     "cat": "SQL",
-    "topic": "Aggregation",
+    "topic": "Aggregation/GROUP BY",
     "q": "Count users per city",
     "a": "SELECT city, COUNT(*) AS user_count\nFROM users\nGROUP BY city;",
     "difficulty": 1
@@ -546,7 +546,7 @@
   {
     "id": 104,
     "cat": "SQL",
-    "topic": "Aggregation",
+    "topic": "Aggregation/GROUP BY",
     "q": "Cities with more than 10 users",
     "a": "SELECT city, COUNT(*) AS user_count\nFROM users\nGROUP BY city\nHAVING COUNT(*) > 10;",
     "difficulty": 2
@@ -554,31 +554,31 @@
   {
     "id": 105,
     "cat": "SQL",
-    "topic": "Aggregation",
+    "topic": "Aggregation/GROUP BY",
     "q": "WHERE vs HAVING — difference?",
-    "a": "WHERE: filters rows BEFORE grouping\nHAVING: filters groups AFTER aggregation\n\nWHERE can't use aggregate functions\nHAVING can",
+    "a": "WHERE filters rows BEFORE grouping.\nHAVING filters groups AFTER aggregation.\nWHERE can't use aggregate functions.",
     "difficulty": 2
   },
   {
     "id": 204,
     "cat": "SQL",
-    "topic": "Aggregation",
+    "topic": "Aggregation/GROUP BY",
     "q": "All 5 aggregate functions",
-    "a": "COUNT(*) — number of rows\nSUM(col) — total\nAVG(col) — average\nMIN(col) — smallest\nMAX(col) — largest\n\nAll ignore NULLs except COUNT(*)",
+    "a": "COUNT(*), SUM(col), AVG(col),\nMIN(col), MAX(col)\n\nAll ignore NULLs except COUNT(*)",
     "difficulty": 1
   },
   {
     "id": 205,
     "cat": "SQL",
-    "topic": "Aggregation",
+    "topic": "Aggregation/GROUP BY",
     "q": "COUNT(*) vs COUNT(column)?",
-    "a": "COUNT(*) — counts ALL rows\nCOUNT(col) — counts non-NULL rows\n\n100 rows, 95 have email:\nCOUNT(*) = 100\nCOUNT(email) = 95",
+    "a": "COUNT(*) counts ALL rows (incl NULL).\nCOUNT(col) counts non-NULL only.\n\n100 rows, 95 have email:\nCOUNT(*) = 100, COUNT(email) = 95",
     "difficulty": 2
   },
   {
     "id": 106,
     "cat": "SQL",
-    "topic": "Joins",
+    "topic": "JOINs",
     "q": "INNER JOIN orders with customers",
     "a": "SELECT *\nFROM orders o\nINNER JOIN customers c\n  ON o.customer_id = c.id;",
     "difficulty": 1
@@ -586,7 +586,7 @@
   {
     "id": 107,
     "cat": "SQL",
-    "topic": "Joins",
+    "topic": "JOINs",
     "q": "Find customers with NO orders",
     "a": "SELECT c.*\nFROM customers c\nLEFT JOIN orders o\n  ON c.id = o.customer_id\nWHERE o.id IS NULL;",
     "difficulty": 2
@@ -594,79 +594,79 @@
   {
     "id": 108,
     "cat": "SQL",
-    "topic": "Joins",
+    "topic": "JOINs",
     "q": "When do you use each JOIN type?",
-    "a": "INNER: only matching rows\nLEFT: all left + matches right\nRIGHT: all right + matches left\nFULL: all from both\nCROSS: every × every (cartesian)",
+    "a": "INNER: only matching rows\nLEFT: all left + matches right\nRIGHT: all right + matches left\nFULL: all from both\nCROSS: every x every (cartesian)",
     "difficulty": 2
   },
   {
     "id": 206,
     "cat": "SQL",
-    "topic": "Joins",
+    "topic": "JOINs",
     "q": "Self join: find employees in same dept",
-    "a": "SELECT a.name, b.name\nFROM employees a\nJOIN employees b\n  ON a.dept = b.dept\n  AND a.id < b.id;\n\n-- a.id < b.id prevents duplicates",
+    "a": "SELECT a.name, b.name\nFROM employees a\nJOIN employees b\n  ON a.dept = b.dept\n  AND a.id < b.id;",
     "difficulty": 3
   },
   {
     "id": 207,
     "cat": "SQL",
-    "topic": "Joins",
+    "topic": "NULL Handling",
     "q": "What happens with NULLs in JOINs?",
-    "a": "NULL never matches anything!\n\nA JOIN B ON a.id = b.id\nIf b.id is NULL → no match.\n\nUse COALESCE or IS NULL to handle",
+    "a": "NULL never matches anything!\nJOIN ON a.id = b.id — if b.id is NULL, no match.\nUse COALESCE or IS NULL to handle.",
     "difficulty": 2
   },
   {
     "id": 109,
     "cat": "SQL",
-    "topic": "CASE",
-    "q": "Categorize users by age group",
+    "topic": "SELECT/WHERE",
+    "q": "Categorize users by age group with CASE",
     "a": "SELECT name,\n  CASE\n    WHEN age < 18 THEN 'minor'\n    WHEN age <= 65 THEN 'adult'\n    ELSE 'senior'\n  END AS age_group\nFROM users;",
     "difficulty": 2
   },
   {
     "id": 110,
     "cat": "SQL",
-    "topic": "NULL",
+    "topic": "NULL Handling",
     "q": "How do you check for NULL?",
-    "a": "-- IS NULL / IS NOT NULL\nSELECT *\nFROM users\nWHERE email IS NULL;\n\n-- NEVER use = NULL",
+    "a": "WHERE email IS NULL;\nWHERE email IS NOT NULL;\n\nNEVER use = NULL (always false!)",
     "difficulty": 1
   },
   {
     "id": 111,
     "cat": "SQL",
-    "topic": "NULL",
+    "topic": "NULL Handling",
     "q": "Replace NULL with a default value",
-    "a": "COALESCE(email, 'no email')\n\n-- Returns first non-NULL argument\nCOALESCE(a, b, c)",
+    "a": "COALESCE(email, 'no email')\nReturns first non-NULL argument.\nCOALESCE(a, b, c) chains work too.",
     "difficulty": 2
   },
   {
     "id": 114,
     "cat": "SQL",
-    "topic": "UNION",
+    "topic": "UNION/Set Ops",
     "q": "UNION vs UNION ALL?",
-    "a": "UNION: combines + removes duplicates\nUNION ALL: combines + keeps dupes\n\nUNION ALL is faster.\nBoth need same # of columns.",
+    "a": "UNION: combines + removes duplicates\nUNION ALL: combines + keeps dupes (faster)\nBoth need same # of columns.",
     "difficulty": 2
   },
   {
     "id": 112,
     "cat": "SQL",
-    "topic": "Subqueries",
+    "topic": "CTEs/Subqueries",
     "q": "Users whose salary is above average",
-    "a": "SELECT *\nFROM users\nWHERE salary > (\n  SELECT AVG(salary)\n  FROM users\n);",
+    "a": "SELECT *\nFROM users\nWHERE salary > (\n  SELECT AVG(salary) FROM users\n);",
     "difficulty": 2
   },
   {
     "id": 113,
     "cat": "SQL",
-    "topic": "Subqueries",
+    "topic": "CTEs/Subqueries",
     "q": "What's a correlated subquery?",
-    "a": "References the outer query.\nRuns once PER ROW.\n\nSELECT *\nFROM employees e\nWHERE salary > (\n  SELECT AVG(salary)\n  FROM employees\n  WHERE dept = e.dept\n);",
+    "a": "References outer query, runs once PER ROW.\nWHERE salary > (\n  SELECT AVG(salary) FROM employees\n  WHERE dept = e.dept);",
     "difficulty": 3
   },
   {
     "id": 115,
     "cat": "SQL",
-    "topic": "Window",
+    "topic": "Window Functions",
     "q": "Rank employees by salary per department",
     "a": "SELECT name, dept, salary,\n  RANK() OVER (\n    PARTITION BY dept\n    ORDER BY salary DESC\n  ) AS salary_rank\nFROM employees;",
     "difficulty": 3
@@ -674,7 +674,7 @@
   {
     "id": 116,
     "cat": "SQL",
-    "topic": "Window",
+    "topic": "Window Functions",
     "q": "ROW_NUMBER vs RANK vs DENSE_RANK",
     "a": "ROW_NUMBER: 1,2,3,4 (no ties)\nRANK: 1,2,2,4 (ties skip)\nDENSE_RANK: 1,2,2,3 (no skip)\n\nAll use OVER(ORDER BY ...)",
     "difficulty": 3
@@ -682,47 +682,47 @@
   {
     "id": 117,
     "cat": "SQL",
-    "topic": "Window",
+    "topic": "Window Functions",
     "q": "Get previous row's value (LAG)",
-    "a": "SELECT date, revenue,\n  LAG(revenue) OVER (ORDER BY date)\n    AS prev_revenue\nFROM sales;\n\nLAG looks back, LEAD looks forward",
+    "a": "LAG(revenue) OVER (ORDER BY date)\n  AS prev_revenue\n\nLAG looks back, LEAD looks forward",
     "difficulty": 3
   },
   {
     "id": 208,
     "cat": "SQL",
-    "topic": "Window",
+    "topic": "Window Functions",
     "q": "Running total using window function",
-    "a": "SELECT date, amount,\n  SUM(amount) OVER (\n    ORDER BY date\n  ) AS running_total\nFROM sales;",
+    "a": "SUM(amount) OVER (ORDER BY date)\n  AS running_total",
     "difficulty": 3
   },
   {
     "id": 118,
     "cat": "SQL",
-    "topic": "CTE",
+    "topic": "CTEs/Subqueries",
     "q": "CTE: find top 5 customers by spend",
-    "a": "WITH customer_spend AS (\n  SELECT customer_id,\n    SUM(amount) AS total\n  FROM orders\n  GROUP BY customer_id\n)\nSELECT *\nFROM customer_spend\nORDER BY total DESC\nLIMIT 5;",
+    "a": "WITH spend AS (\n  SELECT customer_id, SUM(amount) AS total\n  FROM orders GROUP BY customer_id\n)\nSELECT * FROM spend\nORDER BY total DESC LIMIT 5;",
     "difficulty": 2
   },
   {
     "id": 209,
     "cat": "SQL",
-    "topic": "CTE",
+    "topic": "CTEs/Subqueries",
     "q": "Why use CTE instead of subquery?",
-    "a": "More readable.\nCan reference multiple times.\nEasier to debug.\n\nWITH step1 AS (...),\n     step2 AS (...)\nSELECT * FROM step2;",
+    "a": "More readable. Can reference multiple times.\nWITH a AS (...), b AS (...)\nSELECT * FROM b;",
     "difficulty": 2
   },
   {
     "id": 119,
     "cat": "SQL",
     "topic": "PostgreSQL",
-    "q": "PostgreSQL vs Snowflake differences",
-    "a": "String concat: ||\nDate: CURRENT_DATE, NOW()\nInterval: date + INTERVAL '7 days'\nBool: TRUE/FALSE (not 1/0)\nString: single quotes only",
+    "q": "PostgreSQL syntax essentials",
+    "a": "String concat: ||\nDate: CURRENT_DATE, NOW()\nInterval: date + INTERVAL '7 days'\nStrings: single quotes only",
     "difficulty": 2
   },
   {
     "id": 120,
     "cat": "SQL",
-    "topic": "Patterns",
+    "topic": "Data Engineering Patterns",
     "q": "Find the second highest salary",
     "a": "SELECT DISTINCT salary\nFROM employees\nORDER BY salary DESC\nLIMIT 1 OFFSET 1;",
     "difficulty": 3
@@ -730,7 +730,7 @@
   {
     "id": 210,
     "cat": "SQL",
-    "topic": "Patterns",
+    "topic": "Data Engineering Patterns",
     "q": "Find duplicate rows",
     "a": "SELECT email, COUNT(*) AS cnt\nFROM users\nGROUP BY email\nHAVING COUNT(*) > 1;",
     "difficulty": 2
@@ -738,33 +738,33 @@
   {
     "id": 211,
     "cat": "SQL",
-    "topic": "Patterns",
+    "topic": "Data Engineering Patterns",
     "q": "Delete duplicates keeping lowest id",
-    "a": "DELETE FROM users\nWHERE id NOT IN (\n  SELECT MIN(id)\n  FROM users\n  GROUP BY email\n);",
+    "a": "DELETE FROM users\nWHERE id NOT IN (\n  SELECT MIN(id)\n  FROM users GROUP BY email\n);",
     "difficulty": 3
   },
   {
     "id": 2001,
     "cat": "SQL",
     "topic": "Window Functions",
-    "q": "ROW_NUMBER to deduplicate:\nKeep only the latest order per customer",
-    "a": "WITH ranked AS (\n  SELECT *,\n    ROW_NUMBER() OVER (\n      PARTITION BY customer_id\n      ORDER BY order_date DESC\n    ) AS rn\n  FROM orders\n)\nSELECT * FROM ranked WHERE rn = 1;\n\nROW_NUMBER + PARTITION = pick one per group",
+    "q": "ROW_NUMBER to deduplicate: keep latest per customer",
+    "a": "CTE: ROW_NUMBER() OVER (\n  PARTITION BY customer_id\n  ORDER BY order_date DESC) AS rn\nthen WHERE rn = 1 to keep latest.",
     "difficulty": 2
   },
   {
     "id": 2002,
     "cat": "SQL",
     "topic": "Window Functions",
-    "q": "When does RANK skip numbers but DENSE_RANK doesn't?",
-    "a": "Salaries: 100, 90, 90, 80\n\nRANK:       1, 2, 2, 4  (skips 3)\nDENSE_RANK: 1, 2, 2, 3  (no skip)\nROW_NUMBER: 1, 2, 3, 4  (no ties)\n\nUse DENSE_RANK for 'top N distinct values'\nUse RANK for competition-style ranking",
+    "q": "RANK vs DENSE_RANK with ties?",
+    "a": "Vals: 100, 90, 90, 80\nRANK: 1,2,2,4 (skips 3)\nDENSE_RANK: 1,2,2,3 (no skip)\nDENSE_RANK for 'top N distinct values'",
     "difficulty": 2
   },
   {
     "id": 2003,
     "cat": "SQL",
     "topic": "Window Functions",
-    "q": "LAG/LEAD: calculate day-over-day change",
-    "a": "SELECT date, revenue,\n  revenue - LAG(revenue) OVER (\n    ORDER BY date\n  ) AS daily_change,\n  LEAD(revenue) OVER (\n    ORDER BY date\n  ) AS next_day_revenue\nFROM sales;\n\nLAG(col, 2) = 2 rows back\nLAG(col, 1, 0) = default 0 if NULL",
+    "q": "LAG/LEAD: day-over-day change",
+    "a": "revenue - LAG(revenue) OVER (\n  ORDER BY date) AS daily_change\n\nLAG(col,2) = 2 rows back\nLAG(col,1,0) = default 0 if NULL",
     "difficulty": 3
   },
   {
@@ -772,7 +772,7 @@
     "cat": "SQL",
     "topic": "Window Functions",
     "q": "Running total partitioned by category",
-    "a": "SELECT category, date, amount,\n  SUM(amount) OVER (\n    PARTITION BY category\n    ORDER BY date\n    ROWS BETWEEN UNBOUNDED PRECEDING\n      AND CURRENT ROW\n  ) AS running_total\nFROM sales;\n\nWithout PARTITION BY = global running total\nWith PARTITION BY = resets per group",
+    "a": "SUM(amount) OVER (\n  PARTITION BY category ORDER BY date\n) AS running_total\n\nWithout PARTITION BY = global total",
     "difficulty": 3
   },
   {
@@ -780,7 +780,7 @@
     "cat": "SQL",
     "topic": "Window Functions",
     "q": "Moving average (last 7 days)",
-    "a": "SELECT date, revenue,\n  AVG(revenue) OVER (\n    ORDER BY date\n    ROWS BETWEEN 6 PRECEDING\n      AND CURRENT ROW\n  ) AS moving_avg_7d\nFROM daily_sales;\n\nROWS BETWEEN = defines the window frame\n6 PRECEDING + CURRENT ROW = 7 rows total",
+    "a": "AVG(revenue) OVER (\n  ORDER BY date\n  ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\n) AS moving_avg_7d",
     "difficulty": 3
   },
   {
@@ -788,15 +788,15 @@
     "cat": "SQL",
     "topic": "PostgreSQL",
     "q": "INTERVAL: add/subtract time in PostgreSQL",
-    "a": "-- Add 7 days\nWHERE created_at >= NOW() - INTERVAL '7 days'\n\n-- Add 3 months\ndate + INTERVAL '3 months'\n\n-- Combine\nINTERVAL '1 year 2 months 3 days'\n\n-- Multiply\nINTERVAL '1 hour' * 24",
+    "a": "WHERE created_at >= NOW() - INTERVAL '7 days'\ndate + INTERVAL '3 months'\nINTERVAL '1 hour' * 24",
     "difficulty": 2
   },
   {
     "id": 2007,
     "cat": "SQL",
     "topic": "PostgreSQL",
-    "q": "DATE_TRUNC: truncate timestamps in PostgreSQL",
-    "a": "-- Truncate to month\nSELECT DATE_TRUNC('month', created_at)\n  AS month_start\nFROM events;\n\n-- Common units:\n'day', 'week', 'month', 'quarter', 'year'\n\n-- Group by month:\nGROUP BY DATE_TRUNC('month', created_at)",
+    "q": "DATE_TRUNC: truncate timestamps",
+    "a": "DATE_TRUNC('month', created_at)\nUnits: day, week, month, quarter, year\nGROUP BY DATE_TRUNC('month', created_at)",
     "difficulty": 2
   },
   {
@@ -804,103 +804,439 @@
     "cat": "SQL",
     "topic": "PostgreSQL",
     "q": "GENERATE_SERIES: create date ranges",
-    "a": "-- All dates in January 2024\nSELECT d::date\nFROM GENERATE_SERIES(\n  '2024-01-01'::date,\n  '2024-01-31'::date,\n  '1 day'::interval\n) AS d;\n\n-- Use with LEFT JOIN to fill gaps:\nFROM date_series d\nLEFT JOIN sales s ON d.date = s.date",
+    "a": "SELECT d::date FROM GENERATE_SERIES(\n  '2024-01-01'::date, '2024-01-31'::date,\n  '1 day'::interval) AS d;\nLEFT JOIN to fill date gaps",
     "difficulty": 3
   },
   {
     "id": 2009,
     "cat": "SQL",
     "topic": "PostgreSQL",
-    "q": "PostgreSQL string functions for Meta interviews",
-    "a": "LENGTH('hello')           → 5\nSUBSTRING('hello' FROM 1 FOR 3) → 'hel'\nPOSITION('lo' IN 'hello')  → 4\nCONCAT(first, ' ', last)   → full name\nLEFT('hello', 3)           → 'hel'\nRIGHT('hello', 2)          → 'lo'\nTRIM('  hi  ')             → 'hi'\nREPLACE('abc', 'b', 'x')   → 'axc'",
+    "q": "PostgreSQL string functions",
+    "a": "LENGTH, SUBSTRING(col FROM 1 FOR 3),\nPOSITION('lo' IN 'hello'), CONCAT,\nLEFT, RIGHT, TRIM, REPLACE",
     "difficulty": 2
   },
   {
     "id": 2010,
     "cat": "SQL",
-    "topic": "PostgreSQL",
+    "topic": "NULL Handling",
     "q": "COALESCE chains and NULLIF",
-    "a": "-- First non-NULL wins:\nCOALESCE(phone, mobile, email, 'N/A')\n\n-- NULLIF returns NULL if equal:\nNULLIF(value, 0)\n-- Useful to avoid divide-by-zero:\nrevenue / NULLIF(users, 0)\n\n-- Combine:\nCOALESCE(revenue / NULLIF(users, 0), 0)",
+    "a": "COALESCE(phone, mobile, 'N/A')\nNULLIF(val, 0) → NULL if equal\nSafe division: rev / NULLIF(users, 0)",
     "difficulty": 2
   },
   {
     "id": 2011,
     "cat": "Python",
-    "topic": "pandas",
+    "topic": "Pandas",
     "q": "pandas merge: join two DataFrames",
-    "a": "# Like SQL JOIN\nresult = pd.merge(\n  orders, customers,\n  on='customer_id',\n  how='left'  # 'inner','left','right','outer'\n)\n\n# Different column names:\npd.merge(df1, df2,\n  left_on='cust_id', right_on='id')",
+    "a": "pd.merge(orders, customers,\n  on='customer_id', how='left')\nhow: 'inner','left','right','outer'",
     "difficulty": 2
   },
   {
     "id": 2012,
     "cat": "Python",
-    "topic": "pandas",
+    "topic": "Pandas",
     "q": "pandas groupby: aggregate by category",
-    "a": "# Single aggregation\ndf.groupby('city')['salary'].mean()\n\n# Multiple aggregations\ndf.groupby('dept').agg(\n  avg_salary=('salary', 'mean'),\n  headcount=('id', 'count'),\n  max_salary=('salary', 'max')\n).reset_index()",
+    "a": "df.groupby('city')['salary'].mean()\ndf.groupby('dept').agg(\n  avg=('salary','mean'),\n  cnt=('id','count')).reset_index()",
     "difficulty": 2
   },
   {
     "id": 2013,
     "cat": "Python",
-    "topic": "pandas",
+    "topic": "Pandas",
     "q": "pandas apply: custom row/column logic",
-    "a": "# Apply to each row\ndf['category'] = df['age'].apply(\n  lambda x: 'senior' if x >= 65 else 'adult'\n)\n\n# Apply to entire row (axis=1)\ndf['full_name'] = df.apply(\n  lambda row: f\"{row['first']} {row['last']}\",\n  axis=1\n)",
+    "a": "df['cat'] = df['age'].apply(\n  lambda x: 'senior' if x>=65 else 'adult')\naxis=1 for row-wise apply",
     "difficulty": 2
   },
   {
     "id": 2014,
     "cat": "Python",
-    "topic": "pandas",
+    "topic": "Pandas",
     "q": "pandas pivot_table: reshape data",
-    "a": "pd.pivot_table(\n  df,\n  values='revenue',\n  index='region',\n  columns='quarter',\n  aggfunc='sum',\n  fill_value=0\n)\n\n# Like Excel pivot tables\n# index = rows, columns = cols\n# aggfunc: 'sum','mean','count','min','max'",
+    "a": "pd.pivot_table(df, values='revenue',\n  index='region', columns='quarter',\n  aggfunc='sum', fill_value=0)",
     "difficulty": 3
   },
   {
     "id": 2015,
     "cat": "Python",
-    "topic": "pandas",
+    "topic": "Pandas",
     "q": "pandas value_counts: quick frequency table",
-    "a": "# Count occurrences\ndf['city'].value_counts()\n\n# Normalized (percentages)\ndf['city'].value_counts(normalize=True)\n\n# Include NaN\ndf['city'].value_counts(dropna=False)\n\n# Top 5\ndf['city'].value_counts().head(5)",
+    "a": "df['city'].value_counts()\nnormalize=True for percentages\ndropna=False to include NaN",
     "difficulty": 1
   },
   {
     "id": 2016,
     "cat": "SQL",
-    "topic": "Data Engineering",
+    "topic": "Data Engineering Patterns",
     "q": "ETL vs ELT: what's the difference?",
-    "a": "ETL: Extract → Transform → Load\n- Transform BEFORE loading\n- Traditional data warehouses\n- Good when storage is expensive\n\nELT: Extract → Load → Transform\n- Load raw, transform IN warehouse\n- Modern approach (BigQuery, Snowflake)\n- Leverages cheap cloud storage\n- More flexible, keeps raw data",
+    "a": "ETL: Transform BEFORE loading (traditional).\nELT: Load raw, transform IN warehouse.\nELT is modern (BigQuery, Snowflake).",
     "difficulty": 1
   },
   {
     "id": 2017,
     "cat": "SQL",
-    "topic": "Data Engineering",
+    "topic": "Data Engineering Patterns",
     "q": "Data Warehouse vs Data Lake",
-    "a": "Data Warehouse:\n- Structured data only\n- Schema-on-write (define first)\n- Fast queries, optimized\n- Examples: Snowflake, BigQuery, Redshift\n\nData Lake:\n- Any format (JSON, CSV, Parquet, images)\n- Schema-on-read (define at query time)\n- Cheap storage, slower queries\n- Examples: S3, ADLS, GCS\n\nData Lakehouse = both combined (Delta Lake)",
+    "a": "Warehouse: structured, schema-on-write, fast.\nLake: any format, schema-on-read, cheap.\nLakehouse = both (Delta Lake).",
     "difficulty": 1
   },
   {
     "id": 2018,
     "cat": "SQL",
-    "topic": "Data Engineering",
+    "topic": "Indexes",
     "q": "Table partitioning: why and how?",
-    "a": "WHY: Speed up queries on large tables\nby scanning only relevant partitions.\n\n-- PostgreSQL example:\nCREATE TABLE events (\n  id SERIAL,\n  created_at DATE,\n  data JSONB\n) PARTITION BY RANGE (created_at);\n\nCommon partition keys:\n- Date (most common)\n- Region/country\n- Category\n\nQuery with WHERE created_at = '2024-01'\nonly scans that partition, not entire table.",
+    "a": "Speeds up queries by scanning only relevant\npartitions. PARTITION BY RANGE (created_at).\nCommon keys: date, region, category.",
     "difficulty": 2
   },
   {
     "id": 2019,
     "cat": "SQL",
-    "topic": "Data Engineering",
+    "topic": "Indexes",
     "q": "Indexing: when to add, when not to?",
-    "a": "ADD index when:\n- Column is in WHERE/JOIN frequently\n- Column has high cardinality (many unique)\n- Table is large and reads >> writes\n\nDON'T index when:\n- Small tables (full scan is fine)\n- Columns with low cardinality (M/F)\n- Heavy write tables (index slows inserts)\n\nCREATE INDEX idx_users_email\n  ON users(email);\n\nComposite: ON users(city, created_at)",
+    "a": "ADD: frequent WHERE/JOIN, high cardinality.\nDON'T: small tables, low cardinality, heavy writes.\nCREATE INDEX idx ON users(email);",
     "difficulty": 2
   },
   {
     "id": 2020,
     "cat": "SQL",
-    "topic": "Data Engineering",
+    "topic": "Data Engineering Patterns",
     "q": "Normalization: 1NF, 2NF, 3NF quick summary",
-    "a": "1NF: No repeating groups.\n- Each cell has ONE value\n- Bad: tags='a,b,c' → separate rows\n\n2NF: 1NF + no partial dependencies.\n- Every non-key column depends on\n  the WHOLE primary key\n\n3NF: 2NF + no transitive dependencies.\n- Non-key columns don't depend on\n  other non-key columns\n- Bad: zip_code → city (city depends on zip)\n\nDenormalization = intentionally breaking NF\nfor query performance (common in DW).",
+    "a": "1NF: one value per cell.\n2NF: depends on WHOLE primary key.\n3NF: no transitive deps between non-keys.\nDenormalize for DW performance.",
     "difficulty": 2
+  },
+  {
+    "id": 3001,
+    "cat": "SQL",
+    "topic": "SELECT/WHERE",
+    "q": "Question says 'what percentage...' — SQL pattern?",
+    "a": "AVG(CASE WHEN condition THEN 1.0 ELSE 0 END) * 100",
+    "difficulty": 2
+  },
+  {
+    "id": 3002,
+    "cat": "SQL",
+    "topic": "CTEs/Subqueries",
+    "q": "Question says 'top N per group' — SQL pattern?",
+    "a": "CTE + RANK() OVER (PARTITION BY group\nORDER BY val DESC) AS rnk\nthen WHERE rnk <= N",
+    "difficulty": 2
+  },
+  {
+    "id": 3003,
+    "cat": "SQL",
+    "topic": "JOINs",
+    "q": "Question says 'never / don't have' — SQL pattern?",
+    "a": "LEFT JOIN ... WHERE right.key IS NULL\nor: WHERE NOT EXISTS (SELECT 1 FROM ...)",
+    "difficulty": 2
+  },
+  {
+    "id": 3004,
+    "cat": "SQL",
+    "topic": "Aggregation/GROUP BY",
+    "q": "Question says 'more than N' after grouping — pattern?",
+    "a": "GROUP BY col\nHAVING COUNT(*) > N\n\nHAVING filters AFTER aggregation.",
+    "difficulty": 2
+  },
+  {
+    "id": 3005,
+    "cat": "SQL",
+    "topic": "Window Functions",
+    "q": "Question says 'first/last per user' — SQL pattern?",
+    "a": "CTE + ROW_NUMBER() OVER (\n  PARTITION BY user ORDER BY date)\nWHERE rn = 1",
+    "difficulty": 2
+  },
+  {
+    "id": 3006,
+    "cat": "SQL",
+    "topic": "Window Functions",
+    "q": "Question says 'percentage of total' — SQL pattern?",
+    "a": "value * 100.0 / SUM(value) OVER ()\nSUM() OVER () = grand total across all rows.",
+    "difficulty": 2
+  },
+  {
+    "id": 3007,
+    "cat": "SQL",
+    "topic": "JOINs",
+    "q": "Question says 'same day comparison' — SQL pattern?",
+    "a": "Self-join on user_id AND date.\nFROM events a JOIN events b\n  ON a.user_id = b.user_id AND a.date = b.date",
+    "difficulty": 3
+  },
+  {
+    "id": 3008,
+    "cat": "SQL",
+    "topic": "CTEs/Subqueries",
+    "q": "Question says 'average of totals' — SQL pattern?",
+    "a": "CTE to compute totals per group,\nthen SELECT AVG(total) FROM cte;",
+    "difficulty": 2
+  },
+  {
+    "id": 3009,
+    "cat": "SQL",
+    "topic": "Syntax",
+    "q": "Can you use column alias in HAVING in PostgreSQL?",
+    "a": "No! Repeat the aggregation.\nHAVING COUNT(*) > 5 -- not HAVING cnt > 5",
+    "difficulty": 2
+  },
+  {
+    "id": 3010,
+    "cat": "SQL",
+    "topic": "Syntax",
+    "q": "Integer division trap: 1/2 = ?",
+    "a": "0 (integer division truncates!)\nFix: use 1.0/2 or CAST(1 AS DECIMAL)/2\nAlways multiply by 100.0 for percentages.",
+    "difficulty": 2
+  },
+  {
+    "id": 3011,
+    "cat": "SQL",
+    "topic": "Syntax",
+    "q": "Two CTEs in one query — syntax?",
+    "a": "WITH a AS (...),\n     b AS (...)\nSELECT * FROM b;\n\nOne WITH, comma-separated. NOT two WITH keywords.",
+    "difficulty": 2
+  },
+  {
+    "id": 3012,
+    "cat": "SQL",
+    "topic": "Syntax",
+    "q": "COUNT(CASE WHEN x THEN 1 ELSE 0 END) trap?",
+    "a": "Counts ALL rows (0 is not NULL)!\nUse SUM(CASE WHEN x THEN 1 ELSE 0 END)\nor COUNT(CASE WHEN x THEN 1 END) — no ELSE.",
+    "difficulty": 2
+  },
+  {
+    "id": 3013,
+    "cat": "SQL",
+    "topic": "Syntax",
+    "q": "SELECT must match GROUP BY rule?",
+    "a": "Every non-aggregated column in SELECT\nmust appear in GROUP BY.\nOtherwise: error in PostgreSQL.",
+    "difficulty": 1
+  },
+  {
+    "id": 3014,
+    "cat": "SQL",
+    "topic": "NULL Handling",
+    "q": "What does NULL + 5 equal?",
+    "a": "NULL. Any math with NULL = NULL.\nFix: COALESCE(col, 0) + 5\nAlways COALESCE before arithmetic.",
+    "difficulty": 1
+  },
+  {
+    "id": 3015,
+    "cat": "SQL",
+    "topic": "NULL Handling",
+    "q": "Safe division to avoid divide-by-zero?",
+    "a": "value / NULLIF(denominator, 0)\nNULLIF returns NULL if denom = 0,\nresult becomes NULL instead of error.",
+    "difficulty": 2
+  },
+  {
+    "id": 3016,
+    "cat": "SQL",
+    "topic": "Data Engineering Patterns",
+    "q": "Pivot rows to columns in SQL?",
+    "a": "SUM(CASE WHEN cat='X' THEN val END) AS x_total,\nSUM(CASE WHEN cat='Y' THEN val END) AS y_total\nManual pivot with conditional aggregation.",
+    "difficulty": 3
+  },
+  {
+    "id": 3017,
+    "cat": "SQL",
+    "topic": "PostgreSQL",
+    "q": "EXTRACT: get month/year from a date?",
+    "a": "EXTRACT(MONTH FROM date) → 1-12\nEXTRACT(YEAR FROM date) → 2024\nEXTRACT(DAY FROM date) → day of month",
+    "difficulty": 2
+  },
+  {
+    "id": 3018,
+    "cat": "SQL",
+    "topic": "SELECT/WHERE",
+    "q": "Filter rows in last N days?",
+    "a": "WHERE date >= CURRENT_DATE - INTERVAL 'N days'\nor: WHERE date BETWEEN '...' AND '...'",
+    "difficulty": 1
+  },
+  {
+    "id": 3019,
+    "cat": "SQL",
+    "topic": "PostgreSQL",
+    "q": "Type casting in PostgreSQL?",
+    "a": "'5'::integer  or  CAST('5' AS integer)\ncolumn::text, '2024-01-01'::date\n:: is PG shorthand, CAST is ANSI standard.",
+    "difficulty": 2
+  },
+  {
+    "id": 3020,
+    "cat": "SQL",
+    "topic": "CTEs/Subqueries",
+    "q": "EXISTS vs NOT EXISTS pattern?",
+    "a": "WHERE EXISTS (SELECT 1 FROM orders o\n  WHERE o.user_id = u.id) -- has orders\nNOT EXISTS for 'never did X' questions.",
+    "difficulty": 2
+  },
+  {
+    "id": 3021,
+    "cat": "SQL",
+    "topic": "Data Engineering Patterns",
+    "q": "Percentage change formula in SQL?",
+    "a": "(new - old) * 100.0 / old\nUse NULLIF(old, 0) to avoid divide-by-zero.",
+    "difficulty": 2
+  },
+  {
+    "id": 3022,
+    "cat": "SQL",
+    "topic": "Aggregation/GROUP BY",
+    "q": "COUNT(DISTINCT col) — when to use?",
+    "a": "\"How many different...\" questions.\nCOUNT(DISTINCT user_id) = unique users.\nJOINs often create dupes — use DISTINCT.",
+    "difficulty": 2
+  },
+  {
+    "id": 3023,
+    "cat": "Python",
+    "topic": "Dicts/Counters",
+    "q": "defaultdict(list) — what does it do?",
+    "a": "from collections import defaultdict\nd = defaultdict(list)\nd['key'].append('val')  # no KeyError!\nAuto-creates empty list for new keys.",
+    "difficulty": 2
+  },
+  {
+    "id": 3024,
+    "cat": "Python",
+    "topic": "Dicts/Counters",
+    "q": "defaultdict(int) — what does it do?",
+    "a": "from collections import defaultdict\nd = defaultdict(int)\nd['key'] += 1  # starts at 0, no KeyError\nPerfect for counting without .get().",
+    "difficulty": 2
+  },
+  {
+    "id": 3025,
+    "cat": "Python",
+    "topic": "Lists/Comprehensions",
+    "q": "Dict comprehension syntax?",
+    "a": "{word: text.count(word) for word in text.split()}\n{k: v for k, v in d.items() if v > 0}",
+    "difficulty": 2
+  },
+  {
+    "id": 3026,
+    "cat": "Python",
+    "topic": "Lists/Comprehensions",
+    "q": "Set comprehension syntax?",
+    "a": "{word.lower() for word in text.split()}\nCreates set — auto-deduplicates results.",
+    "difficulty": 2
+  },
+  {
+    "id": 3027,
+    "cat": "Python",
+    "topic": "Lists/Comprehensions",
+    "q": "Flatten a nested list?",
+    "a": "flat = [item for sublist in nested\n        for item in sublist]\n[[1,2],[3,4]] → [1,2,3,4]",
+    "difficulty": 2
+  },
+  {
+    "id": 3028,
+    "cat": "Python",
+    "topic": "Data Structures",
+    "q": "zip() — pair up two lists?",
+    "a": "for x, y in zip(list1, list2):\n    print(x, y)\nStops at shorter list length.",
+    "difficulty": 2
+  },
+  {
+    "id": 3029,
+    "cat": "Python",
+    "topic": "Sorting",
+    "q": "max() with key — find dict key with highest value?",
+    "a": "max(d, key=d.get)  → key with max value\nmin(d, key=d.get)  → key with min value",
+    "difficulty": 2
+  },
+  {
+    "id": 3030,
+    "cat": "Python",
+    "topic": "Syntax",
+    "q": "= vs == — what's the difference?",
+    "a": "= assigns a value: x = 5\n== compares equality: if x == 5:\nMixing them up is a common bug.",
+    "difficulty": 1
+  },
+  {
+    "id": 3031,
+    "cat": "Python",
+    "topic": "Syntax",
+    "q": "None vs null — which does Python use?",
+    "a": "Python uses None (capital N).\nCheck with: if x is None:\nNEVER use == None, use 'is None'.",
+    "difficulty": 1
+  },
+  {
+    "id": 3032,
+    "cat": "Python",
+    "topic": "Syntax",
+    "q": "Integer division: 7/2 vs 7//2?",
+    "a": "7 / 2 = 3.5 (true division)\n7 // 2 = 3 (floor division, truncates)\nUse / for decimals, // for whole numbers.",
+    "difficulty": 1
+  },
+  {
+    "id": 3033,
+    "cat": "Python",
+    "topic": "Strings",
+    "q": "Strings are immutable — what does that mean?",
+    "a": "Can't do s[0] = 'H' — TypeError!\nMust create new string:\ns = 'H' + s[1:]",
+    "difficulty": 1
+  },
+  {
+    "id": 3034,
+    "cat": "Python",
+    "topic": "Syntax",
+    "q": "'not in' syntax — how to check absence?",
+    "a": "if x not in my_list:\nif key not in my_dict:\nPython uses words, NOT !in or !== .",
+    "difficulty": 1
+  },
+  {
+    "id": 3035,
+    "cat": "Python",
+    "topic": "Sets",
+    "q": "Set difference: items in A but not B?",
+    "a": "set(a) - set(b)\n'Words that don't match' → set difference.\nAlso: s.difference(other)",
+    "difficulty": 2
+  },
+  {
+    "id": 3036,
+    "cat": "Python",
+    "topic": "Data Structures",
+    "q": "enumerate() — what does it do?",
+    "a": "for i, val in enumerate(nums):\n    print(i, val)\nGives index + value together in a loop.",
+    "difficulty": 1
+  },
+  {
+    "id": 3037,
+    "cat": "Python",
+    "topic": "Sorting",
+    "q": "Sort list of dicts by a field?",
+    "a": "sorted(people, key=lambda x: x['age'])\nreverse=True for descending.",
+    "difficulty": 2
+  },
+  {
+    "id": 3038,
+    "cat": "Python",
+    "topic": "Strings",
+    "q": "Reverse words in a sentence?",
+    "a": "' '.join(s.split()[::-1])\n'hello world' → 'world hello'",
+    "difficulty": 2
+  },
+  {
+    "id": 3039,
+    "cat": "Python",
+    "topic": "Lists/Comprehensions",
+    "q": "Average of a list?",
+    "a": "sum(nums) / len(nums)\nCheck len > 0 first to avoid ZeroDivisionError.",
+    "difficulty": 1
+  },
+  {
+    "id": 3040,
+    "cat": "Python",
+    "topic": "Data Structures",
+    "q": "list.insert() vs list.append()?",
+    "a": "nums.append(4)     → adds to END\nnums.insert(0, 9)  → adds at INDEX 0\nnums.pop()  → removes last\nnums.pop(0) → removes first",
+    "difficulty": 1
+  },
+  {
+    "id": 3041,
+    "cat": "Python",
+    "topic": "Sets",
+    "q": "remove() vs discard() for sets?",
+    "a": "s.remove(4)  → KeyError if missing\ns.discard(4) → no error if missing\nUse discard() for safe removal.",
+    "difficulty": 1
+  },
+  {
+    "id": 3042,
+    "cat": "Python",
+    "topic": "Strings",
+    "q": "s.find() vs 'in' for substrings?",
+    "a": "s.find('world') → 6 (index) or -1\n'world' in s → True/False\nUse 'in' for check, find() for position.",
+    "difficulty": 1
   }
 ]
