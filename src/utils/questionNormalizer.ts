@@ -85,7 +85,7 @@ function normalizeMeta(questions: RawMetaQuestion[]): UnifiedQuestion[] {
     sourceId: q.id,
     source: 'metaOfficial' as QuestionSource,
     question: q.question,
-    answer: q.answer,
+    answer: q.pseudoCode || q.answer,
     subject: q.category as Subject,
     difficulty: q.difficulty,
     timeEstimate: q.timeEstimate,
