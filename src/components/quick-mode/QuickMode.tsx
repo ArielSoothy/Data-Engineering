@@ -8,10 +8,15 @@ import { getTopicsForSubject } from '../../data/topics';
 import QuickFlashcard from './QuickFlashcard';
 import QuickQuiz from './QuickQuiz';
 import QuickPuzzle from './QuickPuzzle';
-import type { Subject } from '../../types/studyHub';
+import type { Subject, Difficulty } from '../../types/studyHub';
+
+// Only show flashcard-appropriate sources — advanced coding questions belong in Deep Mode
+const QUICK_SOURCES = new Set(['quickDrill', 'sqlBasics', 'pythonBasics', 'metaOfficial']);
+const MAX_ANSWER_LENGTH = 400; // Hide questions with very long answers
 
 type QuickModeType = 'flashcard' | 'quiz' | 'puzzle';
 type SubjectFilter = 'all' | Subject;
+type DifficultyFilter = 'all' | Difficulty;
 
 export default function QuickMode() {
   const { questions: allQuestions, loading, error } = useUnifiedQuestions();
@@ -24,13 +29,15 @@ export default function QuickMode() {
 
   const [subject, setSubject] = useState<SubjectFilter>(initialSubject);
   const [topic, setTopic] = useState(initialTopic);
+  const [difficulty, setDifficulty] = useState<DifficultyFilter>((searchParams.get('difficulty') as DifficultyFilter) || 'all');
   const [mode, setMode] = useState<QuickModeType>(initialMode);
 
   // Sync to URL
-  const updateParams = (s: SubjectFilter, t: string, m: QuickModeType) => {
+  const updateParams = (s: SubjectFilter, t: string, d: DifficultyFilter, m: QuickModeType) => {
     const p = new URLSearchParams();
     if (s !== 'all') p.set('subject', s);
     if (t !== 'all') p.set('topic', t);
+    if (d !== 'all') p.set('difficulty', d);
     if (m !== 'flashcard') p.set('mode', m);
     setSearchParams(p, { replace: true });
   };
@@ -38,33 +45,49 @@ export default function QuickMode() {
   const handleSubject = (s: SubjectFilter) => {
     setSubject(s);
     setTopic('all');
-    updateParams(s, 'all', mode);
+    updateParams(s, 'all', difficulty, mode);
   };
 
   const handleTopic = (t: string) => {
     setTopic(t);
-    updateParams(subject, t, mode);
+    updateParams(subject, t, difficulty, mode);
+  };
+
+  const handleDifficulty = (d: DifficultyFilter) => {
+    setDifficulty(d);
+    updateParams(subject, topic, d, mode);
   };
 
   const handleMode = (m: QuickModeType) => {
     setMode(m);
-    updateParams(subject, topic, m);
+    updateParams(subject, topic, difficulty, m);
   };
 
-  // Filter questions
+  // Filter: only flashcard-appropriate sources + short answers (exclude advanced coding questions)
+  const quickQuestions = useMemo(
+    () => allQuestions.filter(q => QUICK_SOURCES.has(q.source) && q.answer.length <= MAX_ANSWER_LENGTH),
+    [allQuestions],
+  );
+
+  // Filter by subject
   const subjectFiltered = useMemo(
-    () => subject === 'all' ? allQuestions : allQuestions.filter(q => q.subject === subject),
-    [allQuestions, subject],
+    () => subject === 'all' ? quickQuestions : quickQuestions.filter(q => q.subject === subject),
+    [quickQuestions, subject],
+  );
+
+  // Filter by difficulty
+  const diffFiltered = useMemo(
+    () => difficulty === 'all' ? subjectFiltered : subjectFiltered.filter(q => q.difficulty === difficulty),
+    [subjectFiltered, difficulty],
   );
 
   // Available topics from filtered questions
   const availableTopics = useMemo(() => {
     const topicSet = new Map<string, number>();
-    for (const q of subjectFiltered) {
+    for (const q of diffFiltered) {
       const t = q.topic || 'Other';
       topicSet.set(t, (topicSet.get(t) || 0) + 1);
     }
-    // Sort by canonical order
     const canonical = subject === 'all'
       ? [...getTopicsForSubject('sql'), ...getTopicsForSubject('python')]
       : getTopicsForSubject(subject);
@@ -75,16 +98,15 @@ export default function QuickMode() {
         topicSet.delete(ct);
       }
     }
-    // Any remaining topics not in canonical list
     for (const [name, count] of topicSet) {
       sorted.push({ name, count });
     }
     return sorted;
-  }, [subjectFiltered, subject]);
+  }, [diffFiltered, subject]);
 
   const filtered = useMemo(
-    () => topic === 'all' ? subjectFiltered : subjectFiltered.filter(q => (q.topic || 'Other') === topic),
-    [subjectFiltered, topic],
+    () => topic === 'all' ? diffFiltered : diffFiltered.filter(q => (q.topic || 'Other') === topic),
+    [diffFiltered, topic],
   );
 
   // Stats — computed directly from AppContext progress (persists to localStorage)
@@ -106,9 +128,16 @@ export default function QuickMode() {
   if (error) return <div className="text-red-500 text-center pt-16">{error}</div>;
 
   const subjectTabs: { value: SubjectFilter; label: string }[] = [
-    { value: 'all', label: `All (${allQuestions.length})` },
-    { value: 'sql', label: `SQL (${allQuestions.filter(q => q.subject === 'sql').length})` },
-    { value: 'python', label: `Python (${allQuestions.filter(q => q.subject === 'python').length})` },
+    { value: 'all', label: `All (${quickQuestions.length})` },
+    { value: 'sql', label: `SQL (${quickQuestions.filter(q => q.subject === 'sql').length})` },
+    { value: 'python', label: `Python (${quickQuestions.filter(q => q.subject === 'python').length})` },
+  ];
+
+  const diffTabs: { value: DifficultyFilter; label: string; color: string }[] = [
+    { value: 'all', label: 'All', color: 'blue' },
+    { value: 'Easy', label: `Easy (${subjectFiltered.filter(q => q.difficulty === 'Easy').length})`, color: 'green' },
+    { value: 'Medium', label: `Medium (${subjectFiltered.filter(q => q.difficulty === 'Medium').length})`, color: 'yellow' },
+    { value: 'Hard', label: `Hard (${subjectFiltered.filter(q => q.difficulty === 'Hard').length})`, color: 'red' },
   ];
 
   const modeTabs: { value: QuickModeType; label: string; icon: React.ReactNode }[] = [
@@ -141,6 +170,30 @@ export default function QuickMode() {
             {t.label}
           </button>
         ))}
+      </div>
+
+      {/* Difficulty filter */}
+      <div className="flex gap-2 mb-4">
+        {diffTabs.map(d => {
+          const active = difficulty === d.value;
+          const colors: Record<string, string> = {
+            blue: active ? 'bg-blue-600 text-white' : '',
+            green: active ? 'bg-green-600 text-white' : '',
+            yellow: active ? 'bg-yellow-500 text-white' : '',
+            red: active ? 'bg-red-600 text-white' : '',
+          };
+          return (
+            <button
+              key={d.value}
+              onClick={() => handleDifficulty(d.value)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                colors[d.color] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              {d.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Topic pills */}
@@ -205,7 +258,7 @@ export default function QuickMode() {
       ) : mode === 'flashcard' ? (
         <QuickFlashcard questions={filtered} />
       ) : mode === 'quiz' ? (
-        <QuickQuiz questions={filtered} allQuestions={allQuestions} />
+        <QuickQuiz questions={filtered} allQuestions={quickQuestions} />
       ) : (
         <QuickPuzzle questions={filtered} />
       )}
