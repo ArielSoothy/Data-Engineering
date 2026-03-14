@@ -1,7 +1,50 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Clock, ChevronDown, ChevronUp, SkipForward, ArrowRight, RotateCcw, Home, Play, Zap, Lightbulb, ArrowRightCircle } from 'lucide-react';
 import { Card, Badge, Button, ProgressBar } from '../ui';
+import { useAppContext } from '../../context/AppContext';
 import type { Question } from '../../hooks/useQuestions';
+
+/* ------------------------------------------------------------------ */
+/*  Session persistence (survives refresh, not tab close)              */
+/* ------------------------------------------------------------------ */
+
+const SESSION_KEY = 'timed_assessment_session';
+
+interface SavedSession {
+  phase: Phase;
+  difficulty: Difficulty;
+  mode: QuestionMode;
+  selectedSql: Question[];
+  selectedPython: Question[];
+  currentIndex: number;
+  answers: AssessmentAnswer[];
+  timeRemaining: number;
+  sqlResult: PhaseResult | null;
+  pythonResult: PhaseResult | null;
+  savedAt: number; // timestamp for freshness check
+}
+
+function saveSession(s: SavedSession) {
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch { /* full */ }
+}
+
+function loadSession(): SavedSession | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw) as SavedSession;
+    // Discard sessions older than 2 hours
+    if (Date.now() - s.savedAt > 2 * 60 * 60 * 1000) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return s;
+  } catch { return null; }
+}
+
+function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+}
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -84,6 +127,8 @@ const selectQuestions = (pool: Question[], count: number, difficulty: Difficulty
 /* ------------------------------------------------------------------ */
 
 const TimedAssessment = () => {
+  const { updateProgress } = useAppContext();
+
   /* ---------- data loading ---------- */
   const [sqlQuestions, setSqlQuestions] = useState<Question[]>([]);
   const [pythonQuestions, setPythonQuestions] = useState<Question[]>([]);
@@ -136,6 +181,36 @@ const TimedAssessment = () => {
 
   // Expand/collapse per-question in results
   const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
+
+  // Restore session from sessionStorage (survives refresh)
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current || dataLoading) return;
+    restoredRef.current = true;
+    const saved = loadSession();
+    if (!saved || saved.phase === 'setup' || saved.phase === 'results') return;
+    setPhase(saved.phase);
+    setDifficulty(saved.difficulty);
+    setMode(saved.mode);
+    setSelectedSql(saved.selectedSql);
+    setSelectedPython(saved.selectedPython);
+    setCurrentIndex(saved.currentIndex);
+    setAnswers(saved.answers);
+    setTimeRemaining(saved.timeRemaining);
+    setSqlResult(saved.sqlResult);
+    setPythonResult(saved.pythonResult);
+  }, [dataLoading]);
+
+  // Save session to sessionStorage on meaningful state changes
+  useEffect(() => {
+    if (phase === 'setup') return; // nothing to save yet
+    if (phase === 'results') { clearSession(); return; } // exam done
+    saveSession({
+      phase, difficulty, mode, selectedSql, selectedPython,
+      currentIndex, answers, timeRemaining, sqlResult, pythonResult,
+      savedAt: Date.now(),
+    });
+  }, [phase, currentIndex, answers, timeRemaining, sqlResult, pythonResult, difficulty, mode, selectedSql, selectedPython]);
 
   /* ---------- timer ---------- */
   useEffect(() => {
@@ -239,6 +314,14 @@ const TimedAssessment = () => {
   const advanceQuestion = useCallback(
     (skipped: boolean) => {
       recordAnswer(skipped);
+      // Persist to AppContext so Dashboard reflects timed assessment progress
+      if (!skipped) {
+        const q = currentQuestions[currentIndex];
+        if (q) {
+          const progressKey = phase === 'sql' ? 'sqlAdvanced' : 'pythonAdvanced';
+          updateProgress(progressKey as any, q.id, true);
+        }
+      }
       if (currentIndex + 1 < currentQuestions.length) {
         setCurrentIndex((i) => i + 1);
         setCurrentAnswer('');
@@ -249,7 +332,7 @@ const TimedAssessment = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentIndex, currentQuestions.length, recordAnswer],
+    [currentIndex, currentQuestions.length, recordAnswer, phase, updateProgress],
   );
 
   const finishPhase = useCallback(() => {
@@ -303,7 +386,7 @@ const TimedAssessment = () => {
     });
   };
 
-  const resetToSetup = () => setPhase('setup');
+  const resetToSetup = () => { clearSession(); setPhase('setup'); };
 
   /* ================================================================ */
   /*  RENDER                                                           */
