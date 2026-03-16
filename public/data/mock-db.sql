@@ -742,3 +742,195 @@ INSERT INTO sales (product_id, store_id, customer_id, promotion_id, store_sales,
     (7,  2, 123, NULL, 4.99,  2.80, 5.0, '2023-12-01'),
     (1,  3, 124, NULL, 4.99,  2.50, 4.0, '2023-11-28'),
     (12, 1, 125, NULL, 6.99,  3.50, 2.0, '2023-08-30');
+
+-- ============================================================
+-- Payment Processing Schema (Experience-Based Questions)
+-- ============================================================
+-- Supports IDs 21-28: ROW_NUMBER dedup, multi-level CTEs,
+-- anti-join cascading match, COALESCE fallback, self-join
+-- hierarchy, incremental upsert, currency conversion.
+-- SQLite-compatible (sql.js): TEXT dates, REAL decimals.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS payment_sales_agents (
+    person_id INTEGER PRIMARY KEY,
+    full_name TEXT NOT NULL,
+    email TEXT,
+    subsidiary_id INTEGER,
+    manager_email TEXT,
+    region TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_date TEXT
+);
+
+CREATE TABLE IF NOT EXISTS payment_clients (
+    client_id INTEGER PRIMARY KEY,
+    client_name TEXT NOT NULL,
+    multi_client_id INTEGER REFERENCES payment_clients(client_id),
+    sales_agent_id INTEGER,
+    country_code TEXT,
+    region TEXT,
+    client_status TEXT DEFAULT 'active',
+    onboarding_date TEXT
+);
+
+CREATE TABLE IF NOT EXISTS payment_currency_rates (
+    rate_id INTEGER PRIMARY KEY,
+    currency_code TEXT NOT NULL,
+    rate_date TEXT NOT NULL,
+    rate_to_usd REAL NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS payment_transactions (
+    txn_id INTEGER PRIMARY KEY,
+    client_id INTEGER REFERENCES payment_clients(client_id),
+    amount REAL,
+    currency_code TEXT,
+    txn_date TEXT,
+    txn_status TEXT
+);
+
+CREATE TABLE IF NOT EXISTS payment_banks (
+    bank_id INTEGER NOT NULL,
+    subsidiary_id INTEGER NOT NULL,
+    bank_name TEXT,
+    swift_code TEXT,
+    country_code TEXT,
+    is_active INTEGER DEFAULT 1,
+    updated_date TEXT,
+    PRIMARY KEY (bank_id, subsidiary_id)
+);
+
+CREATE TABLE IF NOT EXISTS payment_banks_staging (
+    bank_id INTEGER NOT NULL,
+    subsidiary_id INTEGER NOT NULL,
+    bank_name TEXT,
+    swift_code TEXT,
+    country_code TEXT,
+    is_active INTEGER DEFAULT 1,
+    updated_date TEXT
+);
+
+-- ============================================================
+-- Payment Sales Agents (20 rows)
+-- Duplicate emails: sarah.cohen (1,6), david.levy (2,7),
+-- jessica.park (5,13), rachel.green (3,14), kevin.brown (15,19)
+-- Manager emails form a matching hierarchy for anti-join cascade
+-- ============================================================
+INSERT OR IGNORE INTO payment_sales_agents (person_id, full_name, email, subsidiary_id, manager_email, region, is_active, created_date) VALUES
+    (1,  'Sarah Cohen',    'sarah.cohen@nuvpay.com',     1, NULL,                            'EMEA',  1, '2021-03-15'),
+    (2,  'David Levy',     'david.levy@nuvpay.com',      1, 'sarah.cohen@nuvpay.com',        'EMEA',  1, '2021-06-01'),
+    (3,  'Rachel Green',   'rachel.green@nuvpay.com',    1, 'sarah.cohen@nuvpay.com',        'EMEA',  1, '2022-01-10'),
+    (4,  'Michael Ross',   'michael.ross@nuvpay.com',    2, 'david.levy@nuvpay.com',         'NA',    1, '2021-08-20'),
+    (5,  'Jessica Park',   'jessica.park@nuvpay.com',    2, NULL,                            'NA',    1, '2021-04-05'),
+    (6,  'Sarah Cohen',    'sarah.cohen@nuvpay.com',     3, NULL,                            'APAC',  1, '2022-06-01'),
+    (7,  'David Levy',     'david.levy@nuvpay.com',      3, 'sarah.cohen@nuvpay.com',        'APAC',  1, '2022-07-15'),
+    (8,  'Emma Watson',    'emma.watson@payflow.com',    3, 'jessica.park@nuvpay.com',       'APAC',  1, '2022-03-10'),
+    (9,  'James Chen',     'james.chen@payflow.com',     4, 'emma.watson@payflow.com',       'APAC',  1, '2022-09-01'),
+    (10, 'Maria Santos',   'maria.santos@payflow.com',   4, 'unknown.mgr@payflow.com',       'LATAM', 1, '2023-01-15'),
+    (11, 'Tom Wilson',     'tom.wilson@nuvpay.com',      1, 'rachel.green@nuvpay.com',       'EMEA',  1, '2022-05-20'),
+    (12, 'Ana Silva',      'ana.silva@payflow.com',      5, 'missing@other.com',             'LATAM', 1, '2023-03-01'),
+    (13, 'Jessica Park',   'jessica.park@nuvpay.com',    4, NULL,                            'APAC',  0, '2023-04-05'),
+    (14, 'Rachel Green',   'rachel.green@nuvpay.com',    2, 'sarah.cohen@nuvpay.com',        'NA',    1, '2023-01-10'),
+    (15, 'Kevin Brown',    'kevin.brown@acqpay.com',     5, NULL,                            'LATAM', 1, '2023-06-01'),
+    (16, 'Lisa Wang',      'lisa.wang@nuvpay.com',       1, 'tom.wilson@nuvpay.com',         'EMEA',  1, '2023-02-15'),
+    (17, 'Omar Hassan',    'omar.hassan@acqpay.com',     5, 'kevin.brown@acqpay.com',        'LATAM', 1, '2023-07-01'),
+    (18, 'Priya Sharma',   'priya.sharma@nuvpay.com',    3, NULL,                            'APAC',  1, '2023-04-10'),
+    (19, 'Kevin Brown',    'kevin.brown@acqpay.com',     2, NULL,                            'NA',    0, '2022-12-01'),
+    (20, 'Alex Turner',    'alex.turner@nuvpay.com',     1, 'non.existent@nuvpay.com',       'EMEA',  1, '2023-08-01');
+
+-- ============================================================
+-- Payment Clients (15 rows)
+-- Hierarchy via multi_client_id self-reference:
+--   GlobalPay Corp(1) → EU(2), UK(3)
+--   MerchantFlow(4) → Canada(5)
+--   PayRight(6) → NZ(7)
+--   QuickCharge(8) → MX(9)
+--   EuroMerchant(11) → AT(12)
+--   AsiaGate(13) → HK(14)
+-- ============================================================
+INSERT OR IGNORE INTO payment_clients (client_id, client_name, multi_client_id, sales_agent_id, country_code, region, client_status, onboarding_date) VALUES
+    (1,  'GlobalPay Corp',      NULL, 1,    'US', 'NA',    'active',    '2020-01-15'),
+    (2,  'GlobalPay EU',        1,    2,    'DE', 'EMEA',  'active',    '2020-06-01'),
+    (3,  'GlobalPay UK',        1,    3,    'GB', 'EMEA',  'active',    '2020-08-20'),
+    (4,  'MerchantFlow Inc',    NULL, 4,    'US', 'NA',    'active',    '2021-02-10'),
+    (5,  'MerchantFlow Canada', 4,    5,    'CA', 'NA',    'active',    '2021-05-15'),
+    (6,  'PayRight Ltd',        NULL, 8,    'AU', 'APAC',  'active',    '2021-09-01'),
+    (7,  'PayRight NZ',         6,    9,    'NZ', 'APAC',  'active',    '2022-01-10'),
+    (8,  'QuickCharge SA',      NULL, 10,   'BR', 'LATAM', 'active',    '2022-03-20'),
+    (9,  'QuickCharge MX',      8,    12,   'MX', 'LATAM', 'active',    '2022-07-01'),
+    (10, 'TechPay Solutions',   NULL, 11,   'IL', 'EMEA',  'suspended', '2020-11-05'),
+    (11, 'EuroMerchant GmbH',   NULL, 16,   'DE', 'EMEA',  'active',    '2023-01-15'),
+    (12, 'EuroMerchant AT',     11,   16,   'AT', 'EMEA',  'active',    '2023-04-01'),
+    (13, 'AsiaGate Payments',   NULL, 18,   'SG', 'APAC',  'active',    '2023-05-20'),
+    (14, 'AsiaGate HK',         13,   18,   'HK', 'APAC',  'pending',   '2023-09-01'),
+    (15, 'NordicPay AB',        NULL, NULL, 'SE', 'EMEA',  'inactive',  '2019-06-15');
+
+-- ============================================================
+-- Currency Rates (15 rows — 5 currencies × 3 months)
+-- ============================================================
+INSERT OR IGNORE INTO payment_currency_rates (rate_id, currency_code, rate_date, rate_to_usd) VALUES
+    (1,  'EUR', '2024-01-15', 1.0875),
+    (2,  'GBP', '2024-01-15', 1.2690),
+    (3,  'AUD', '2024-01-15', 0.6580),
+    (4,  'BRL', '2024-01-15', 0.2045),
+    (5,  'CAD', '2024-01-15', 0.7450),
+    (6,  'EUR', '2024-02-15', 1.0780),
+    (7,  'GBP', '2024-02-15', 1.2610),
+    (8,  'AUD', '2024-02-15', 0.6520),
+    (9,  'BRL', '2024-02-15', 0.2010),
+    (10, 'CAD', '2024-02-15', 0.7410),
+    (11, 'EUR', '2024-03-15', 1.0920),
+    (12, 'GBP', '2024-03-15', 1.2750),
+    (13, 'AUD', '2024-03-15', 0.6610),
+    (14, 'BRL', '2024-03-15', 0.1980),
+    (15, 'CAD', '2024-03-15', 0.7390);
+
+-- ============================================================
+-- Payment Transactions (20 rows)
+-- Mix of currencies, statuses, and clients for conversion queries
+-- USD transactions don't need conversion (rate = 1.0)
+-- ============================================================
+INSERT OR IGNORE INTO payment_transactions (txn_id, client_id, amount, currency_code, txn_date, txn_status) VALUES
+    (1,  1,  15000.00, 'USD', '2024-01-10', 'approved'),
+    (2,  2,  12500.00, 'EUR', '2024-01-15', 'approved'),
+    (3,  3,   8750.00, 'GBP', '2024-01-18', 'approved'),
+    (4,  4,  22000.00, 'USD', '2024-01-22', 'approved'),
+    (5,  5,   5400.00, 'CAD', '2024-01-25', 'declined'),
+    (6,  6,  18200.00, 'AUD', '2024-02-01', 'approved'),
+    (7,  7,   3100.00, 'AUD', '2024-02-05', 'approved'),
+    (8,  8,  45000.00, 'BRL', '2024-02-10', 'approved'),
+    (9,  9,  28000.00, 'BRL', '2024-02-15', 'approved'),
+    (10, 1,  17500.00, 'USD', '2024-02-18', 'approved'),
+    (11, 2,   9800.00, 'EUR', '2024-02-20', 'approved'),
+    (12, 10,  6200.00, 'USD', '2024-03-01', 'chargeback'),
+    (13, 11, 14300.00, 'EUR', '2024-03-05', 'approved'),
+    (14, 3,  11200.00, 'GBP', '2024-03-10', 'approved'),
+    (15, 6,  21500.00, 'AUD', '2024-03-15', 'approved'),
+    (16, 4,  19000.00, 'USD', '2024-03-18', 'approved'),
+    (17, 8,  38000.00, 'BRL', '2024-03-20', 'declined'),
+    (18, 13,  7600.00, 'USD', '2024-03-22', 'approved'),
+    (19, 5,   4200.00, 'CAD', '2024-03-25', 'approved'),
+    (20, 12,  8900.00, 'EUR', '2024-03-28', 'approved');
+
+-- ============================================================
+-- Payment Banks — target table (7 rows, composite PK)
+-- ============================================================
+INSERT OR IGNORE INTO payment_banks (bank_id, subsidiary_id, bank_name, swift_code, country_code, is_active, updated_date) VALUES
+    (1, 1, 'First National Bank',  'FNBKUS33', 'US', 1, '2024-01-01'),
+    (2, 1, 'Chase Manhattan',      'CHASUS33', 'US', 1, '2024-01-01'),
+    (3, 2, 'Deutsche Bank',        'DEUTDEFF', 'DE', 1, '2024-01-01'),
+    (4, 2, 'Barclays UK',          'BARCGB22', 'GB', 1, '2024-01-01'),
+    (5, 3, 'ANZ Bank',             'ANZBAU3M', 'AU', 1, '2024-01-01'),
+    (6, 4, 'Banco do Brasil',      'BRASBRRJ', 'BR', 1, '2024-01-01'),
+    (7, 5, 'Santander',            'BSCHESMM', 'ES', 0, '2023-06-15');
+
+-- ============================================================
+-- Payment Banks Staging — incoming changes (5 rows: 3 updates, 2 new)
+-- ============================================================
+INSERT OR IGNORE INTO payment_banks_staging (bank_id, subsidiary_id, bank_name, swift_code, country_code, is_active, updated_date) VALUES
+    (3, 2, 'Deutsche Bank AG',     'DEUTDEFF', 'DE', 1, '2024-03-01'),
+    (5, 3, 'ANZ Banking Group',    'ANZBAU3M', 'AU', 1, '2024-03-01'),
+    (7, 5, 'Santander Group',      'BSCHESMM', 'ES', 1, '2024-03-01'),
+    (8, 1, 'Wells Fargo',          'WFBIUS6S', 'US', 1, '2024-03-01'),
+    (9, 4, 'Itau Unibanco',        'ITAUBRSP', 'BR', 1, '2024-03-01');
