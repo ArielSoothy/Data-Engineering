@@ -62,38 +62,41 @@ const TabNavigation = () => {
       {/* Desktop navigation */}
       <div className="hidden md:flex border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4">
-          <div className="flex overflow-x-auto">
-            {/* Brand */}
-            <div className="flex items-center px-4 py-3 mr-2 shrink-0 gap-2 border-b-2 border-transparent">
-              <GraduationCap size={20} className="text-blue-500 dark:text-blue-400" />
-              <span className="font-bold text-base tracking-tight text-gray-800 dark:text-gray-100">
-                DE Prep
-              </span>
+          <div className="flex items-stretch">
+            {/* Scrollable tabs area */}
+            <div className="flex overflow-x-auto min-w-0">
+              {/* Brand */}
+              <div className="flex items-center px-4 py-3 mr-2 shrink-0 gap-2 border-b-2 border-transparent">
+                <GraduationCap size={20} className="text-blue-500 dark:text-blue-400" />
+                <span className="font-bold text-base tracking-tight text-gray-800 dark:text-gray-100">
+                  DE Prep
+                </span>
+              </div>
+
+              {/* Divider */}
+              <div className="my-2 w-px bg-gray-200 dark:bg-gray-700 shrink-0" />
+
+              {primaryTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabClick(tab)}
+                  className={`flex items-center px-4 py-3 whitespace-nowrap border-b-2 font-medium text-sm ${
+                    activeTab.id === tab.id
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <span className="mr-2">{tab.icon}</span>
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            {/* Divider */}
-            <div className="my-2 w-px bg-gray-200 dark:bg-gray-700 shrink-0" />
-
-            {primaryTabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab)}
-                className={`flex items-center px-4 py-3 whitespace-nowrap border-b-2 font-medium text-sm ${
-                  activeTab.id === tab.id
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-
-            {/* More dropdown */}
-            <div className="relative">
+            {/* More dropdown — outside overflow container */}
+            <div className="relative shrink-0">
               <button
                 onClick={() => setDrawerOpen(!drawerOpen)}
-                className={`flex items-center px-4 py-3 whitespace-nowrap border-b-2 font-medium text-sm ${
+                className={`flex items-center px-4 py-3 whitespace-nowrap border-b-2 font-medium text-sm h-full ${
                   drawerOpen || !primaryTabs.some(p => p.id === activeTab.id)
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -103,36 +106,41 @@ const TabNavigation = () => {
                 More
               </button>
               {drawerOpen && (
-                <div className="absolute top-full right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 py-1">
-                  {secondaryTabs.map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabClick(tab)}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                        activeTab.id === tab.id
-                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {tab.icon}
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setDrawerOpen(false)} />
+                  <div className="absolute top-full right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 py-1">
+                    {secondaryTabs.map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => handleTabClick(tab)}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                          activeTab.id === tab.id
+                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {tab.icon}
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
-            {/* Dark mode */}
-            <button
-              onClick={toggleDarkMode}
-              className="ml-auto flex items-center px-3 py-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              aria-label="Toggle dark mode"
-            >
-              {preferences.darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            {!isOnline && (
-              <div className="flex items-center text-xs text-yellow-500 px-2">Offline</div>
-            )}
+            {/* Dark mode + status */}
+            <div className="ml-auto flex items-center shrink-0">
+              <button
+                onClick={toggleDarkMode}
+                className="flex items-center px-3 py-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                aria-label="Toggle dark mode"
+              >
+                {preferences.darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              {!isOnline && (
+                <div className="flex items-center text-xs text-yellow-500 px-2">Offline</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
