@@ -5,7 +5,7 @@ import {
   LayoutDashboard, BarChart, Cloud,
   Video, Book, Moon, Sun, GraduationCap,
   Briefcase, Menu, X,
-  Zap, Code2, Target
+  Zap, Code2, Target, FileText
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -42,6 +42,7 @@ const TabNavigation = () => {
     { id: 'decomposition', label: 'Product Sense', icon: <BarChart size={20} />, path: '/decomposition' },
     { id: 'tech-stack', label: 'Meta Tech Stack', icon: <Cloud size={20} />, path: '/tech-stack' },
     { id: 'mock-interview', label: 'Mock Interview', icon: <Video size={20} />, path: '/mock-interview' },
+    { id: 'cheat-sheet', label: 'Cheat Sheet', icon: <FileText size={20} />, path: '/cheat-sheet' },
     { id: 'glossary', label: 'Glossary', icon: <Book size={20} />, path: '/glossary' },
   ];
 
