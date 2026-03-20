@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Layers, Zap, HelpCircle, Puzzle } from 'lucide-react';
+import { Layers, Zap, HelpCircle, Puzzle, ChevronDown, Check } from 'lucide-react';
 import { Spinner, Badge, ProgressBar } from '../ui';
 import { useUnifiedQuestions } from '../../hooks/useUnifiedQuestions';
 import { useAppContext } from '../../context/AppContext';
@@ -140,6 +140,43 @@ export default function QuickMode() {
     { value: 'Hard', label: `Hard (${subjectFiltered.filter(q => q.difficulty === 'Hard').length})`, color: 'red' },
   ];
 
+  const [topicOpen, setTopicOpen] = useState(false);
+  const topicRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!topicOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (topicRef.current && !topicRef.current.contains(e.target as Node)) setTopicOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [topicOpen]);
+
+  // Group topics by SQL vs Python for the dropdown
+  const groupedTopics = useMemo(() => {
+    const sqlTopics = getTopicsForSubject('sql');
+    const pyTopics = getTopicsForSubject('python');
+    const topicMap = new Map(availableTopics.map(t => [t.name, t.count]));
+
+    const sqlGroup = sqlTopics
+      .filter(t => topicMap.has(t))
+      .map(t => ({ name: t, count: topicMap.get(t)! }));
+    const pyGroup = pyTopics
+      .filter(t => topicMap.has(t))
+      .map(t => ({ name: t, count: topicMap.get(t)! }));
+
+    // Catch any topics not in canonical lists
+    const known = new Set([...sqlTopics, ...pyTopics]);
+    const other = availableTopics.filter(t => !known.has(t.name));
+
+    return { sql: sqlGroup, python: pyGroup, other };
+  }, [availableTopics]);
+
+  const topicLabel = topic === 'all'
+    ? `All Topics (${diffFiltered.length})`
+    : `${topic} (${availableTopics.find(t => t.name === topic)?.count ?? 0})`;
+
   const modeTabs: { value: QuickModeType; label: string; icon: React.ReactNode }[] = [
     { value: 'flashcard', label: 'Flashcard', icon: <Layers size={16} /> },
     { value: 'quiz', label: 'Quiz', icon: <HelpCircle size={16} /> },
@@ -155,13 +192,14 @@ export default function QuickMode() {
         <Badge variant="info">{stats.mastered}/{stats.total} mastered</Badge>
       </div>
 
-      {/* Subject tabs */}
-      <div className="flex gap-2 mb-4">
+      {/* Filters row: Subject + Difficulty + Topic — all compact */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        {/* Subject pills */}
         {subjectTabs.map(t => (
           <button
             key={t.value}
             onClick={() => handleSubject(t.value)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${
               subject === t.value
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -170,10 +208,11 @@ export default function QuickMode() {
             {t.label}
           </button>
         ))}
-      </div>
 
-      {/* Difficulty filter */}
-      <div className="flex gap-2 mb-4">
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 hidden sm:block" />
+
+        {/* Difficulty pills */}
         {diffTabs.map(d => {
           const active = difficulty === d.value;
           const colors: Record<string, string> = {
@@ -186,7 +225,7 @@ export default function QuickMode() {
             <button
               key={d.value}
               onClick={() => handleDifficulty(d.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${
                 colors[d.color] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
@@ -196,31 +235,102 @@ export default function QuickMode() {
         })}
       </div>
 
-      {/* Topic pills */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      {/* Topic dropdown */}
+      <div className="relative mb-4" ref={topicRef}>
         <button
-          onClick={() => handleTopic('all')}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-            topic === 'all'
-              ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-300 dark:ring-blue-700'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+          onClick={() => setTopicOpen(o => !o)}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors min-h-[48px] ${
+            topic !== 'all'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-800'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
           }`}
         >
-          All Topics
+          <span>{topicLabel}</span>
+          <ChevronDown size={18} className={`transition-transform ${topicOpen ? 'rotate-180' : ''}`} />
         </button>
-        {availableTopics.map(t => (
-          <button
-            key={t.name}
-            onClick={() => handleTopic(t.name)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              topic === t.name
-                ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-300 dark:ring-blue-700'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            {t.name} ({t.count})
-          </button>
-        ))}
+
+        {topicOpen && (
+          <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-h-[60vh] overflow-y-auto">
+            {/* All Topics option */}
+            <button
+              onClick={() => { handleTopic('all'); setTopicOpen(false); }}
+              className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium border-b border-gray-100 dark:border-gray-700 ${
+                topic === 'all' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span>All Topics</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">{diffFiltered.length}</span>
+                {topic === 'all' && <Check size={16} className="text-blue-500" />}
+              </div>
+            </button>
+
+            {/* SQL topics */}
+            {groupedTopics.sql.length > 0 && (
+              <>
+                <div className="px-4 py-2 text-[10px] font-bold tracking-[0.2em] text-blue-500 uppercase bg-gray-50 dark:bg-gray-900/50 sticky top-0">
+                  SQL
+                </div>
+                {groupedTopics.sql.map(t => (
+                  <button
+                    key={t.name}
+                    onClick={() => { handleTopic(t.name); setTopicOpen(false); }}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-sm ${
+                      topic === t.name ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <span>{t.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">{t.count}</span>
+                      {topic === t.name && <Check size={16} className="text-blue-500" />}
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Python topics */}
+            {groupedTopics.python.length > 0 && (
+              <>
+                <div className="px-4 py-2 text-[10px] font-bold tracking-[0.2em] text-green-500 uppercase bg-gray-50 dark:bg-gray-900/50 sticky top-0">
+                  Python
+                </div>
+                {groupedTopics.python.map(t => (
+                  <button
+                    key={t.name}
+                    onClick={() => { handleTopic(t.name); setTopicOpen(false); }}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-sm ${
+                      topic === t.name ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <span>{t.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">{t.count}</span>
+                      {topic === t.name && <Check size={16} className="text-blue-500" />}
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Other topics */}
+            {groupedTopics.other.length > 0 && groupedTopics.other.map(t => (
+              <button
+                key={t.name}
+                onClick={() => { handleTopic(t.name); setTopicOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 text-sm ${
+                  topic === t.name ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                <span>{t.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">{t.count}</span>
+                  {topic === t.name && <Check size={16} className="text-blue-500" />}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Mode tabs */}

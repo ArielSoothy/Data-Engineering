@@ -16,17 +16,13 @@ const Trivia = lazy(() => import('./components/tabs/Trivia'));
 const Glossary = lazy(() => import('./components/tabs/Glossary'));
 const Decomposition = lazy(() => import('./components/tabs/Decomposition'));
 const MetaTechStack = lazy(() => import('./components/tabs/MetaTechStack'));
-const MockInterview = lazy(() => import('./components/tabs/MockInterview'));
 const MyProjects = lazy(() => import('./components/tabs/MyProjects'));
 const AdaptivePractice = lazy(() => import('./components/tabs/AdaptivePractice'));
 const MetaOfficial = lazy(() => import('./components/tabs/MetaOfficial'));
 const QuickDrill = lazy(() => import('./components/tabs/QuickDrill'));
-const TimedAssessment = lazy(() => import('./components/tabs/TimedAssessment'));
-const DailyAssessment = lazy(() => import('./components/tabs/DailyAssessment'));
 const StudyHub = lazy(() => import('./components/study-hub/StudyHub'));
 const QuickMode = lazy(() => import('./components/quick-mode/QuickMode'));
 const DeepMode = lazy(() => import('./components/deep-mode/DeepMode'));
-const PracticeHub = lazy(() => import('./components/practice/PracticeHub'));
 const CheatSheet = lazy(() => import('./components/tabs/CheatSheet'));
 const ApiTest = lazy(() => import('./components/ApiTest').then(m => ({ default: m.ApiTest })));
 const ApiDiagnostic = lazy(() => import('./components/ApiDiagnostic').then(m => ({ default: m.ApiDiagnostic })));
@@ -71,15 +67,9 @@ function App() {
                 <Route path="/glossary" element={<Glossary />} />
                 <Route path="/decomposition" element={<Decomposition />} />
                 <Route path="/tech-stack" element={<MetaTechStack />} />
-                <Route path="/mock-interview" element={<MockInterview />} />
                 <Route path="/my-projects" element={<MyProjects />} />
                 <Route path="/meta-official" element={<MetaOfficial />} />
                 <Route path="/quick-drill" element={<QuickDrill />} />
-                <Route path="/practice" element={<PracticeHub />} />
-                <Route path="/practice/timed" element={<TimedAssessment />} />
-                <Route path="/practice/daily" element={<DailyAssessment />} />
-                <Route path="/timed-assessment" element={<TimedAssessment />} />
-                <Route path="/daily-assessment" element={<DailyAssessment />} />
                 <Route path="/quick" element={<QuickMode />} />
                 <Route path="/deep" element={<DeepMode />} />
                 <Route path="/cheat-sheet" element={<CheatSheet />} />

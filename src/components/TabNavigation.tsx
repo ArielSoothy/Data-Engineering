@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import {
   LayoutDashboard, BarChart, Cloud,
-  Video, Book, Moon, Sun, GraduationCap,
+  Book, Moon, Sun, GraduationCap,
   Briefcase, Menu, X,
-  Zap, Code2, Target, FileText
+  Zap, Code2, FileText
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -29,7 +29,7 @@ const TabNavigation = () => {
     { id: 'dashboard', label: 'Home', icon: <LayoutDashboard size={20} />, path: '/' },
     { id: 'quick', label: 'Quick', icon: <Zap size={20} />, path: '/quick' },
     { id: 'deep', label: 'Deep', icon: <Code2 size={20} />, path: '/deep' },
-    { id: 'practice', label: 'Practice', icon: <Target size={20} />, path: '/practice' },
+    { id: 'cheat-sheet', label: 'Cheat', icon: <FileText size={20} />, path: '/cheat-sheet' },
   ];
 
   // All tabs for desktop and More drawer
@@ -37,12 +37,10 @@ const TabNavigation = () => {
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
     { id: 'quick', label: 'Quick Mode', icon: <Zap size={20} />, path: '/quick' },
     { id: 'deep', label: 'Deep Mode', icon: <Code2 size={20} />, path: '/deep' },
-    { id: 'practice', label: 'Practice', icon: <Target size={20} />, path: '/practice' },
+    { id: 'cheat-sheet', label: 'Cheat Sheet', icon: <FileText size={20} />, path: '/cheat-sheet' },
     { id: 'my-projects', label: 'My Projects', icon: <Briefcase size={20} />, path: '/my-projects' },
     { id: 'decomposition', label: 'Product Sense', icon: <BarChart size={20} />, path: '/decomposition' },
     { id: 'tech-stack', label: 'Meta Tech Stack', icon: <Cloud size={20} />, path: '/tech-stack' },
-    { id: 'mock-interview', label: 'Mock Interview', icon: <Video size={20} />, path: '/mock-interview' },
-    { id: 'cheat-sheet', label: 'Cheat Sheet', icon: <FileText size={20} />, path: '/cheat-sheet' },
     { id: 'glossary', label: 'Glossary', icon: <Book size={20} />, path: '/glossary' },
   ];
 

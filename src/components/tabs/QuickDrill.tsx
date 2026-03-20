@@ -12,6 +12,7 @@ interface DrillCard {
   q: string;
   a: string;
   difficulty: number;
+  trigger?: string;
 }
 
 interface CardProgress {
@@ -580,6 +581,16 @@ export default function QuickDrill() {
           onClick={() => setShowAnswer(true)}
           className="min-h-[180px] relative"
         >
+          {currentCard.trigger && (
+            <div className="mb-3 pb-2 border-b border-amber-200 dark:border-amber-800/40">
+              <p className="text-[10px] font-bold tracking-[0.2em] text-amber-500 dark:text-amber-400 uppercase mb-1">
+                QUESTION TRIGGER
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-300 italic">
+                {currentCard.trigger}
+              </p>
+            </div>
+          )}
           <p className="text-xs font-extrabold tracking-[0.15em] text-blue-500 dark:text-blue-400 mb-2">
             Q
           </p>
@@ -677,6 +688,16 @@ export default function QuickDrill() {
 
         {/* Question */}
         <Card padding="lg" className="mb-4">
+          {currentCard.trigger && (
+            <div className="mb-3 pb-2 border-b border-amber-200 dark:border-amber-800/40">
+              <p className="text-[10px] font-bold tracking-[0.2em] text-amber-500 dark:text-amber-400 uppercase mb-1">
+                QUESTION TRIGGER
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-300 italic">
+                {currentCard.trigger}
+              </p>
+            </div>
+          )}
           <p className="text-xs font-extrabold tracking-[0.15em] text-purple-500 dark:text-purple-400 mb-2">
             ARRANGE THE CODE
           </p>
