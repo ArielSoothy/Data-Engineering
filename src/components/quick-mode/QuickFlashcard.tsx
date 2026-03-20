@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { createEmptyCard, fsrs, Rating, State, type Card as FSRSCard, type Grade } from 'ts-fsrs';
-import { SkipForward, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SkipForward, RotateCcw, ChevronLeft, ChevronRight, List, X, CheckCircle } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { pushProgressDebounced } from '../../services/progressSync';
 import { useAppContext } from '../../context/AppContext';
@@ -68,13 +68,13 @@ function getFsrsKey(q: UnifiedQuestion): string {
   return q.source === 'quickDrill' ? FSRS_KEY_DRILL : FSRS_KEY_HUB;
 }
 
-// --- Session persistence (survives refresh, not tab close) ---
+// --- Session persistence (localStorage — survives browser close) ---
 const FC_SESSION_KEY = 'quick_flashcard_session';
 interface FCSession { currentIndex: number; stats: { correct: number; wrong: number; seen: number }; deckLen: number }
 
-function saveFCSession(s: FCSession) { try { sessionStorage.setItem(FC_SESSION_KEY, JSON.stringify(s)); } catch {} }
-function loadFCSession(): FCSession | null { try { const r = sessionStorage.getItem(FC_SESSION_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
-function clearFCSession() { sessionStorage.removeItem(FC_SESSION_KEY); }
+function saveFCSession(s: FCSession) { try { localStorage.setItem(FC_SESSION_KEY, JSON.stringify(s)); } catch {} }
+function loadFCSession(): FCSession | null { try { const r = localStorage.getItem(FC_SESSION_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
+function clearFCSession() { localStorage.removeItem(FC_SESSION_KEY); }
 
 // --- Component ---
 
@@ -88,6 +88,18 @@ export default function QuickFlashcard({ questions }: Props) {
   const [showAnswer, setShowAnswer] = useState(false);
   const [stats, setStats] = useState(() => { const s = loadFCSession(); return s ? s.stats : { correct: 0, wrong: 0, seen: 0 }; });
   const [done, setDone] = useState(false);
+  const [jumpOpen, setJumpOpen] = useState(false);
+  const [jumpValue, setJumpValue] = useState('');
+  const [listOpen, setListOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  const activeItemRef = useRef<HTMLButtonElement>(null);
+
+  // Scroll active question into view when list opens
+  useEffect(() => {
+    if (listOpen && activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, [listOpen]);
 
   // Build deck: due → new → scheduled
   const deck = useMemo(() => {
@@ -215,113 +227,210 @@ export default function QuickFlashcard({ questions }: Props) {
     setStats(s => { saveFCSession({ currentIndex: clamped, stats: s, deckLen: deck.length }); return s; });
   };
 
-  const [jumpOpen, setJumpOpen] = useState(false);
-  const [jumpValue, setJumpValue] = useState('');
+  // Get mastery status for each question
+  const getMastery = (q: UnifiedQuestion) => {
+    const s = q.source === 'quickDrill' ? drillFsrs : hubFsrs;
+    const fc = s[getFsrsId(q)];
+    if (!fc) return 'new';
+    if (fc.state === State.Review) return 'mastered';
+    return 'learning';
+  };
 
   return (
-    <div className="max-w-lg mx-auto">
-      {/* Navigation + Progress */}
-      <div className="flex items-center gap-2 mb-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => goTo(currentIndex - 1)}
-          disabled={currentIndex === 0}
-          className="!p-2 !min-h-0"
-        >
-          <ChevronLeft size={18} />
-        </Button>
-
-        <div className="flex-1">
-          <div className="flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-1">
-            <button
-              onClick={() => { setJumpOpen(true); setJumpValue(String(currentIndex + 1)); }}
-              className="font-bold text-sm text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-            >
-              {currentIndex + 1} / {deck.length}
-            </button>
-            <span className="text-amber-500">{dueCount} due</span>
-            <span className="text-blue-500">{newCount} new</span>
+    <div className="flex gap-4 max-w-4xl mx-auto relative">
+      {/* Question List — desktop sidebar */}
+      <div className="hidden lg:block w-64 shrink-0">
+        <Card padding="none" className="sticky top-4 max-h-[80vh] overflow-hidden flex flex-col">
+          <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
+            <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Questions</span>
+            <span className="text-xs text-gray-400">{currentIndex + 1}/{deck.length}</span>
           </div>
-          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500 transition-all" style={{ width: `${((currentIndex + 1) / deck.length) * 100}%` }} />
+          <div className="overflow-y-auto flex-1">
+            {deck.map((q, i) => {
+              const mastery = getMastery(q);
+              return (
+                <button
+                  key={q.uid}
+                  ref={i === currentIndex ? activeItemRef : undefined}
+                  onClick={() => goTo(i)}
+                  className={`w-full text-left px-3 py-2 text-xs border-b border-gray-50 dark:border-gray-800 flex items-center gap-2 transition-colors ${
+                    i === currentIndex
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                  }`}
+                >
+                  <span className="w-5 shrink-0 text-right text-gray-400">{i + 1}</span>
+                  {mastery === 'mastered' ? (
+                    <CheckCircle size={12} className="shrink-0 text-green-500" />
+                  ) : mastery === 'learning' ? (
+                    <div className="w-3 h-3 rounded-full bg-yellow-400 shrink-0" />
+                  ) : (
+                    <div className="w-3 h-3 rounded-full border border-gray-300 dark:border-gray-600 shrink-0" />
+                  )}
+                  <span className="truncate">{q.question.slice(0, 50)}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => goTo(currentIndex + 1)}
-          disabled={currentIndex >= deck.length - 1}
-          className="!p-2 !min-h-0"
-        >
-          <ChevronRight size={18} />
-        </Button>
+        </Card>
       </div>
 
-      {/* Jump-to dialog */}
-      {jumpOpen && (
-        <div className="mb-4 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-3">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Go to:</span>
-          <input
-            type="number"
-            min={1}
-            max={deck.length}
-            value={jumpValue}
-            onChange={e => setJumpValue(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') { goTo(Number(jumpValue) - 1); setJumpOpen(false); }
-              if (e.key === 'Escape') setJumpOpen(false);
-            }}
-            autoFocus
-            className="w-16 px-2 py-1 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-center text-sm"
-          />
-          <span className="text-xs text-gray-400">/ {deck.length}</span>
-          <Button size="sm" variant="primary" onClick={() => { goTo(Number(jumpValue) - 1); setJumpOpen(false); }}>Go</Button>
-          <Button size="sm" variant="ghost" onClick={() => setJumpOpen(false)}>Cancel</Button>
+      {/* Mobile question list toggle + drawer */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setListOpen(true)}
+        className="lg:hidden fixed bottom-20 right-4 z-30 !rounded-full !p-3 !min-h-0 shadow-lg !bg-white dark:!bg-gray-800 border border-gray-200 dark:border-gray-700"
+      >
+        <List size={20} />
+      </Button>
+
+      {listOpen && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setListOpen(false)} />
+          <div ref={listRef} className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-2xl max-h-[70vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="font-bold text-sm">Questions ({deck.length})</h3>
+              <Button variant="ghost" size="sm" onClick={() => setListOpen(false)} className="!p-1 !min-h-0">
+                <X size={18} />
+              </Button>
+            </div>
+            <div className="overflow-y-auto flex-1 pb-safe">
+              {deck.map((q, i) => {
+                const mastery = getMastery(q);
+                return (
+                  <button
+                    key={q.uid}
+                    ref={i === currentIndex ? activeItemRef : undefined}
+                    onClick={() => { goTo(i); setListOpen(false); }}
+                    className={`w-full text-left px-4 py-3 text-sm border-b border-gray-50 dark:border-gray-800 flex items-center gap-3 ${
+                      i === currentIndex
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-400'
+                    }`}
+                  >
+                    <span className="w-6 shrink-0 text-right text-gray-400 text-xs">{i + 1}</span>
+                    {mastery === 'mastered' ? (
+                      <CheckCircle size={14} className="shrink-0 text-green-500" />
+                    ) : mastery === 'learning' ? (
+                      <div className="w-3.5 h-3.5 rounded-full bg-yellow-400 shrink-0" />
+                    ) : (
+                      <div className="w-3.5 h-3.5 rounded-full border border-gray-300 dark:border-gray-600 shrink-0" />
+                    )}
+                    <span className="truncate">{q.question.slice(0, 60)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Flashcard */}
-      <Card padding="lg" className="min-h-[280px] flex flex-col">
-        <div className="flex items-center gap-2 mb-3">
-          <Badge variant={current.difficulty === 'Easy' ? 'success' : current.difficulty === 'Medium' ? 'warning' : 'danger'}>
-            {current.difficulty}
-          </Badge>
-          {current.topic && <Badge variant="info">{current.topic}</Badge>}
-          <Badge variant={stateLabel === 'New' ? 'info' : stateLabel === 'Review' ? 'success' : 'warning'}>{stateLabel}</Badge>
-        </div>
+      {/* Main flashcard area */}
+      <div className="flex-1 min-w-0">
+        {/* Navigation + Progress */}
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => goTo(currentIndex - 1)}
+            disabled={currentIndex === 0}
+            className="!p-2 !min-h-0"
+          >
+            <ChevronLeft size={18} />
+          </Button>
 
-        <div className="flex-1">
-          <p className="text-gray-900 dark:text-gray-100 font-medium whitespace-pre-wrap">{current.question}</p>
-          {showAnswer && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg overflow-x-auto">
-                {current.answer}
-              </pre>
+          <div className="flex-1">
+            <div className="flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <button
+                onClick={() => { setJumpOpen(true); setJumpValue(String(currentIndex + 1)); }}
+                className="font-bold text-sm text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+              >
+                {currentIndex + 1} / {deck.length}
+              </button>
+              <span className="text-amber-500">{dueCount} due</span>
+              <span className="text-blue-500">{newCount} new</span>
             </div>
-          )}
+            <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-500 transition-all" style={{ width: `${((currentIndex + 1) / deck.length) * 100}%` }} />
+            </div>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => goTo(currentIndex + 1)}
+            disabled={currentIndex >= deck.length - 1}
+            className="!p-2 !min-h-0"
+          >
+            <ChevronRight size={18} />
+          </Button>
         </div>
 
-        {/* Actions */}
-        {!showAnswer ? (
-          <div className="flex gap-3 mt-4">
-            <Button variant="primary" size="lg" className="flex-1" onClick={() => setShowAnswer(true)}>
-              Show Answer
-            </Button>
-            <Button variant="ghost" size="lg" onClick={advance} icon={<SkipForward size={16} />}>
-              Skip
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-2 mt-4">
-            <Button variant="danger" size="md" className="flex-1" onClick={() => markCard(Rating.Again)}>Again</Button>
-            <Button variant="secondary" size="md" className="flex-1 !bg-orange-50 dark:!bg-orange-900/20 !text-orange-600 dark:!text-orange-400 hover:!bg-orange-100" onClick={() => markCard(Rating.Hard)}>Hard</Button>
-            <Button variant="secondary" size="md" className="flex-1 !bg-green-50 dark:!bg-green-900/20 !text-green-600 dark:!text-green-400 hover:!bg-green-100" onClick={() => markCard(Rating.Good)}>Good</Button>
-            <Button variant="primary" size="md" className="flex-1" onClick={() => markCard(Rating.Easy)}>Easy</Button>
+        {/* Jump-to dialog */}
+        {jumpOpen && (
+          <div className="mb-4 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-3">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Go to:</span>
+            <input
+              type="number"
+              min={1}
+              max={deck.length}
+              value={jumpValue}
+              onChange={e => setJumpValue(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { goTo(Number(jumpValue) - 1); setJumpOpen(false); }
+                if (e.key === 'Escape') setJumpOpen(false);
+              }}
+              autoFocus
+              className="w-16 px-2 py-1 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-center text-sm"
+            />
+            <span className="text-xs text-gray-400">/ {deck.length}</span>
+            <Button size="sm" variant="primary" onClick={() => { goTo(Number(jumpValue) - 1); setJumpOpen(false); }}>Go</Button>
+            <Button size="sm" variant="ghost" onClick={() => setJumpOpen(false)}>Cancel</Button>
           </div>
         )}
-      </Card>
+
+        {/* Flashcard */}
+        <Card padding="lg" className="min-h-[280px] flex flex-col">
+          <div className="flex items-center gap-2 mb-3">
+            <Badge variant={current.difficulty === 'Easy' ? 'success' : current.difficulty === 'Medium' ? 'warning' : 'danger'}>
+              {current.difficulty}
+            </Badge>
+            {current.topic && <Badge variant="info">{current.topic}</Badge>}
+            <Badge variant={stateLabel === 'New' ? 'info' : stateLabel === 'Review' ? 'success' : 'warning'}>{stateLabel}</Badge>
+          </div>
+
+          <div className="flex-1">
+            <p className="text-gray-900 dark:text-gray-100 font-medium whitespace-pre-wrap">{current.question}</p>
+            {showAnswer && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg overflow-x-auto">
+                  {current.answer}
+                </pre>
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          {!showAnswer ? (
+            <div className="flex gap-3 mt-4">
+              <Button variant="primary" size="lg" className="flex-1" onClick={() => setShowAnswer(true)}>
+                Show Answer
+              </Button>
+              <Button variant="ghost" size="lg" onClick={advance} icon={<SkipForward size={16} />}>
+                Skip
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2 mt-4">
+              <Button variant="danger" size="md" className="flex-1" onClick={() => markCard(Rating.Again)}>Again</Button>
+              <Button variant="secondary" size="md" className="flex-1 !bg-orange-50 dark:!bg-orange-900/20 !text-orange-600 dark:!text-orange-400 hover:!bg-orange-100" onClick={() => markCard(Rating.Hard)}>Hard</Button>
+              <Button variant="secondary" size="md" className="flex-1 !bg-green-50 dark:!bg-green-900/20 !text-green-600 dark:!text-green-400 hover:!bg-green-100" onClick={() => markCard(Rating.Good)}>Good</Button>
+              <Button variant="primary" size="md" className="flex-1" onClick={() => markCard(Rating.Easy)}>Easy</Button>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
