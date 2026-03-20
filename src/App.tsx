@@ -24,6 +24,7 @@ const StudyHub = lazy(() => import('./components/study-hub/StudyHub'));
 const QuickMode = lazy(() => import('./components/quick-mode/QuickMode'));
 const DeepMode = lazy(() => import('./components/deep-mode/DeepMode'));
 const CheatSheet = lazy(() => import('./components/tabs/CheatSheet'));
+const LeetCodePractice = lazy(() => import('./components/tabs/LeetCodePractice'));
 const ApiTest = lazy(() => import('./components/ApiTest').then(m => ({ default: m.ApiTest })));
 const ApiDiagnostic = lazy(() => import('./components/ApiDiagnostic').then(m => ({ default: m.ApiDiagnostic })));
 
@@ -73,6 +74,7 @@ function App() {
                 <Route path="/quick" element={<QuickMode />} />
                 <Route path="/deep" element={<DeepMode />} />
                 <Route path="/cheat-sheet" element={<CheatSheet />} />
+                <Route path="/code-practice" element={<LeetCodePractice />} />
                 <Route path="/study" element={<StudyHub />} />
                 <Route path="/api-test" element={<ApiTest />} />
                 <Route path="/api-diagnostic" element={<ApiDiagnostic />} />
