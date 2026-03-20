@@ -326,7 +326,7 @@ export default function QuickFlashcard({ questions }: Props) {
       </div>
 
       {/* Main flashcard area */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 w-full lg:w-auto">
         {/* Navigation + Progress */}
         <div className="flex items-center gap-2 mb-4">
           <Button
