@@ -31,6 +31,18 @@ export default function QuickMode() {
   const [topic, setTopic] = useState(initialTopic);
   const [difficulty, setDifficulty] = useState<DifficultyFilter>((searchParams.get('difficulty') as DifficultyFilter) || 'all');
   const [mode, setMode] = useState<QuickModeType>(initialMode);
+  const [topicOpen, setTopicOpen] = useState(false);
+  const topicRef = useRef<HTMLDivElement>(null);
+
+  // Close topic dropdown on outside click
+  useEffect(() => {
+    if (!topicOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (topicRef.current && !topicRef.current.contains(e.target as Node)) setTopicOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [topicOpen]);
 
   // Sync to URL
   const updateParams = (s: SubjectFilter, t: string, d: DifficultyFilter, m: QuickModeType) => {
@@ -124,6 +136,29 @@ export default function QuickMode() {
     };
   }, [filtered, progress]);
 
+  // Group topics by SQL vs Python for the dropdown
+  const groupedTopics = useMemo(() => {
+    const sqlTopics = getTopicsForSubject('sql');
+    const pyTopics = getTopicsForSubject('python');
+    const topicMap = new Map(availableTopics.map(t => [t.name, t.count]));
+
+    const sqlGroup = sqlTopics
+      .filter(t => topicMap.has(t))
+      .map(t => ({ name: t, count: topicMap.get(t)! }));
+    const pyGroup = pyTopics
+      .filter(t => topicMap.has(t))
+      .map(t => ({ name: t, count: topicMap.get(t)! }));
+
+    const known = new Set([...sqlTopics, ...pyTopics]);
+    const other = availableTopics.filter(t => !known.has(t.name));
+
+    return { sql: sqlGroup, python: pyGroup, other };
+  }, [availableTopics]);
+
+  const topicLabel = topic === 'all'
+    ? `All Topics (${diffFiltered.length})`
+    : `${topic} (${availableTopics.find(t => t.name === topic)?.count ?? 0})`;
+
   if (loading) return <div className="flex justify-center pt-16"><Spinner size="lg" /></div>;
   if (error) return <div className="text-red-500 text-center pt-16">{error}</div>;
 
@@ -139,43 +174,6 @@ export default function QuickMode() {
     { value: 'Medium', label: `Medium (${subjectFiltered.filter(q => q.difficulty === 'Medium').length})`, color: 'yellow' },
     { value: 'Hard', label: `Hard (${subjectFiltered.filter(q => q.difficulty === 'Hard').length})`, color: 'red' },
   ];
-
-  const [topicOpen, setTopicOpen] = useState(false);
-  const topicRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!topicOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (topicRef.current && !topicRef.current.contains(e.target as Node)) setTopicOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [topicOpen]);
-
-  // Group topics by SQL vs Python for the dropdown
-  const groupedTopics = useMemo(() => {
-    const sqlTopics = getTopicsForSubject('sql');
-    const pyTopics = getTopicsForSubject('python');
-    const topicMap = new Map(availableTopics.map(t => [t.name, t.count]));
-
-    const sqlGroup = sqlTopics
-      .filter(t => topicMap.has(t))
-      .map(t => ({ name: t, count: topicMap.get(t)! }));
-    const pyGroup = pyTopics
-      .filter(t => topicMap.has(t))
-      .map(t => ({ name: t, count: topicMap.get(t)! }));
-
-    // Catch any topics not in canonical lists
-    const known = new Set([...sqlTopics, ...pyTopics]);
-    const other = availableTopics.filter(t => !known.has(t.name));
-
-    return { sql: sqlGroup, python: pyGroup, other };
-  }, [availableTopics]);
-
-  const topicLabel = topic === 'all'
-    ? `All Topics (${diffFiltered.length})`
-    : `${topic} (${availableTopics.find(t => t.name === topic)?.count ?? 0})`;
 
   const modeTabs: { value: QuickModeType; label: string; icon: React.ReactNode }[] = [
     { value: 'flashcard', label: 'Flashcard', icon: <Layers size={16} /> },
