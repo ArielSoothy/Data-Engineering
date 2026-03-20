@@ -236,7 +236,7 @@ export default function QuickFlashcard({ questions }: Props) {
   };
 
   return (
-    <div className="flex gap-4 max-w-4xl mx-auto relative">
+    <div className="flex flex-col lg:flex-row gap-4 max-w-4xl mx-auto relative">
       {/* Question List — desktop sidebar */}
       <div className="hidden lg:block w-64 shrink-0">
         <Card padding="none" className="sticky top-4 max-h-[80vh] overflow-hidden flex flex-col">
@@ -275,7 +275,7 @@ export default function QuickFlashcard({ questions }: Props) {
       </div>
 
       {/* Mobile collapsible question list */}
-      <div className="lg:hidden absolute left-0 right-0 top-0" style={{ position: 'relative' }}>
+      <div className="lg:hidden w-full">
         <Card padding="none" className="mb-4 overflow-hidden">
           {/* Collapsed bar — always visible */}
           <button

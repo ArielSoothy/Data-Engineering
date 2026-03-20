@@ -197,9 +197,9 @@ export default function QuickMode() {
           <Button
             key={t.value}
             variant={subject === t.value ? 'primary' : 'ghost'}
-            size="md"
+            size="sm"
             onClick={() => handleSubject(t.value)}
-            className={`min-h-[40px] !rounded-lg ${
+            className={`!rounded-lg ${
               subject === t.value
                 ? '!bg-blue-600 !text-white'
                 : '!bg-gray-100 dark:!bg-gray-800 !text-gray-600 dark:!text-gray-400 hover:!bg-gray-200 dark:hover:!bg-gray-700'
@@ -225,9 +225,9 @@ export default function QuickMode() {
             <Button
               key={d.value}
               variant={active ? 'primary' : 'ghost'}
-              size="md"
+              size="sm"
               onClick={() => handleDifficulty(d.value)}
-              className={`min-h-[40px] !rounded-lg ${
+              className={`!rounded-lg ${
                 active
                   ? activeColors[d.color]
                   : '!bg-gray-100 dark:!bg-gray-800 !text-gray-600 dark:!text-gray-400 hover:!bg-gray-200 dark:hover:!bg-gray-700'
