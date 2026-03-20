@@ -2,16 +2,35 @@
   {
     "id": "lc-1",
     "title": "Two Sum",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "HashMap",
-    "topics": ["Arrays", "HashMap"],
+    "topics": [
+      "Arrays",
+      "HashMap"
+    ],
     "problem": "Given an array of integers nums and an integer target, return the indices of the two numbers that add up to target. Each input has exactly one solution.\n\nExample:\nnums = [2, 7, 11, 15], target = 9\nOutput: [0, 1]",
     "solution": "def two_sum(nums, target):\n    seen = {}\n    for i, num in enumerate(nums):\n        diff = target - num\n        if diff in seen:\n            return [seen[diff], i]\n        seen[num] = i\n    return []",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you loop through a list with both index and value?", "a": "for i, num in enumerate(nums):\n    print(i, num)"},
-      {"id": "bd-2", "q": "How do you check if a key exists in a dictionary?", "a": "if key in my_dict:\n    print('found')"},
-      {"id": "bd-3", "q": "How do you store a value in a dictionary?", "a": "my_dict[key] = value"},
-      {"id": "bd-4", "q": "Given nums=[2,7,11] and target=9, what number do you look for when you're at num=2?", "a": "target - num = 9 - 2 = 7\nCheck if 7 is in our dict"}
+      {
+        "id": "bd-1",
+        "q": "How do you loop through a list with both index and value?",
+        "a": "for i, num in enumerate(nums):\n    print(i, num)"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you check if a key exists in a dictionary?",
+        "a": "if key in my_dict:\n    print('found')"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you store a value in a dictionary?",
+        "a": "my_dict[key] = value"
+      },
+      {
+        "id": "bd-4",
+        "q": "Given nums=[2,7,11] and target=9, what number do you look for when you're at num=2?",
+        "a": "target - num = 9 - 2 = 7\nCheck if 7 is in our dict"
+      }
     ],
     "patternHint": "Need to find pairs that satisfy a condition? Use a HashMap to store seen values for O(1) lookup instead of O(n) nested loops."
   },
@@ -20,14 +39,33 @@
     "title": "Valid Anagram",
     "difficulty": "Easy",
     "pattern": "HashMap",
-    "topics": ["Strings", "HashMap"],
+    "topics": [
+      "Strings",
+      "HashMap"
+    ],
     "problem": "Given two strings s and t, return True if t is an anagram of s (same characters, same frequency).\n\nExample:\ns = \"anagram\", t = \"nagaram\"\nOutput: True",
     "solution": "def is_anagram(s, t):\n    if len(s) != len(t):\n        return False\n    count = {}\n    for c in s:\n        count[c] = count.get(c, 0) + 1\n    for c in t:\n        count[c] = count.get(c, 0) - 1\n        if count[c] < 0:\n            return False\n    return True",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you compare the lengths of two strings?", "a": "if len(s) != len(t):\n    return False"},
-      {"id": "bd-2", "q": "How do you get a value from a dict with a default if the key is missing?", "a": "count.get('a', 0)  # returns 0 if 'a' not in count"},
-      {"id": "bd-3", "q": "How do you count how many times each character appears in a string?", "a": "count = {}\nfor c in s:\n    count[c] = count.get(c, 0) + 1"},
-      {"id": "bd-4", "q": "Given count={'a':2, 'n':1}, how do you subtract counts for a second string?", "a": "for c in t:\n    count[c] = count.get(c, 0) - 1\n    if count[c] < 0:\n        return False"}
+      {
+        "id": "bd-1",
+        "q": "How do you compare the lengths of two strings?",
+        "a": "if len(s) != len(t):\n    return False"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you get a value from a dict with a default if the key is missing?",
+        "a": "count.get('a', 0)  # returns 0 if 'a' not in count"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you count how many times each character appears in a string?",
+        "a": "count = {}\nfor c in s:\n    count[c] = count.get(c, 0) + 1"
+      },
+      {
+        "id": "bd-4",
+        "q": "Given count={'a':2, 'n':1}, how do you subtract counts for a second string?",
+        "a": "for c in t:\n    count[c] = count.get(c, 0) - 1\n    if count[c] < 0:\n        return False"
+      }
     ],
     "patternHint": "Comparing character/element frequencies? Build a frequency HashMap and compare counts."
   },
@@ -36,14 +74,33 @@
     "title": "Contains Duplicate",
     "difficulty": "Easy",
     "pattern": "HashMap",
-    "topics": ["Arrays", "HashMap"],
+    "topics": [
+      "Arrays",
+      "HashMap"
+    ],
     "problem": "Given an integer array nums, return True if any value appears at least twice.\n\nExample:\nnums = [1, 2, 3, 1]\nOutput: True",
     "solution": "def contains_duplicate(nums):\n    seen = set()\n    for num in nums:\n        if num in seen:\n            return True\n        seen.add(num)\n    return False",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you create an empty set in Python?", "a": "seen = set()"},
-      {"id": "bd-2", "q": "How do you add an element to a set?", "a": "seen.add(5)"},
-      {"id": "bd-3", "q": "How do you check if a value is already in a set?", "a": "if num in seen:\n    print('duplicate!')"},
-      {"id": "bd-4", "q": "Given nums=[1,2,3,1], walk through the set after each step.", "a": "num=1: seen={1}\nnum=2: seen={1,2}\nnum=3: seen={1,2,3}\nnum=1: 1 in seen -> return True"}
+      {
+        "id": "bd-1",
+        "q": "How do you create an empty set in Python?",
+        "a": "seen = set()"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you add an element to a set?",
+        "a": "seen.add(5)"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you check if a value is already in a set?",
+        "a": "if num in seen:\n    print('duplicate!')"
+      },
+      {
+        "id": "bd-4",
+        "q": "Given nums=[1,2,3,1], walk through the set after each step.",
+        "a": "num=1: seen={1}\nnum=2: seen={1,2}\nnum=3: seen={1,2,3}\nnum=1: 1 in seen -> return True"
+      }
     ],
     "patternHint": "Checking for duplicates or existence? Use a set for O(1) lookups instead of searching the entire array."
   },
@@ -52,62 +109,137 @@
     "title": "Maximum Subarray Sum",
     "difficulty": "Medium",
     "pattern": "Arrays",
-    "topics": ["Arrays"],
+    "topics": [
+      "Arrays"
+    ],
     "problem": "Given an integer array nums, find the subarray with the largest sum and return the sum.\n\nExample:\nnums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]\nOutput: 6 (subarray [4, -1, 2, 1])",
     "solution": "def max_subarray(nums):\n    max_sum = nums[0]\n    current = nums[0]\n    for num in nums[1:]:\n        current = max(num, current + num)\n        max_sum = max(max_sum, current)\n    return max_sum",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you get the first element of a list?", "a": "nums[0]"},
-      {"id": "bd-2", "q": "How do you loop through a list starting from the second element?", "a": "for num in nums[1:]:\n    print(num)"},
-      {"id": "bd-3", "q": "How do you pick the larger of two numbers?", "a": "max(a, b)\n# e.g. max(3, 7) returns 7"},
-      {"id": "bd-4", "q": "At num=4 with current=-2, should you extend the subarray or start fresh?", "a": "current = max(4, -2 + 4) = max(4, 2) = 4\nStart fresh because 4 alone is bigger"}
+      {
+        "id": "bd-1",
+        "q": "How do you get the first element of a list?",
+        "a": "nums[0]"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you loop through a list starting from the second element?",
+        "a": "for num in nums[1:]:\n    print(num)"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you pick the larger of two numbers?",
+        "a": "max(a, b)\n# e.g. max(3, 7) returns 7"
+      },
+      {
+        "id": "bd-4",
+        "q": "At num=4 with current=-2, should you extend the subarray or start fresh?",
+        "a": "current = max(4, -2 + 4) = max(4, 2) = 4\nStart fresh because 4 alone is bigger"
+      }
     ],
     "patternHint": "Finding optimal contiguous subarray? Think Kadane's algorithm — decide at each step whether to extend or restart."
   },
   {
     "id": "lc-5",
     "title": "Merge Sorted Arrays",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "Two Pointers",
-    "topics": ["Arrays", "Two Pointers", "Sorting"],
+    "topics": [
+      "Arrays",
+      "Two Pointers",
+      "Sorting"
+    ],
     "problem": "Given two sorted arrays nums1 and nums2, merge them into one sorted array.\n\nExample:\nnums1 = [1, 3, 5], nums2 = [2, 4, 6]\nOutput: [1, 2, 3, 4, 5, 6]",
     "solution": "def merge_sorted(nums1, nums2):\n    result = []\n    i, j = 0, 0\n    while i < len(nums1) and j < len(nums2):\n        if nums1[i] <= nums2[j]:\n            result.append(nums1[i])\n            i += 1\n        else:\n            result.append(nums2[j])\n            j += 1\n    result.extend(nums1[i:])\n    result.extend(nums2[j:])\n    return result",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you initialize two variables to 0 on one line?", "a": "i, j = 0, 0"},
-      {"id": "bd-2", "q": "How do you add an element to the end of a list?", "a": "result.append(value)"},
-      {"id": "bd-3", "q": "How do you add all remaining elements from a list slice to another list?", "a": "result.extend(nums[i:])\n# adds everything from index i onward"},
-      {"id": "bd-4", "q": "With nums1=[1,3,5] at i=1 and nums2=[2,4,6] at j=0, which element do you pick?", "a": "nums1[1]=3, nums2[0]=2\n2 <= 3 is False, so pick nums2[0]=2\nresult.append(2), j += 1"}
+      {
+        "id": "bd-1",
+        "q": "How do you initialize two variables to 0 on one line?",
+        "a": "i, j = 0, 0"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you add an element to the end of a list?",
+        "a": "result.append(value)"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you add all remaining elements from a list slice to another list?",
+        "a": "result.extend(nums[i:])\n# adds everything from index i onward"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums1=[1,3,5] at i=1 and nums2=[2,4,6] at j=0, which element do you pick?",
+        "a": "nums1[1]=3, nums2[0]=2\n2 <= 3 is False, so pick nums2[0]=2\nresult.append(2), j += 1"
+      }
     ],
     "patternHint": "Merging sorted sequences? Use two pointers, one per array, and compare elements to build the result."
   },
   {
     "id": "lc-6",
     "title": "Move Zeroes to End",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "Two Pointers",
-    "topics": ["Arrays", "Two Pointers"],
+    "topics": [
+      "Arrays",
+      "Two Pointers"
+    ],
     "problem": "Given an array nums, move all zeroes to the end while maintaining the relative order of non-zero elements. Do it in-place.\n\nExample:\nnums = [0, 1, 0, 3, 12]\nOutput: [1, 3, 12, 0, 0]",
     "solution": "def move_zeroes(nums):\n    write = 0\n    for read in range(len(nums)):\n        if nums[read] != 0:\n            nums[write], nums[read] = nums[read], nums[write]\n            write += 1\n    return nums",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you loop through indices 0 to len(nums)-1?", "a": "for read in range(len(nums)):\n    print(read)"},
-      {"id": "bd-2", "q": "How do you check if a value is not zero?", "a": "if nums[read] != 0:\n    print('non-zero')"},
-      {"id": "bd-3", "q": "How do you swap two elements in a list?", "a": "nums[i], nums[j] = nums[j], nums[i]"},
-      {"id": "bd-4", "q": "With nums=[0,1,0,3], write=0, read=1: what happens when nums[1]=1?", "a": "nums[1] != 0, so swap:\nnums[0], nums[1] = nums[1], nums[0]\nnums becomes [1,0,0,3], write becomes 1"}
+      {
+        "id": "bd-1",
+        "q": "How do you loop through indices 0 to len(nums)-1?",
+        "a": "for read in range(len(nums)):\n    print(read)"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you check if a value is not zero?",
+        "a": "if nums[read] != 0:\n    print('non-zero')"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you swap two elements in a list?",
+        "a": "nums[i], nums[j] = nums[j], nums[i]"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[0,1,0,3], write=0, read=1: what happens when nums[1]=1?",
+        "a": "nums[1] != 0, so swap:\nnums[0], nums[1] = nums[1], nums[0]\nnums becomes [1,0,0,3], write becomes 1"
+      }
     ],
     "patternHint": "Partitioning elements in-place? Use read/write pointers — read scans all, write tracks placement position."
   },
   {
     "id": "lc-7",
     "title": "Best Time to Trade",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "Arrays",
-    "topics": ["Arrays"],
+    "topics": [
+      "Arrays"
+    ],
     "problem": "Given an array prices where prices[i] is the price on day i, find the maximum profit from one buy and one sell (buy before sell). Return 0 if no profit possible.\n\nExample:\nprices = [7, 1, 5, 3, 6, 4]\nOutput: 5 (buy at 1, sell at 6)",
     "solution": "def max_profit(prices):\n    min_price = float('inf')\n    max_profit = 0\n    for price in prices:\n        min_price = min(min_price, price)\n        max_profit = max(max_profit, price - min_price)\n    return max_profit",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you set a variable to infinity in Python?", "a": "min_price = float('inf')\n# any number is less than infinity"},
-      {"id": "bd-2", "q": "How do you keep track of the smallest value seen so far in a loop?", "a": "min_price = min(min_price, price)"},
-      {"id": "bd-3", "q": "How do you calculate profit given a buy price and sell price?", "a": "profit = sell_price - buy_price\n# e.g. 6 - 1 = 5"},
-      {"id": "bd-4", "q": "At price=5 with min_price=1, what is the profit and is it the best so far?", "a": "profit = 5 - 1 = 4\nmax_profit = max(0, 4) = 4"}
+      {
+        "id": "bd-1",
+        "q": "How do you set a variable to infinity in Python?",
+        "a": "min_price = float('inf')\n# any number is less than infinity"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you keep track of the smallest value seen so far in a loop?",
+        "a": "min_price = min(min_price, price)"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you calculate profit given a buy price and sell price?",
+        "a": "profit = sell_price - buy_price\n# e.g. 6 - 1 = 5"
+      },
+      {
+        "id": "bd-4",
+        "q": "At price=5 with min_price=1, what is the profit and is it the best so far?",
+        "a": "profit = 5 - 1 = 4\nmax_profit = max(0, 4) = 4"
+      }
     ],
     "patternHint": "Optimizing a buy/sell or min-before-max problem? Track the running minimum and compute profit at each step."
   },
@@ -116,14 +248,34 @@
     "title": "Group Strings by Anagram",
     "difficulty": "Medium",
     "pattern": "HashMap",
-    "topics": ["Strings", "HashMap", "Sorting"],
+    "topics": [
+      "Strings",
+      "HashMap",
+      "Sorting"
+    ],
     "problem": "Given a list of strings, group the anagrams together.\n\nExample:\nstrs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]\nOutput: [[\"eat\",\"tea\",\"ate\"],[\"tan\",\"nat\"],[\"bat\"]]",
     "solution": "def group_anagrams(strs):\n    groups = {}\n    for s in strs:\n        key = ''.join(sorted(s))\n        if key not in groups:\n            groups[key] = []\n        groups[key].append(s)\n    return list(groups.values())",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you sort the characters of a string alphabetically?", "a": "sorted('eat')  # returns ['a', 'e', 't']"},
-      {"id": "bd-2", "q": "How do you join a list of characters back into a string?", "a": "''.join(['a', 'e', 't'])  # returns 'aet'"},
-      {"id": "bd-3", "q": "How do you add a value to a list stored inside a dictionary?", "a": "if key not in groups:\n    groups[key] = []\ngroups[key].append(value)"},
-      {"id": "bd-4", "q": "How do you get all the values from a dictionary as a list?", "a": "list(groups.values())"}
+      {
+        "id": "bd-1",
+        "q": "How do you sort the characters of a string alphabetically?",
+        "a": "sorted('eat')  # returns ['a', 'e', 't']"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you join a list of characters back into a string?",
+        "a": "''.join(['a', 'e', 't'])  # returns 'aet'"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you add a value to a list stored inside a dictionary?",
+        "a": "if key not in groups:\n    groups[key] = []\ngroups[key].append(value)"
+      },
+      {
+        "id": "bd-4",
+        "q": "How do you get all the values from a dictionary as a list?",
+        "a": "list(groups.values())"
+      }
     ],
     "patternHint": "Grouping items by some equivalence? Create a canonical key (sorted, counted, etc.) and use a HashMap of lists."
   },
@@ -132,30 +284,69 @@
     "title": "Longest Substring Without Repeating",
     "difficulty": "Medium",
     "pattern": "Sliding Window",
-    "topics": ["Strings", "Sliding Window", "HashMap"],
+    "topics": [
+      "Strings",
+      "Sliding Window",
+      "HashMap"
+    ],
     "problem": "Given a string s, find the length of the longest substring without repeating characters.\n\nExample:\ns = \"abcabcbb\"\nOutput: 3 (\"abc\")",
     "solution": "def length_of_longest_substring(s):\n    char_index = {}\n    left = 0\n    max_len = 0\n    for right in range(len(s)):\n        if s[right] in char_index and char_index[s[right]] >= left:\n            left = char_index[s[right]] + 1\n        char_index[s[right]] = right\n        max_len = max(max_len, right - left + 1)\n    return max_len",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you access a character in a string by index?", "a": "s[right]\n# e.g. s='abcabc', s[3] returns 'a'"},
-      {"id": "bd-2", "q": "How do you store a character's position in a dictionary?", "a": "char_index[s[right]] = right\n# e.g. char_index['a'] = 0"},
-      {"id": "bd-3", "q": "How do you calculate the length of a window from left to right?", "a": "length = right - left + 1\n# e.g. left=1, right=3 -> length=3"},
-      {"id": "bd-4", "q": "If s='abcabc' and you see 'a' again at right=3, and char_index['a']=0, where should left move?", "a": "left = char_index['a'] + 1 = 0 + 1 = 1\nSkip past the previous 'a'"}
+      {
+        "id": "bd-1",
+        "q": "How do you access a character in a string by index?",
+        "a": "s[right]\n# e.g. s='abcabc', s[3] returns 'a'"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you store a character's position in a dictionary?",
+        "a": "char_index[s[right]] = right\n# e.g. char_index['a'] = 0"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you calculate the length of a window from left to right?",
+        "a": "length = right - left + 1\n# e.g. left=1, right=3 -> length=3"
+      },
+      {
+        "id": "bd-4",
+        "q": "If s='abcabc' and you see 'a' again at right=3, and char_index['a']=0, where should left move?",
+        "a": "left = char_index['a'] + 1 = 0 + 1 = 1\nSkip past the previous 'a'"
+      }
     ],
     "patternHint": "Finding longest/shortest substring with a constraint? Use sliding window with two pointers (left, right) expanding and contracting."
   },
   {
     "id": "lc-10",
     "title": "Maximum Average Subarray",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "Sliding Window",
-    "topics": ["Arrays", "Sliding Window"],
+    "topics": [
+      "Arrays",
+      "Sliding Window"
+    ],
     "problem": "Given an array nums and integer k, find the contiguous subarray of length k with the maximum average value.\n\nExample:\nnums = [1, 12, -5, -6, 50, 3], k = 4\nOutput: 12.75 (subarray [12, -5, -6, 50])",
     "solution": "def find_max_average(nums, k):\n    window_sum = sum(nums[:k])\n    max_sum = window_sum\n    for i in range(k, len(nums)):\n        window_sum += nums[i] - nums[i - k]\n        max_sum = max(max_sum, window_sum)\n    return max_sum / k",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you get the first k elements of a list?", "a": "nums[:k]\n# e.g. nums[:3] gives [1, 12, -5]"},
-      {"id": "bd-2", "q": "How do you sum all elements in a list?", "a": "total = sum([1, 12, -5])  # returns 8"},
-      {"id": "bd-3", "q": "How do you slide a window by one position without re-summing everything?", "a": "window_sum += nums[i] - nums[i - k]\n# add new element, subtract the one leaving"},
-      {"id": "bd-4", "q": "How do you divide in Python to get a decimal result?", "a": "max_sum / k\n# e.g. 51 / 4 = 12.75"}
+      {
+        "id": "bd-1",
+        "q": "How do you get the first k elements of a list?",
+        "a": "nums[:k]\n# e.g. nums[:3] gives [1, 12, -5]"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you sum all elements in a list?",
+        "a": "total = sum([1, 12, -5])  # returns 8"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you slide a window by one position without re-summing everything?",
+        "a": "window_sum += nums[i] - nums[i - k]\n# add new element, subtract the one leaving"
+      },
+      {
+        "id": "bd-4",
+        "q": "How do you divide in Python to get a decimal result?",
+        "a": "max_sum / k\n# e.g. 51 / 4 = 12.75"
+      }
     ],
     "patternHint": "Fixed-size subarray optimization? Use a fixed sliding window — slide by adding one element and removing another."
   },
@@ -164,30 +355,68 @@
     "title": "Smallest Subarray with Sum >= Target",
     "difficulty": "Medium",
     "pattern": "Sliding Window",
-    "topics": ["Arrays", "Sliding Window"],
+    "topics": [
+      "Arrays",
+      "Sliding Window"
+    ],
     "problem": "Given an array of positive integers nums and a target, find the minimal length of a subarray whose sum >= target. Return 0 if no such subarray.\n\nExample:\ntarget = 7, nums = [2, 3, 1, 2, 4, 3]\nOutput: 2 (subarray [4, 3])",
     "solution": "def min_subarray_len(target, nums):\n    left = 0\n    current_sum = 0\n    min_len = float('inf')\n    for right in range(len(nums)):\n        current_sum += nums[right]\n        while current_sum >= target:\n            min_len = min(min_len, right - left + 1)\n            current_sum -= nums[left]\n            left += 1\n    return min_len if min_len != float('inf') else 0",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you add to a running sum as you expand a window?", "a": "current_sum += nums[right]"},
-      {"id": "bd-2", "q": "How do you shrink a window from the left and update the sum?", "a": "current_sum -= nums[left]\nleft += 1"},
-      {"id": "bd-3", "q": "How do you use a while loop to keep shrinking as long as a condition is met?", "a": "while current_sum >= target:\n    # shrink window\n    left += 1"},
-      {"id": "bd-4", "q": "How do you return 0 if no valid subarray was found (min_len was never updated)?", "a": "return min_len if min_len != float('inf') else 0"}
+      {
+        "id": "bd-1",
+        "q": "How do you add to a running sum as you expand a window?",
+        "a": "current_sum += nums[right]"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you shrink a window from the left and update the sum?",
+        "a": "current_sum -= nums[left]\nleft += 1"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you use a while loop to keep shrinking as long as a condition is met?",
+        "a": "while current_sum >= target:\n    # shrink window\n    left += 1"
+      },
+      {
+        "id": "bd-4",
+        "q": "How do you return 0 if no valid subarray was found (min_len was never updated)?",
+        "a": "return min_len if min_len != float('inf') else 0"
+      }
     ],
     "patternHint": "Finding smallest subarray meeting a condition? Use a variable sliding window — expand right, shrink left when condition is met."
   },
   {
     "id": "lc-12",
     "title": "Valid Parentheses",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "Stack",
-    "topics": ["Strings", "Stacks"],
+    "topics": [
+      "Strings",
+      "Stacks"
+    ],
     "problem": "Given a string containing just '(', ')', '{', '}', '[', ']', determine if the input string has valid (properly nested) brackets.\n\nExample:\ns = \"([{}])\"\nOutput: True",
     "solution": "def is_valid(s):\n    stack = []\n    pairs = {')': '(', '}': '{', ']': '['}\n    for char in s:\n        if char in pairs:\n            if not stack or stack[-1] != pairs[char]:\n                return False\n            stack.pop()\n        else:\n            stack.append(char)\n    return len(stack) == 0",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you add an element to the end of a list (push to stack)?", "a": "stack.append('(')\n# stack is now ['(']"},
-      {"id": "bd-2", "q": "How do you look at the last element of a list without removing it?", "a": "stack[-1]\n# returns the top of the stack"},
-      {"id": "bd-3", "q": "How do you remove and return the last element of a list (pop from stack)?", "a": "stack.pop()\n# removes and returns the last element"},
-      {"id": "bd-4", "q": "How do you map closing brackets to their matching opening brackets?", "a": "pairs = {')': '(', '}': '{', ']': '['}\npairs[')']  # returns '('"}
+      {
+        "id": "bd-1",
+        "q": "How do you add an element to the end of a list (push to stack)?",
+        "a": "stack.append('(')\n# stack is now ['(']"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you look at the last element of a list without removing it?",
+        "a": "stack[-1]\n# returns the top of the stack"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you remove and return the last element of a list (pop from stack)?",
+        "a": "stack.pop()\n# removes and returns the last element"
+      },
+      {
+        "id": "bd-4",
+        "q": "How do you map closing brackets to their matching opening brackets?",
+        "a": "pairs = {')': '(', '}': '{', ']': '['}\npairs[')']  # returns '('"
+      }
     ],
     "patternHint": "Matching/nesting problems (brackets, tags)? Use a stack — push openers, pop and compare when you see closers."
   },
@@ -196,14 +425,33 @@
     "title": "Reverse a String",
     "difficulty": "Easy",
     "pattern": "Two Pointers",
-    "topics": ["Strings", "Two Pointers"],
+    "topics": [
+      "Strings",
+      "Two Pointers"
+    ],
     "problem": "Reverse a string in-place (given as a list of characters).\n\nExample:\nchars = ['h','e','l','l','o']\nOutput: ['o','l','l','e','h']",
     "solution": "def reverse_string(chars):\n    left, right = 0, len(chars) - 1\n    while left < right:\n        chars[left], chars[right] = chars[right], chars[left]\n        left += 1\n        right -= 1\n    return chars",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you set two pointers at the start and end of a list?", "a": "left, right = 0, len(chars) - 1\n# e.g. for 5 elements: left=0, right=4"},
-      {"id": "bd-2", "q": "How do you swap two elements in a list?", "a": "chars[left], chars[right] = chars[right], chars[left]"},
-      {"id": "bd-3", "q": "How do you move two pointers toward each other?", "a": "left += 1\nright -= 1"},
-      {"id": "bd-4", "q": "When should you stop the loop when converging two pointers?", "a": "while left < right:\n# stop when they meet or cross"}
+      {
+        "id": "bd-1",
+        "q": "How do you set two pointers at the start and end of a list?",
+        "a": "left, right = 0, len(chars) - 1\n# e.g. for 5 elements: left=0, right=4"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you swap two elements in a list?",
+        "a": "chars[left], chars[right] = chars[right], chars[left]"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you move two pointers toward each other?",
+        "a": "left += 1\nright -= 1"
+      },
+      {
+        "id": "bd-4",
+        "q": "When should you stop the loop when converging two pointers?",
+        "a": "while left < right:\n# stop when they meet or cross"
+      }
     ],
     "patternHint": "Reversing or comparing from both ends? Use two pointers starting at opposite ends, converging toward the middle."
   },
@@ -212,14 +460,33 @@
     "title": "First Unique Character",
     "difficulty": "Easy",
     "pattern": "HashMap",
-    "topics": ["Strings", "HashMap"],
+    "topics": [
+      "Strings",
+      "HashMap"
+    ],
     "problem": "Given a string s, find the first non-repeating character and return its index. Return -1 if none.\n\nExample:\ns = \"loveleetcode\"\nOutput: 2 (character 'v')",
     "solution": "def first_uniq_char(s):\n    count = {}\n    for c in s:\n        count[c] = count.get(c, 0) + 1\n    for i, c in enumerate(s):\n        if count[c] == 1:\n            return i\n    return -1",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you loop through each character in a string?", "a": "for c in s:\n    print(c)"},
-      {"id": "bd-2", "q": "How do you count occurrences of each character using a dictionary?", "a": "count = {}\nfor c in s:\n    count[c] = count.get(c, 0) + 1"},
-      {"id": "bd-3", "q": "How do you loop through a string with both index and character?", "a": "for i, c in enumerate(s):\n    print(i, c)"},
-      {"id": "bd-4", "q": "Given count={'l':3, 'o':2, 'v':1, ...}, how do you find the first char with count 1?", "a": "for i, c in enumerate(s):\n    if count[c] == 1:\n        return i  # returns 2 for 'v'"}
+      {
+        "id": "bd-1",
+        "q": "How do you loop through each character in a string?",
+        "a": "for c in s:\n    print(c)"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you count occurrences of each character using a dictionary?",
+        "a": "count = {}\nfor c in s:\n    count[c] = count.get(c, 0) + 1"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you loop through a string with both index and character?",
+        "a": "for i, c in enumerate(s):\n    print(i, c)"
+      },
+      {
+        "id": "bd-4",
+        "q": "Given count={'l':3, 'o':2, 'v':1, ...}, how do you find the first char with count 1?",
+        "a": "for i, c in enumerate(s):\n    if count[c] == 1:\n        return i  # returns 2 for 'v'"
+      }
     ],
     "patternHint": "Finding first/last unique element? Two-pass approach: first count frequencies in a HashMap, then scan for the target count."
   },
@@ -228,14 +495,33 @@
     "title": "Sorted Array Search",
     "difficulty": "Easy",
     "pattern": "Binary Search",
-    "topics": ["Arrays", "Binary Search"],
+    "topics": [
+      "Arrays",
+      "Binary Search"
+    ],
     "problem": "Given a sorted array nums and a target value, return the index if found, else -1.\n\nExample:\nnums = [1, 3, 5, 7, 9], target = 5\nOutput: 2",
     "solution": "def binary_search(nums, target):\n    left, right = 0, len(nums) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if nums[mid] == target:\n            return mid\n        elif nums[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you set left and right boundaries for a list?", "a": "left, right = 0, len(nums) - 1"},
-      {"id": "bd-2", "q": "How do you calculate the middle index using integer division?", "a": "mid = (left + right) // 2\n# e.g. (0 + 4) // 2 = 2"},
-      {"id": "bd-3", "q": "If nums[mid]=5 and target=7, which half do you search next?", "a": "5 < 7, so target is in the right half\nleft = mid + 1"},
-      {"id": "bd-4", "q": "If nums[mid]=7 and target=5, which half do you search next?", "a": "7 > 5, so target is in the left half\nright = mid - 1"}
+      {
+        "id": "bd-1",
+        "q": "How do you set left and right boundaries for a list?",
+        "a": "left, right = 0, len(nums) - 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you calculate the middle index using integer division?",
+        "a": "mid = (left + right) // 2\n# e.g. (0 + 4) // 2 = 2"
+      },
+      {
+        "id": "bd-3",
+        "q": "If nums[mid]=5 and target=7, which half do you search next?",
+        "a": "5 < 7, so target is in the right half\nleft = mid + 1"
+      },
+      {
+        "id": "bd-4",
+        "q": "If nums[mid]=7 and target=5, which half do you search next?",
+        "a": "7 > 5, so target is in the left half\nright = mid - 1"
+      }
     ],
     "patternHint": "Searching in a sorted array? Binary search cuts the search space in half each step — O(log n)."
   },
@@ -244,46 +530,103 @@
     "title": "Find Insert Position",
     "difficulty": "Easy",
     "pattern": "Binary Search",
-    "topics": ["Arrays", "Binary Search"],
+    "topics": [
+      "Arrays",
+      "Binary Search"
+    ],
     "problem": "Given a sorted array and a target, return the index where target is found, or where it would be inserted to keep the array sorted.\n\nExample:\nnums = [1, 3, 5, 6], target = 4\nOutput: 2",
     "solution": "def search_insert(nums, target):\n    left, right = 0, len(nums)\n    while left < right:\n        mid = (left + right) // 2\n        if nums[mid] < target:\n            left = mid + 1\n        else:\n            right = mid\n    return left",
     "breakdowns": [
-      {"id": "bd-1", "q": "How is the right boundary different here vs normal binary search?", "a": "right = len(nums)  # not len(nums) - 1\n# allows inserting at the end"},
-      {"id": "bd-2", "q": "How do you compute the midpoint?", "a": "mid = (left + right) // 2"},
-      {"id": "bd-3", "q": "When nums[mid] >= target, how do you narrow the search?", "a": "right = mid  # not mid - 1\n# mid itself could be the answer"},
-      {"id": "bd-4", "q": "With nums=[1,3,5,6] and target=4, what does left equal when the loop ends?", "a": "left=0,right=4 -> mid=2, nums[2]=5>=4 -> right=2\nleft=0,right=2 -> mid=1, nums[1]=3<4 -> left=2\nleft==right==2, return 2"}
+      {
+        "id": "bd-1",
+        "q": "How is the right boundary different here vs normal binary search?",
+        "a": "right = len(nums)  # not len(nums) - 1\n# allows inserting at the end"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you compute the midpoint?",
+        "a": "mid = (left + right) // 2"
+      },
+      {
+        "id": "bd-3",
+        "q": "When nums[mid] >= target, how do you narrow the search?",
+        "a": "right = mid  # not mid - 1\n# mid itself could be the answer"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[1,3,5,6] and target=4, what does left equal when the loop ends?",
+        "a": "left=0,right=4 -> mid=2, nums[2]=5>=4 -> right=2\nleft=0,right=2 -> mid=1, nums[1]=3<4 -> left=2\nleft==right==2, return 2"
+      }
     ],
     "patternHint": "Finding insertion point in sorted data? Use bisect-left binary search — the left pointer ends at the answer."
   },
   {
     "id": "lc-17",
     "title": "Pair with Target Sum (Sorted)",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "Two Pointers",
-    "topics": ["Arrays", "Two Pointers"],
+    "topics": [
+      "Arrays",
+      "Two Pointers"
+    ],
     "problem": "Given a sorted array, find two numbers that add up to a target. Return their indices.\n\nExample:\nnums = [1, 3, 4, 5, 7, 10], target = 9\nOutput: [2, 4] (nums[2]+nums[4] = 4+5 = 9)",
     "solution": "def pair_with_target(nums, target):\n    left, right = 0, len(nums) - 1\n    while left < right:\n        current_sum = nums[left] + nums[right]\n        if current_sum == target:\n            return [left, right]\n        elif current_sum < target:\n            left += 1\n        else:\n            right -= 1\n    return []",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you set pointers at the start and end of a list?", "a": "left, right = 0, len(nums) - 1"},
-      {"id": "bd-2", "q": "How do you add two elements from a list?", "a": "current_sum = nums[left] + nums[right]"},
-      {"id": "bd-3", "q": "If the sum is too small and the array is sorted, which pointer do you move?", "a": "left += 1\n# move left pointer right to increase the sum"},
-      {"id": "bd-4", "q": "If the sum is too big and the array is sorted, which pointer do you move?", "a": "right -= 1\n# move right pointer left to decrease the sum"}
+      {
+        "id": "bd-1",
+        "q": "How do you set pointers at the start and end of a list?",
+        "a": "left, right = 0, len(nums) - 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you add two elements from a list?",
+        "a": "current_sum = nums[left] + nums[right]"
+      },
+      {
+        "id": "bd-3",
+        "q": "If the sum is too small and the array is sorted, which pointer do you move?",
+        "a": "left += 1\n# move left pointer right to increase the sum"
+      },
+      {
+        "id": "bd-4",
+        "q": "If the sum is too big and the array is sorted, which pointer do you move?",
+        "a": "right -= 1\n# move right pointer left to decrease the sum"
+      }
     ],
     "patternHint": "Finding pairs in a sorted array? Use two pointers from both ends — no HashMap needed when data is sorted."
   },
   {
     "id": "lc-18",
     "title": "Remove Duplicates from Sorted Array",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "Two Pointers",
-    "topics": ["Arrays", "Two Pointers"],
+    "topics": [
+      "Arrays",
+      "Two Pointers"
+    ],
     "problem": "Given a sorted array, remove duplicates in-place and return the number of unique elements.\n\nExample:\nnums = [1, 1, 2, 2, 3]\nOutput: 3, nums = [1, 2, 3, ...]",
     "solution": "def remove_duplicates(nums):\n    if not nums:\n        return 0\n    write = 1\n    for read in range(1, len(nums)):\n        if nums[read] != nums[read - 1]:\n            nums[write] = nums[read]\n            write += 1\n    return write",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you check if a list is empty?", "a": "if not nums:\n    return 0"},
-      {"id": "bd-2", "q": "How do you loop starting from index 1 to the end?", "a": "for read in range(1, len(nums)):\n    print(nums[read])"},
-      {"id": "bd-3", "q": "How do you compare an element to the one before it?", "a": "if nums[read] != nums[read - 1]:\n    print('new unique value')"},
-      {"id": "bd-4", "q": "With nums=[1,1,2], write=1, read=2: nums[2]=2 != nums[1]=1, what happens?", "a": "nums[write] = nums[read]  # nums[1] = 2\nwrite += 1  # write becomes 2\nnums is now [1, 2, 2]"}
+      {
+        "id": "bd-1",
+        "q": "How do you check if a list is empty?",
+        "a": "if not nums:\n    return 0"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you loop starting from index 1 to the end?",
+        "a": "for read in range(1, len(nums)):\n    print(nums[read])"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you compare an element to the one before it?",
+        "a": "if nums[read] != nums[read - 1]:\n    print('new unique value')"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[1,1,2], write=1, read=2: nums[2]=2 != nums[1]=1, what happens?",
+        "a": "nums[write] = nums[read]  # nums[1] = 2\nwrite += 1  # write becomes 2\nnums is now [1, 2, 2]"
+      }
     ],
     "patternHint": "Removing duplicates in-place from sorted data? Use read/write pointers — write only advances for new unique values."
   },
@@ -292,14 +635,33 @@
     "title": "Majority Element",
     "difficulty": "Easy",
     "pattern": "HashMap",
-    "topics": ["Arrays", "HashMap"],
+    "topics": [
+      "Arrays",
+      "HashMap"
+    ],
     "problem": "Given an array nums, find the element that appears more than n/2 times (guaranteed to exist).\n\nExample:\nnums = [3, 2, 3]\nOutput: 3",
     "solution": "def majority_element(nums):\n    count = {}\n    threshold = len(nums) // 2\n    for num in nums:\n        count[num] = count.get(num, 0) + 1\n        if count[num] > threshold:\n            return num\n    return -1",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you do integer division (floor division) in Python?", "a": "threshold = len(nums) // 2\n# e.g. 5 // 2 = 2"},
-      {"id": "bd-2", "q": "How do you increment a count in a dictionary?", "a": "count[num] = count.get(num, 0) + 1"},
-      {"id": "bd-3", "q": "How do you check if a count exceeds a threshold?", "a": "if count[num] > threshold:\n    return num"},
-      {"id": "bd-4", "q": "With nums=[3,2,3], threshold=1: walk through counting each element.", "a": "num=3: count={3:1}, 1>1? No\nnum=2: count={3:1,2:1}, 1>1? No\nnum=3: count={3:2,2:1}, 2>1? Yes -> return 3"}
+      {
+        "id": "bd-1",
+        "q": "How do you do integer division (floor division) in Python?",
+        "a": "threshold = len(nums) // 2\n# e.g. 5 // 2 = 2"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you increment a count in a dictionary?",
+        "a": "count[num] = count.get(num, 0) + 1"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you check if a count exceeds a threshold?",
+        "a": "if count[num] > threshold:\n    return num"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[3,2,3], threshold=1: walk through counting each element.",
+        "a": "num=3: count={3:1}, 1>1? No\nnum=2: count={3:1,2:1}, 1>1? No\nnum=3: count={3:2,2:1}, 2>1? Yes -> return 3"
+      }
     ],
     "patternHint": "Finding the most frequent element? Count with a HashMap and return as soon as any count exceeds the threshold."
   },
@@ -308,46 +670,103 @@
     "title": "Sort Array by Frequency",
     "difficulty": "Medium",
     "pattern": "HashMap",
-    "topics": ["Arrays", "HashMap", "Sorting"],
+    "topics": [
+      "Arrays",
+      "HashMap",
+      "Sorting"
+    ],
     "problem": "Sort an array by frequency (ascending). If frequencies are equal, sort by value (descending).\n\nExample:\nnums = [1, 1, 2, 2, 2, 3]\nOutput: [3, 1, 1, 2, 2, 2]",
     "solution": "def frequency_sort(nums):\n    count = {}\n    for num in nums:\n        count[num] = count.get(num, 0) + 1\n    return sorted(nums, key=lambda x: (count[x], -x))",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you count occurrences of each number in a list?", "a": "count = {}\nfor num in nums:\n    count[num] = count.get(num, 0) + 1"},
-      {"id": "bd-2", "q": "How do you sort a list using a custom key function?", "a": "sorted(nums, key=lambda x: x)\n# sorts by whatever the lambda returns"},
-      {"id": "bd-3", "q": "How do you sort by two criteria (frequency first, then value)?", "a": "key=lambda x: (count[x], -x)\n# tuple: sorts by first element, then second"},
-      {"id": "bd-4", "q": "Why negate -x in the key to sort values descending?", "a": "sorted() sorts ascending by default\n-x reverses the order for numbers\n# (1, -3) comes before (1, -1), so 3 before 1"}
+      {
+        "id": "bd-1",
+        "q": "How do you count occurrences of each number in a list?",
+        "a": "count = {}\nfor num in nums:\n    count[num] = count.get(num, 0) + 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you sort a list using a custom key function?",
+        "a": "sorted(nums, key=lambda x: x)\n# sorts by whatever the lambda returns"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you sort by two criteria (frequency first, then value)?",
+        "a": "key=lambda x: (count[x], -x)\n# tuple: sorts by first element, then second"
+      },
+      {
+        "id": "bd-4",
+        "q": "Why negate -x in the key to sort values descending?",
+        "a": "sorted() sorts ascending by default\n-x reverses the order for numbers\n# (1, -3) comes before (1, -1), so 3 before 1"
+      }
     ],
     "patternHint": "Custom sorting with multiple criteria? Build a frequency map, then use sorted() with a tuple key."
   },
   {
     "id": "lc-21",
     "title": "Longest Common Prefix",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "Strings",
-    "topics": ["Strings"],
+    "topics": [
+      "Strings"
+    ],
     "problem": "Find the longest common prefix string among an array of strings.\n\nExample:\nstrs = [\"flower\",\"flow\",\"flight\"]\nOutput: \"fl\"",
     "solution": "def longest_common_prefix(strs):\n    if not strs:\n        return \"\"\n    prefix = strs[0]\n    for s in strs[1:]:\n        while not s.startswith(prefix):\n            prefix = prefix[:-1]\n            if not prefix:\n                return \"\"\n    return prefix",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you check if a string starts with a certain prefix?", "a": "s.startswith('fl')  # returns True or False"},
-      {"id": "bd-2", "q": "How do you remove the last character from a string?", "a": "prefix = prefix[:-1]\n# 'flow' becomes 'flo'"},
-      {"id": "bd-3", "q": "How do you check if a string is empty?", "a": "if not prefix:\n    return ''"},
-      {"id": "bd-4", "q": "Starting with prefix='flower', how do you shrink it until 'flight' starts with it?", "a": "'flight'.startswith('flower')? No -> 'flowe'\n'flight'.startswith('flowe')? No -> 'flow'\n'flight'.startswith('flow')? No -> 'flo'\n'flight'.startswith('flo')? No -> 'fl'\n'flight'.startswith('fl')? Yes -> prefix='fl'"}
+      {
+        "id": "bd-1",
+        "q": "How do you check if a string starts with a certain prefix?",
+        "a": "s.startswith('fl')  # returns True or False"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you remove the last character from a string?",
+        "a": "prefix = prefix[:-1]\n# 'flow' becomes 'flo'"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you check if a string is empty?",
+        "a": "if not prefix:\n    return ''"
+      },
+      {
+        "id": "bd-4",
+        "q": "Starting with prefix='flower', how do you shrink it until 'flight' starts with it?",
+        "a": "'flight'.startswith('flower')? No -> 'flowe'\n'flight'.startswith('flowe')? No -> 'flow'\n'flight'.startswith('flow')? No -> 'flo'\n'flight'.startswith('flo')? No -> 'fl'\n'flight'.startswith('fl')? Yes -> prefix='fl'"
+      }
     ],
     "patternHint": "Finding common prefix/suffix? Start with the first string as the candidate and trim it until all strings match."
   },
   {
     "id": "lc-22",
     "title": "Palindrome Check",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "pattern": "Two Pointers",
-    "topics": ["Strings", "Two Pointers"],
+    "topics": [
+      "Strings",
+      "Two Pointers"
+    ],
     "problem": "Check if a string is a palindrome, considering only alphanumeric characters and ignoring case.\n\nExample:\ns = \"A man, a plan, a canal: Panama\"\nOutput: True",
     "solution": "def is_palindrome(s):\n    cleaned = [c.lower() for c in s if c.isalnum()]\n    left, right = 0, len(cleaned) - 1\n    while left < right:\n        if cleaned[left] != cleaned[right]:\n            return False\n        left += 1\n        right -= 1\n    return True",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you check if a character is a letter or digit?", "a": "'a'.isalnum()  # True\n'!'.isalnum()  # False"},
-      {"id": "bd-2", "q": "How do you convert a character to lowercase?", "a": "'A'.lower()  # returns 'a'"},
-      {"id": "bd-3", "q": "How do you build a cleaned list with only lowercase alphanumeric characters?", "a": "cleaned = [c.lower() for c in s if c.isalnum()]"},
-      {"id": "bd-4", "q": "Given cleaned=['a','m','a','n','a',...], how do you compare from both ends?", "a": "left, right = 0, len(cleaned) - 1\nwhile left < right:\n    if cleaned[left] != cleaned[right]:\n        return False\n    left += 1\n    right -= 1"}
+      {
+        "id": "bd-1",
+        "q": "How do you check if a character is a letter or digit?",
+        "a": "'a'.isalnum()  # True\n'!'.isalnum()  # False"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you convert a character to lowercase?",
+        "a": "'A'.lower()  # returns 'a'"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you build a cleaned list with only lowercase alphanumeric characters?",
+        "a": "cleaned = [c.lower() for c in s if c.isalnum()]"
+      },
+      {
+        "id": "bd-4",
+        "q": "Given cleaned=['a','m','a','n','a',...], how do you compare from both ends?",
+        "a": "left, right = 0, len(cleaned) - 1\nwhile left < right:\n    if cleaned[left] != cleaned[right]:\n        return False\n    left += 1\n    right -= 1"
+      }
     ],
     "patternHint": "Checking palindromes? Clean the input, then use two pointers from both ends comparing characters."
   },
@@ -356,14 +775,34 @@
     "title": "Top K Frequent Elements",
     "difficulty": "Medium",
     "pattern": "HashMap",
-    "topics": ["Arrays", "HashMap", "Sorting"],
+    "topics": [
+      "Arrays",
+      "HashMap",
+      "Sorting"
+    ],
     "problem": "Given an integer array nums and integer k, return the k most frequent elements.\n\nExample:\nnums = [1,1,1,2,2,3], k = 2\nOutput: [1, 2]",
     "solution": "def top_k_frequent(nums, k):\n    count = {}\n    for num in nums:\n        count[num] = count.get(num, 0) + 1\n    sorted_items = sorted(count.keys(), key=lambda x: count[x], reverse=True)\n    return sorted_items[:k]",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you count how many times each number appears?", "a": "count = {}\nfor num in nums:\n    count[num] = count.get(num, 0) + 1"},
-      {"id": "bd-2", "q": "How do you get all unique keys from a dictionary?", "a": "count.keys()\n# e.g. dict_keys([1, 2, 3])"},
-      {"id": "bd-3", "q": "How do you sort by frequency in descending order?", "a": "sorted(count.keys(), key=lambda x: count[x], reverse=True)"},
-      {"id": "bd-4", "q": "How do you take only the first k items from a list?", "a": "result[:k]\n# e.g. [1, 2, 3][:2] gives [1, 2]"}
+      {
+        "id": "bd-1",
+        "q": "How do you count how many times each number appears?",
+        "a": "count = {}\nfor num in nums:\n    count[num] = count.get(num, 0) + 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you get all unique keys from a dictionary?",
+        "a": "count.keys()\n# e.g. dict_keys([1, 2, 3])"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you sort by frequency in descending order?",
+        "a": "sorted(count.keys(), key=lambda x: count[x], reverse=True)"
+      },
+      {
+        "id": "bd-4",
+        "q": "How do you take only the first k items from a list?",
+        "a": "result[:k]\n# e.g. [1, 2, 3][:2] gives [1, 2]"
+      }
     ],
     "patternHint": "Finding top-K elements? Count frequencies with a HashMap, then sort by count and take the first K."
   },
@@ -372,14 +811,33 @@
     "title": "Intersection of Two Arrays",
     "difficulty": "Easy",
     "pattern": "HashMap",
-    "topics": ["Arrays", "HashMap"],
+    "topics": [
+      "Arrays",
+      "HashMap"
+    ],
     "problem": "Given two integer arrays, return an array of their intersection (each element appears as many times as it shows in both arrays).\n\nExample:\nnums1 = [1,2,2,1], nums2 = [2,2]\nOutput: [2, 2]",
     "solution": "def intersect(nums1, nums2):\n    count = {}\n    for num in nums1:\n        count[num] = count.get(num, 0) + 1\n    result = []\n    for num in nums2:\n        if count.get(num, 0) > 0:\n            result.append(num)\n            count[num] -= 1\n    return result",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you build a frequency count of the first array?", "a": "count = {}\nfor num in nums1:\n    count[num] = count.get(num, 0) + 1"},
-      {"id": "bd-2", "q": "How do you check if a number still has remaining count in the dict?", "a": "if count.get(num, 0) > 0:\n    print('still available')"},
-      {"id": "bd-3", "q": "How do you subtract from a count after using it?", "a": "count[num] -= 1"},
-      {"id": "bd-4", "q": "With count={1:2, 2:2} and nums2=[2,2], walk through the intersection.", "a": "num=2: count[2]=2>0 -> result=[2], count[2]=1\nnum=2: count[2]=1>0 -> result=[2,2], count[2]=0"}
+      {
+        "id": "bd-1",
+        "q": "How do you build a frequency count of the first array?",
+        "a": "count = {}\nfor num in nums1:\n    count[num] = count.get(num, 0) + 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you check if a number still has remaining count in the dict?",
+        "a": "if count.get(num, 0) > 0:\n    print('still available')"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you subtract from a count after using it?",
+        "a": "count[num] -= 1"
+      },
+      {
+        "id": "bd-4",
+        "q": "With count={1:2, 2:2} and nums2=[2,2], walk through the intersection.",
+        "a": "num=2: count[2]=2>0 -> result=[2], count[2]=1\nnum=2: count[2]=1>0 -> result=[2,2], count[2]=0"
+      }
     ],
     "patternHint": "Finding intersection with duplicates? Count one array in a HashMap, then iterate the other and decrement counts."
   },
@@ -388,14 +846,33 @@
     "title": "Daily Temperatures (Next Greater)",
     "difficulty": "Medium",
     "pattern": "Stack",
-    "topics": ["Arrays", "Stacks"],
+    "topics": [
+      "Arrays",
+      "Stacks"
+    ],
     "problem": "Given daily temperatures, for each day find how many days until a warmer temperature. Return 0 if no warmer day.\n\nExample:\ntemps = [73,74,75,71,69,72,76,73]\nOutput: [1,1,4,2,1,1,0,0]",
     "solution": "def daily_temperatures(temps):\n    result = [0] * len(temps)\n    stack = []\n    for i, temp in enumerate(temps):\n        while stack and temps[stack[-1]] < temp:\n            prev = stack.pop()\n            result[prev] = i - prev\n        stack.append(i)\n    return result",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you create a list of zeros with the same length as another list?", "a": "result = [0] * len(temps)\n# e.g. [0, 0, 0, 0, 0, 0, 0, 0]"},
-      {"id": "bd-2", "q": "How do you loop with both index and value?", "a": "for i, temp in enumerate(temps):\n    print(i, temp)"},
-      {"id": "bd-3", "q": "How do you check if the stack is not empty AND the top element meets a condition?", "a": "while stack and temps[stack[-1]] < temp:\n    # process stack top"},
-      {"id": "bd-4", "q": "If stack=[0,1,2] and current i=6 with a warmer temp, how do you calculate days waited?", "a": "prev = stack.pop()  # prev = 2\nresult[prev] = i - prev  # result[2] = 6 - 2 = 4"}
+      {
+        "id": "bd-1",
+        "q": "How do you create a list of zeros with the same length as another list?",
+        "a": "result = [0] * len(temps)\n# e.g. [0, 0, 0, 0, 0, 0, 0, 0]"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you loop with both index and value?",
+        "a": "for i, temp in enumerate(temps):\n    print(i, temp)"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you check if the stack is not empty AND the top element meets a condition?",
+        "a": "while stack and temps[stack[-1]] < temp:\n    # process stack top"
+      },
+      {
+        "id": "bd-4",
+        "q": "If stack=[0,1,2] and current i=6 with a warmer temp, how do you calculate days waited?",
+        "a": "prev = stack.pop()  # prev = 2\nresult[prev] = i - prev  # result[2] = 6 - 2 = 4"
+      }
     ],
     "patternHint": "Finding next greater/smaller element? Use a monotonic stack — pop and process when the current element breaks the pattern."
   },
@@ -404,14 +881,33 @@
     "title": "Evaluate Reverse Polish Notation",
     "difficulty": "Medium",
     "pattern": "Stack",
-    "topics": ["Stacks", "Strings"],
+    "topics": [
+      "Stacks",
+      "Strings"
+    ],
     "problem": "Evaluate an expression in Reverse Polish Notation (postfix). Valid operators: +, -, *, /.\n\nExample:\ntokens = [\"2\",\"1\",\"+\",\"3\",\"*\"]\nOutput: 9 ((2+1)*3)",
     "solution": "def eval_rpn(tokens):\n    stack = []\n    ops = {'+', '-', '*', '/'}\n    for token in tokens:\n        if token in ops:\n            b, a = stack.pop(), stack.pop()\n            if token == '+':\n                stack.append(a + b)\n            elif token == '-':\n                stack.append(a - b)\n            elif token == '*':\n                stack.append(a * b)\n            elif token == '/':\n                stack.append(int(a / b))\n        else:\n            stack.append(int(token))\n    return stack[0]",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you convert a string to an integer?", "a": "int('42')  # returns 42\nint('-3')  # returns -3"},
-      {"id": "bd-2", "q": "How do you create a set of operators to check membership?", "a": "ops = {'+', '-', '*', '/'}\nif token in ops:\n    print('operator')"},
-      {"id": "bd-3", "q": "How do you pop two values from a stack (getting them in the right order)?", "a": "b, a = stack.pop(), stack.pop()\n# b is the second operand, a is the first"},
-      {"id": "bd-4", "q": "How do you truncate division toward zero in Python?", "a": "int(a / b)\n# int(7 / 2) = 3\n# int(-7 / 2) = -3"}
+      {
+        "id": "bd-1",
+        "q": "How do you convert a string to an integer?",
+        "a": "int('42')  # returns 42\nint('-3')  # returns -3"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you create a set of operators to check membership?",
+        "a": "ops = {'+', '-', '*', '/'}\nif token in ops:\n    print('operator')"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you pop two values from a stack (getting them in the right order)?",
+        "a": "b, a = stack.pop(), stack.pop()\n# b is the second operand, a is the first"
+      },
+      {
+        "id": "bd-4",
+        "q": "How do you truncate division toward zero in Python?",
+        "a": "int(a / b)\n# int(7 / 2) = 3\n# int(-7 / 2) = -3"
+      }
     ],
     "patternHint": "Evaluating expressions or processing nested structures? Use a stack — push operands, pop and compute when you see operators."
   },
@@ -420,14 +916,33 @@
     "title": "Subarray Sum Equals K",
     "difficulty": "Medium",
     "pattern": "HashMap",
-    "topics": ["Arrays", "HashMap"],
+    "topics": [
+      "Arrays",
+      "HashMap"
+    ],
     "problem": "Given an array nums and integer k, return the total number of subarrays whose sum equals k.\n\nExample:\nnums = [1, 1, 1], k = 2\nOutput: 2",
     "solution": "def subarray_sum(nums, k):\n    count = 0\n    prefix_sum = 0\n    seen = {0: 1}\n    for num in nums:\n        prefix_sum += num\n        if prefix_sum - k in seen:\n            count += seen[prefix_sum - k]\n        seen[prefix_sum] = seen.get(prefix_sum, 0) + 1\n    return count",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you build a running total (prefix sum) as you loop?", "a": "prefix_sum = 0\nfor num in nums:\n    prefix_sum += num"},
-      {"id": "bd-2", "q": "How do you initialize a dictionary with a starting entry?", "a": "seen = {0: 1}\n# key 0 with value 1"},
-      {"id": "bd-3", "q": "How do you check if a computed value exists as a key in a dict?", "a": "if prefix_sum - k in seen:\n    count += seen[prefix_sum - k]"},
-      {"id": "bd-4", "q": "With nums=[1,1,1], k=2, walk through the prefix sums and lookups.", "a": "prefix=1: 1-2=-1 not in seen. seen={0:1,1:1}\nprefix=2: 2-2=0 in seen(1). count=1. seen={0:1,1:1,2:1}\nprefix=3: 3-2=1 in seen(1). count=2. seen={0:1,1:1,2:1,3:1}"}
+      {
+        "id": "bd-1",
+        "q": "How do you build a running total (prefix sum) as you loop?",
+        "a": "prefix_sum = 0\nfor num in nums:\n    prefix_sum += num"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you initialize a dictionary with a starting entry?",
+        "a": "seen = {0: 1}\n# key 0 with value 1"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you check if a computed value exists as a key in a dict?",
+        "a": "if prefix_sum - k in seen:\n    count += seen[prefix_sum - k]"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[1,1,1], k=2, walk through the prefix sums and lookups.",
+        "a": "prefix=1: 1-2=-1 not in seen. seen={0:1,1:1}\nprefix=2: 2-2=0 in seen(1). count=1. seen={0:1,1:1,2:1}\nprefix=3: 3-2=1 in seen(1). count=2. seen={0:1,1:1,2:1,3:1}"
+      }
     ],
     "patternHint": "Counting subarrays with a target sum? Use prefix sums + HashMap — store prefix sums and look up (current - k)."
   },
@@ -436,14 +951,32 @@
     "title": "Product of Array Except Self",
     "difficulty": "Medium",
     "pattern": "Arrays",
-    "topics": ["Arrays"],
+    "topics": [
+      "Arrays"
+    ],
     "problem": "Given an array nums, return an array where each element is the product of all other elements. Solve without division.\n\nExample:\nnums = [1, 2, 3, 4]\nOutput: [24, 12, 8, 6]",
     "solution": "def product_except_self(nums):\n    n = len(nums)\n    result = [1] * n\n    prefix = 1\n    for i in range(n):\n        result[i] = prefix\n        prefix *= nums[i]\n    suffix = 1\n    for i in range(n - 1, -1, -1):\n        result[i] *= suffix\n        suffix *= nums[i]\n    return result",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you create a list of all 1s with length n?", "a": "result = [1] * n\n# e.g. [1, 1, 1, 1]"},
-      {"id": "bd-2", "q": "How do you build a running product going left to right?", "a": "prefix = 1\nfor i in range(n):\n    result[i] = prefix\n    prefix *= nums[i]"},
-      {"id": "bd-3", "q": "How do you loop through a list backwards?", "a": "for i in range(n - 1, -1, -1):\n    print(i)  # prints n-1, n-2, ..., 0"},
-      {"id": "bd-4", "q": "With nums=[1,2,3,4], what is result after the prefix pass (left to right)?", "a": "i=0: result[0]=1, prefix=1*1=1\ni=1: result[1]=1, prefix=1*2=2\ni=2: result[2]=2, prefix=2*3=6\ni=3: result[3]=6, prefix=6*4=24\nresult = [1, 1, 2, 6]"}
+      {
+        "id": "bd-1",
+        "q": "How do you create a list of all 1s with length n?",
+        "a": "result = [1] * n\n# e.g. [1, 1, 1, 1]"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you build a running product going left to right?",
+        "a": "prefix = 1\nfor i in range(n):\n    result[i] = prefix\n    prefix *= nums[i]"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you loop through a list backwards?",
+        "a": "for i in range(n - 1, -1, -1):\n    print(i)  # prints n-1, n-2, ..., 0"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[1,2,3,4], what is result after the prefix pass (left to right)?",
+        "a": "i=0: result[0]=1, prefix=1*1=1\ni=1: result[1]=1, prefix=1*2=2\ni=2: result[2]=2, prefix=2*3=6\ni=3: result[3]=6, prefix=6*4=24\nresult = [1, 1, 2, 6]"
+      }
     ],
     "patternHint": "Need product/sum of all except current? Compute prefix and suffix arrays (or running values) in two passes."
   },
@@ -452,14 +985,32 @@
     "title": "Rotate Array by K Steps",
     "difficulty": "Medium",
     "pattern": "Arrays",
-    "topics": ["Arrays"],
+    "topics": [
+      "Arrays"
+    ],
     "problem": "Rotate an array to the right by k steps, in-place.\n\nExample:\nnums = [1,2,3,4,5,6,7], k = 3\nOutput: [5,6,7,1,2,3,4]",
     "solution": "def rotate(nums, k):\n    n = len(nums)\n    k = k % n\n    def reverse(start, end):\n        while start < end:\n            nums[start], nums[end] = nums[end], nums[start]\n            start += 1\n            end -= 1\n    reverse(0, n - 1)\n    reverse(0, k - 1)\n    reverse(k, n - 1)\n    return nums",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you use modulo to handle k larger than the array length?", "a": "k = k % n\n# e.g. k=10, n=7 -> k=3"},
-      {"id": "bd-2", "q": "How do you define a helper function inside another function?", "a": "def reverse(start, end):\n    while start < end:\n        nums[start], nums[end] = nums[end], nums[start]\n        start += 1\n        end -= 1"},
-      {"id": "bd-3", "q": "How do you swap two elements in a list?", "a": "nums[start], nums[end] = nums[end], nums[start]"},
-      {"id": "bd-4", "q": "With nums=[1,2,3,4,5,6,7] and k=3, what happens after each reverse?", "a": "reverse(0,6): [7,6,5,4,3,2,1]\nreverse(0,2): [5,6,7,4,3,2,1]\nreverse(3,6): [5,6,7,1,2,3,4]"}
+      {
+        "id": "bd-1",
+        "q": "How do you use modulo to handle k larger than the array length?",
+        "a": "k = k % n\n# e.g. k=10, n=7 -> k=3"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you define a helper function inside another function?",
+        "a": "def reverse(start, end):\n    while start < end:\n        nums[start], nums[end] = nums[end], nums[start]\n        start += 1\n        end -= 1"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you swap two elements in a list?",
+        "a": "nums[start], nums[end] = nums[end], nums[start]"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[1,2,3,4,5,6,7] and k=3, what happens after each reverse?",
+        "a": "reverse(0,6): [7,6,5,4,3,2,1]\nreverse(0,2): [5,6,7,4,3,2,1]\nreverse(3,6): [5,6,7,1,2,3,4]"
+      }
     ],
     "patternHint": "Rotating an array in-place? Use the triple-reverse trick: reverse all, reverse first k, reverse the rest."
   },
@@ -468,14 +1019,33 @@
     "title": "Find Peak Element",
     "difficulty": "Medium",
     "pattern": "Binary Search",
-    "topics": ["Arrays", "Binary Search"],
+    "topics": [
+      "Arrays",
+      "Binary Search"
+    ],
     "problem": "A peak element is strictly greater than its neighbors. Given an array, find any peak element's index. nums[-1] = nums[n] = -infinity.\n\nExample:\nnums = [1, 2, 3, 1]\nOutput: 2 (nums[2] = 3)",
     "solution": "def find_peak(nums):\n    left, right = 0, len(nums) - 1\n    while left < right:\n        mid = (left + right) // 2\n        if nums[mid] > nums[mid + 1]:\n            right = mid\n        else:\n            left = mid + 1\n    return left",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you set up binary search boundaries?", "a": "left, right = 0, len(nums) - 1"},
-      {"id": "bd-2", "q": "How do you calculate the middle index?", "a": "mid = (left + right) // 2"},
-      {"id": "bd-3", "q": "How do you compare an element with its right neighbor?", "a": "if nums[mid] > nums[mid + 1]:\n    print('going downhill')"},
-      {"id": "bd-4", "q": "With nums=[1,2,3,1], mid=1, nums[1]=2 vs nums[2]=3: which half has the peak?", "a": "2 < 3, so we're going uphill\nleft = mid + 1 = 2\nPeak must be to the right (including mid+1)"}
+      {
+        "id": "bd-1",
+        "q": "How do you set up binary search boundaries?",
+        "a": "left, right = 0, len(nums) - 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you calculate the middle index?",
+        "a": "mid = (left + right) // 2"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you compare an element with its right neighbor?",
+        "a": "if nums[mid] > nums[mid + 1]:\n    print('going downhill')"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[1,2,3,1], mid=1, nums[1]=2 vs nums[2]=3: which half has the peak?",
+        "a": "2 < 3, so we're going uphill\nleft = mid + 1 = 2\nPeak must be to the right (including mid+1)"
+      }
     ],
     "patternHint": "Finding a peak or transition point? Binary search works even on unsorted data when you can determine which half contains the answer."
   },
@@ -484,14 +1054,33 @@
     "title": "Minimum in Rotated Sorted Array",
     "difficulty": "Medium",
     "pattern": "Binary Search",
-    "topics": ["Arrays", "Binary Search"],
+    "topics": [
+      "Arrays",
+      "Binary Search"
+    ],
     "problem": "A sorted array has been rotated at some pivot. Find the minimum element.\n\nExample:\nnums = [3, 4, 5, 1, 2]\nOutput: 1",
     "solution": "def find_min(nums):\n    left, right = 0, len(nums) - 1\n    while left < right:\n        mid = (left + right) // 2\n        if nums[mid] > nums[right]:\n            left = mid + 1\n        else:\n            right = mid\n    return nums[left]",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you access the element at the right boundary?", "a": "nums[right]"},
-      {"id": "bd-2", "q": "How do you compute the midpoint?", "a": "mid = (left + right) // 2"},
-      {"id": "bd-3", "q": "If nums[mid] > nums[right], which half has the minimum?", "a": "left = mid + 1\n# minimum is in the right half\n# e.g. [3,4,5,1,2]: mid=5 > right=2"},
-      {"id": "bd-4", "q": "With nums=[3,4,5,1,2], walk through the binary search.", "a": "left=0,right=4,mid=2: nums[2]=5>nums[4]=2 -> left=3\nleft=3,right=4,mid=3: nums[3]=1<nums[4]=2 -> right=3\nleft==right==3: return nums[3]=1"}
+      {
+        "id": "bd-1",
+        "q": "How do you access the element at the right boundary?",
+        "a": "nums[right]"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you compute the midpoint?",
+        "a": "mid = (left + right) // 2"
+      },
+      {
+        "id": "bd-3",
+        "q": "If nums[mid] > nums[right], which half has the minimum?",
+        "a": "left = mid + 1\n# minimum is in the right half\n# e.g. [3,4,5,1,2]: mid=5 > right=2"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[3,4,5,1,2], walk through the binary search.",
+        "a": "left=0,right=4,mid=2: nums[2]=5>nums[4]=2 -> left=3\nleft=3,right=4,mid=3: nums[3]=1<nums[4]=2 -> right=3\nleft==right==3: return nums[3]=1"
+      }
     ],
     "patternHint": "Searching in a rotated sorted array? Compare mid with right boundary to determine which half is properly sorted."
   },
@@ -500,14 +1089,33 @@
     "title": "String Compression",
     "difficulty": "Medium",
     "pattern": "Two Pointers",
-    "topics": ["Strings", "Two Pointers"],
+    "topics": [
+      "Strings",
+      "Two Pointers"
+    ],
     "problem": "Compress a list of characters in-place: consecutive duplicates become char + count (only if count > 1). Return the new length.\n\nExample:\nchars = ['a','a','b','b','c','c','c']\nOutput: 6, chars = ['a','2','b','2','c','3']",
     "solution": "def compress(chars):\n    write = 0\n    read = 0\n    while read < len(chars):\n        char = chars[read]\n        count = 0\n        while read < len(chars) and chars[read] == char:\n            read += 1\n            count += 1\n        chars[write] = char\n        write += 1\n        if count > 1:\n            for digit in str(count):\n                chars[write] = digit\n                write += 1\n    return write",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you count consecutive identical elements with a while loop?", "a": "count = 0\nwhile read < len(chars) and chars[read] == char:\n    read += 1\n    count += 1"},
-      {"id": "bd-2", "q": "How do you convert a number to a string?", "a": "str(12)  # returns '12'"},
-      {"id": "bd-3", "q": "How do you write each digit of a number into a list separately?", "a": "for digit in str(count):\n    chars[write] = digit\n    write += 1\n# 12 becomes '1' then '2'"},
-      {"id": "bd-4", "q": "With chars=['a','a','b'], after processing 'a' (count=2), what does the array look like?", "a": "chars[0] = 'a'  # write the char\nchars[1] = '2'  # write the count\nwrite = 2, read = 2\nchars = ['a', '2', 'b']"}
+      {
+        "id": "bd-1",
+        "q": "How do you count consecutive identical elements with a while loop?",
+        "a": "count = 0\nwhile read < len(chars) and chars[read] == char:\n    read += 1\n    count += 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you convert a number to a string?",
+        "a": "str(12)  # returns '12'"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you write each digit of a number into a list separately?",
+        "a": "for digit in str(count):\n    chars[write] = digit\n    write += 1\n# 12 becomes '1' then '2'"
+      },
+      {
+        "id": "bd-4",
+        "q": "With chars=['a','a','b'], after processing 'a' (count=2), what does the array look like?",
+        "a": "chars[0] = 'a'  # write the char\nchars[1] = '2'  # write the count\nwrite = 2, read = 2\nchars = ['a', '2', 'b']"
+      }
     ],
     "patternHint": "Run-length encoding or compression? Use read/write pointers — read counts runs, write outputs the compressed form."
   },
@@ -516,14 +1124,34 @@
     "title": "Maximum Length Substring with K Distinct",
     "difficulty": "Medium",
     "pattern": "Sliding Window",
-    "topics": ["Strings", "Sliding Window", "HashMap"],
+    "topics": [
+      "Strings",
+      "Sliding Window",
+      "HashMap"
+    ],
     "problem": "Given a string s and integer k, find the length of the longest substring with at most k distinct characters.\n\nExample:\ns = \"eceba\", k = 2\nOutput: 3 (\"ece\")",
     "solution": "def longest_k_distinct(s, k):\n    char_count = {}\n    left = 0\n    max_len = 0\n    for right in range(len(s)):\n        char_count[s[right]] = char_count.get(s[right], 0) + 1\n        while len(char_count) > k:\n            char_count[s[left]] -= 1\n            if char_count[s[left]] == 0:\n                del char_count[s[left]]\n            left += 1\n        max_len = max(max_len, right - left + 1)\n    return max_len",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you add a character count to a dictionary?", "a": "char_count[s[right]] = char_count.get(s[right], 0) + 1"},
-      {"id": "bd-2", "q": "How do you check how many unique keys are in a dictionary?", "a": "len(char_count)\n# e.g. {'e':2, 'c':1} -> 2 distinct chars"},
-      {"id": "bd-3", "q": "How do you delete a key from a dictionary?", "a": "del char_count[s[left]]\n# removes the key entirely"},
-      {"id": "bd-4", "q": "When len(char_count) > k, how do you shrink the window?", "a": "char_count[s[left]] -= 1\nif char_count[s[left]] == 0:\n    del char_count[s[left]]\nleft += 1"}
+      {
+        "id": "bd-1",
+        "q": "How do you add a character count to a dictionary?",
+        "a": "char_count[s[right]] = char_count.get(s[right], 0) + 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you check how many unique keys are in a dictionary?",
+        "a": "len(char_count)\n# e.g. {'e':2, 'c':1} -> 2 distinct chars"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you delete a key from a dictionary?",
+        "a": "del char_count[s[left]]\n# removes the key entirely"
+      },
+      {
+        "id": "bd-4",
+        "q": "When len(char_count) > k, how do you shrink the window?",
+        "a": "char_count[s[left]] -= 1\nif char_count[s[left]] == 0:\n    del char_count[s[left]]\nleft += 1"
+      }
     ],
     "patternHint": "Substring with at most K distinct chars? Sliding window with a HashMap tracking char counts. Shrink when distinct > k."
   },
@@ -532,14 +1160,34 @@
     "title": "Sort Colors (Dutch Flag)",
     "difficulty": "Medium",
     "pattern": "Two Pointers",
-    "topics": ["Arrays", "Two Pointers", "Sorting"],
+    "topics": [
+      "Arrays",
+      "Two Pointers",
+      "Sorting"
+    ],
     "problem": "Given an array with values 0, 1, and 2 (red, white, blue), sort them in-place in one pass.\n\nExample:\nnums = [2, 0, 2, 1, 1, 0]\nOutput: [0, 0, 1, 1, 2, 2]",
     "solution": "def sort_colors(nums):\n    low, mid, high = 0, 0, len(nums) - 1\n    while mid <= high:\n        if nums[mid] == 0:\n            nums[low], nums[mid] = nums[mid], nums[low]\n            low += 1\n            mid += 1\n        elif nums[mid] == 1:\n            mid += 1\n        else:\n            nums[mid], nums[high] = nums[high], nums[mid]\n            high -= 1\n    return nums",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you initialize three variables on one line?", "a": "low, mid, high = 0, 0, len(nums) - 1"},
-      {"id": "bd-2", "q": "How do you swap two elements by index?", "a": "nums[low], nums[mid] = nums[mid], nums[low]"},
-      {"id": "bd-3", "q": "How do you compare a value against specific numbers (0, 1, 2)?", "a": "if nums[mid] == 0:\n    # handle 0\nelif nums[mid] == 1:\n    # handle 1\nelse:\n    # handle 2"},
-      {"id": "bd-4", "q": "With nums=[2,0,1], low=0, mid=0, high=2: nums[0]=2, what happens?", "a": "nums[mid]=2, so swap with high:\nnums[0], nums[2] = nums[2], nums[0]\nnums = [1, 0, 2], high = 1\nmid stays at 0 (need to check swapped value)"}
+      {
+        "id": "bd-1",
+        "q": "How do you initialize three variables on one line?",
+        "a": "low, mid, high = 0, 0, len(nums) - 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you swap two elements by index?",
+        "a": "nums[low], nums[mid] = nums[mid], nums[low]"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you compare a value against specific numbers (0, 1, 2)?",
+        "a": "if nums[mid] == 0:\n    # handle 0\nelif nums[mid] == 1:\n    # handle 1\nelse:\n    # handle 2"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[2,0,1], low=0, mid=0, high=2: nums[0]=2, what happens?",
+        "a": "nums[mid]=2, so swap with high:\nnums[0], nums[2] = nums[2], nums[0]\nnums = [1, 0, 2], high = 1\nmid stays at 0 (need to check swapped value)"
+      }
     ],
     "patternHint": "Partitioning into 3 groups in one pass? Use three pointers (Dutch National Flag) — low, mid, high."
   },
@@ -548,14 +1196,33 @@
     "title": "Kth Largest Element",
     "difficulty": "Medium",
     "pattern": "Sorting",
-    "topics": ["Arrays", "Sorting"],
+    "topics": [
+      "Arrays",
+      "Sorting"
+    ],
     "problem": "Find the kth largest element in an unsorted array.\n\nExample:\nnums = [3,2,1,5,6,4], k = 2\nOutput: 5",
     "solution": "import heapq\n\ndef find_kth_largest(nums, k):\n    heap = []\n    for num in nums:\n        heapq.heappush(heap, num)\n        if len(heap) > k:\n            heapq.heappop(heap)\n    return heap[0]",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you import the heapq module?", "a": "import heapq"},
-      {"id": "bd-2", "q": "How do you push a value onto a min-heap?", "a": "heapq.heappush(heap, num)\n# heap is a regular list"},
-      {"id": "bd-3", "q": "How do you pop the smallest value from a heap?", "a": "smallest = heapq.heappop(heap)"},
-      {"id": "bd-4", "q": "With k=2, why does keeping only 2 elements in a min-heap give the 2nd largest?", "a": "heap always has the k largest seen so far\nheap[0] is the smallest of those k\n# [3,2,1,5,6,4] -> final heap [5,6]\n# heap[0] = 5 = 2nd largest"}
+      {
+        "id": "bd-1",
+        "q": "How do you import the heapq module?",
+        "a": "import heapq"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you push a value onto a min-heap?",
+        "a": "heapq.heappush(heap, num)\n# heap is a regular list"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you pop the smallest value from a heap?",
+        "a": "smallest = heapq.heappop(heap)"
+      },
+      {
+        "id": "bd-4",
+        "q": "With k=2, why does keeping only 2 elements in a min-heap give the 2nd largest?",
+        "a": "heap always has the k largest seen so far\nheap[0] is the smallest of those k\n# [3,2,1,5,6,4] -> final heap [5,6]\n# heap[0] = 5 = 2nd largest"
+      }
     ],
     "patternHint": "Finding Kth largest/smallest? Maintain a heap of size K — more efficient than full sorting for large arrays."
   },
@@ -564,14 +1231,33 @@
     "title": "Merge Overlapping Intervals",
     "difficulty": "Medium",
     "pattern": "Sorting",
-    "topics": ["Arrays", "Sorting"],
+    "topics": [
+      "Arrays",
+      "Sorting"
+    ],
     "problem": "Given a collection of intervals, merge all overlapping intervals.\n\nExample:\nintervals = [[1,3],[2,6],[8,10],[15,18]]\nOutput: [[1,6],[8,10],[15,18]]",
     "solution": "def merge_intervals(intervals):\n    intervals.sort(key=lambda x: x[0])\n    merged = [intervals[0]]\n    for start, end in intervals[1:]:\n        if start <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], end)\n        else:\n            merged.append([start, end])\n    return merged",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you sort a list of lists by the first element?", "a": "intervals.sort(key=lambda x: x[0])"},
-      {"id": "bd-2", "q": "How do you unpack a two-element list in a for loop?", "a": "for start, end in intervals:\n    print(start, end)"},
-      {"id": "bd-3", "q": "How do you access the last element of a list?", "a": "merged[-1]  # last interval\nmerged[-1][1]  # end of last interval"},
-      {"id": "bd-4", "q": "With merged=[[1,3]] and next interval [2,6], do they overlap and what's the result?", "a": "start=2 <= merged[-1][1]=3? Yes, overlap!\nmerged[-1][1] = max(3, 6) = 6\nmerged = [[1, 6]]"}
+      {
+        "id": "bd-1",
+        "q": "How do you sort a list of lists by the first element?",
+        "a": "intervals.sort(key=lambda x: x[0])"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you unpack a two-element list in a for loop?",
+        "a": "for start, end in intervals:\n    print(start, end)"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you access the last element of a list?",
+        "a": "merged[-1]  # last interval\nmerged[-1][1]  # end of last interval"
+      },
+      {
+        "id": "bd-4",
+        "q": "With merged=[[1,3]] and next interval [2,6], do they overlap and what's the result?",
+        "a": "start=2 <= merged[-1][1]=3? Yes, overlap!\nmerged[-1][1] = max(3, 6) = 6\nmerged = [[1, 6]]"
+      }
     ],
     "patternHint": "Merging intervals? Sort by start time, then iterate and merge overlapping ones by comparing with the last merged interval."
   },
@@ -580,14 +1266,33 @@
     "title": "Character Replacement with K Changes",
     "difficulty": "Medium",
     "pattern": "Sliding Window",
-    "topics": ["Strings", "Sliding Window"],
+    "topics": [
+      "Strings",
+      "Sliding Window"
+    ],
     "problem": "Given a string s and integer k, find the length of the longest substring where you can replace at most k characters to make all characters the same.\n\nExample:\ns = \"AABABBA\", k = 1\nOutput: 4 (\"AABA\" -> change one B to A)",
     "solution": "def character_replacement(s, k):\n    count = {}\n    left = 0\n    max_count = 0\n    max_len = 0\n    for right in range(len(s)):\n        count[s[right]] = count.get(s[right], 0) + 1\n        max_count = max(max_count, count[s[right]])\n        while (right - left + 1) - max_count > k:\n            count[s[left]] -= 1\n            left += 1\n        max_len = max(max_len, right - left + 1)\n    return max_len",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you count characters in the current window using a dict?", "a": "count[s[right]] = count.get(s[right], 0) + 1"},
-      {"id": "bd-2", "q": "How do you track the highest character frequency seen so far?", "a": "max_count = max(max_count, count[s[right]])"},
-      {"id": "bd-3", "q": "How do you calculate how many characters in the window need replacing?", "a": "replacements = (right - left + 1) - max_count\n# window size minus the most frequent char"},
-      {"id": "bd-4", "q": "With window 'AABA' (size 4), max_count=3 (A appears 3x), k=1: is this valid?", "a": "replacements = 4 - 3 = 1\n1 <= k=1? Yes, valid!\nOnly need to replace 1 char (the B)"}
+      {
+        "id": "bd-1",
+        "q": "How do you count characters in the current window using a dict?",
+        "a": "count[s[right]] = count.get(s[right], 0) + 1"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you track the highest character frequency seen so far?",
+        "a": "max_count = max(max_count, count[s[right]])"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you calculate how many characters in the window need replacing?",
+        "a": "replacements = (right - left + 1) - max_count\n# window size minus the most frequent char"
+      },
+      {
+        "id": "bd-4",
+        "q": "With window 'AABA' (size 4), max_count=3 (A appears 3x), k=1: is this valid?",
+        "a": "replacements = 4 - 3 = 1\n1 <= k=1? Yes, valid!\nOnly need to replace 1 char (the B)"
+      }
     ],
     "patternHint": "Longest substring with at most K changes? Sliding window tracking the most frequent character — replacements = window_size - max_freq."
   },
@@ -596,14 +1301,33 @@
     "title": "Decode String with Brackets",
     "difficulty": "Medium",
     "pattern": "Stack",
-    "topics": ["Strings", "Stacks"],
+    "topics": [
+      "Strings",
+      "Stacks"
+    ],
     "problem": "Decode an encoded string. Pattern: k[encoded_string] means repeat the encoded_string k times.\n\nExample:\ns = \"3[a2[c]]\"\nOutput: \"accaccacc\"",
     "solution": "def decode_string(s):\n    stack = []\n    current_str = \"\"\n    current_num = 0\n    for char in s:\n        if char.isdigit():\n            current_num = current_num * 10 + int(char)\n        elif char == '[':\n            stack.append((current_str, current_num))\n            current_str = \"\"\n            current_num = 0\n        elif char == ']':\n            prev_str, num = stack.pop()\n            current_str = prev_str + current_str * num\n        else:\n            current_str += char\n    return current_str",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you check if a character is a digit?", "a": "char.isdigit()  # '3' -> True, 'a' -> False"},
-      {"id": "bd-2", "q": "How do you build a multi-digit number one character at a time?", "a": "current_num = current_num * 10 + int(char)\n# '1' then '2': 0*10+1=1, 1*10+2=12"},
-      {"id": "bd-3", "q": "How do you repeat a string n times in Python?", "a": "'abc' * 3  # returns 'abcabcabc'"},
-      {"id": "bd-4", "q": "How do you push a tuple onto a stack and pop it later?", "a": "stack.append((current_str, current_num))\n# later:\nprev_str, num = stack.pop()"}
+      {
+        "id": "bd-1",
+        "q": "How do you check if a character is a digit?",
+        "a": "char.isdigit()  # '3' -> True, 'a' -> False"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you build a multi-digit number one character at a time?",
+        "a": "current_num = current_num * 10 + int(char)\n# '1' then '2': 0*10+1=1, 1*10+2=12"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you repeat a string n times in Python?",
+        "a": "'abc' * 3  # returns 'abcabcabc'"
+      },
+      {
+        "id": "bd-4",
+        "q": "How do you push a tuple onto a stack and pop it later?",
+        "a": "stack.append((current_str, current_num))\n# later:\nprev_str, num = stack.pop()"
+      }
     ],
     "patternHint": "Nested encoded strings? Use a stack to save state before each '[', then pop and combine when you hit ']'."
   },
@@ -612,14 +1336,32 @@
     "title": "Find All Duplicates",
     "difficulty": "Medium",
     "pattern": "Arrays",
-    "topics": ["Arrays"],
+    "topics": [
+      "Arrays"
+    ],
     "problem": "Given an array of n integers where 1 <= nums[i] <= n, find all elements that appear twice. Solve in O(n) time and O(1) extra space.\n\nExample:\nnums = [4,3,2,7,8,2,3,1]\nOutput: [2, 3]",
     "solution": "def find_duplicates(nums):\n    result = []\n    for num in nums:\n        idx = abs(num) - 1\n        if nums[idx] < 0:\n            result.append(abs(num))\n        else:\n            nums[idx] = -nums[idx]\n    return result",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you get the absolute value of a number?", "a": "abs(-5)  # returns 5\nabs(3)   # returns 3"},
-      {"id": "bd-2", "q": "How do you convert a value (1-based) to an index (0-based)?", "a": "idx = abs(num) - 1\n# value 4 -> index 3"},
-      {"id": "bd-3", "q": "How do you negate a number to 'mark' it as seen?", "a": "nums[idx] = -nums[idx]\n# e.g. nums[2] = 7 becomes -7"},
-      {"id": "bd-4", "q": "With nums=[4,3,2,7,8,2,3,1], what happens when you hit the second 2?", "a": "num=2, idx=abs(2)-1=1\nnums[1] is already negative (marked)\nSo 2 is a duplicate -> result.append(2)"}
+      {
+        "id": "bd-1",
+        "q": "How do you get the absolute value of a number?",
+        "a": "abs(-5)  # returns 5\nabs(3)   # returns 3"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you convert a value (1-based) to an index (0-based)?",
+        "a": "idx = abs(num) - 1\n# value 4 -> index 3"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you negate a number to 'mark' it as seen?",
+        "a": "nums[idx] = -nums[idx]\n# e.g. nums[2] = 7 becomes -7"
+      },
+      {
+        "id": "bd-4",
+        "q": "With nums=[4,3,2,7,8,2,3,1], what happens when you hit the second 2?",
+        "a": "num=2, idx=abs(2)-1=1\nnums[1] is already negative (marked)\nSo 2 is a duplicate -> result.append(2)"
+      }
     ],
     "patternHint": "Finding duplicates in a 1..n array with O(1) space? Use the array itself as a hash map — negate values at index (num-1) to mark as seen."
   },
@@ -628,14 +1370,33 @@
     "title": "Longest Consecutive Sequence",
     "difficulty": "Medium",
     "pattern": "HashMap",
-    "topics": ["Arrays", "HashMap"],
+    "topics": [
+      "Arrays",
+      "HashMap"
+    ],
     "problem": "Given an unsorted array of integers, find the length of the longest consecutive elements sequence in O(n) time.\n\nExample:\nnums = [100, 4, 200, 1, 3, 2]\nOutput: 4 (sequence [1, 2, 3, 4])",
     "solution": "def longest_consecutive(nums):\n    num_set = set(nums)\n    max_len = 0\n    for num in num_set:\n        if num - 1 not in num_set:\n            current = num\n            length = 1\n            while current + 1 in num_set:\n                current += 1\n                length += 1\n            max_len = max(max_len, length)\n    return max_len",
     "breakdowns": [
-      {"id": "bd-1", "q": "How do you create a set from a list?", "a": "num_set = set(nums)\n# e.g. set([1,2,2,3]) -> {1, 2, 3}"},
-      {"id": "bd-2", "q": "How do you check if a value is NOT in a set?", "a": "if num - 1 not in num_set:\n    print('this is a sequence start')"},
-      {"id": "bd-3", "q": "How do you count consecutive numbers starting from a value?", "a": "current = num\nlength = 1\nwhile current + 1 in num_set:\n    current += 1\n    length += 1"},
-      {"id": "bd-4", "q": "With num_set={100,4,200,1,3,2}, why only start counting from num=1?", "a": "1-1=0 not in set -> 1 is a sequence start\n2-1=1 in set -> skip (not a start)\n3-1=2 in set -> skip\n4-1=3 in set -> skip\nOnly count from starts to avoid re-counting"}
+      {
+        "id": "bd-1",
+        "q": "How do you create a set from a list?",
+        "a": "num_set = set(nums)\n# e.g. set([1,2,2,3]) -> {1, 2, 3}"
+      },
+      {
+        "id": "bd-2",
+        "q": "How do you check if a value is NOT in a set?",
+        "a": "if num - 1 not in num_set:\n    print('this is a sequence start')"
+      },
+      {
+        "id": "bd-3",
+        "q": "How do you count consecutive numbers starting from a value?",
+        "a": "current = num\nlength = 1\nwhile current + 1 in num_set:\n    current += 1\n    length += 1"
+      },
+      {
+        "id": "bd-4",
+        "q": "With num_set={100,4,200,1,3,2}, why only start counting from num=1?",
+        "a": "1-1=0 not in set -> 1 is a sequence start\n2-1=1 in set -> skip (not a start)\n3-1=2 in set -> skip\n4-1=3 in set -> skip\nOnly count from starts to avoid re-counting"
+      }
     ],
     "patternHint": "Finding longest consecutive sequence? Put all in a set. Only start counting from sequence starts (no predecessor) for O(n) total."
   }
