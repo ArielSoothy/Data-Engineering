@@ -17,19 +17,19 @@ interface ButtonProps {
 
 const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary:
-    'bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 border border-transparent',
+    'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 shadow-sm hover:shadow border border-transparent',
   secondary:
-    'bg-transparent text-blue-600 border border-blue-500 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-900 dark:hover:bg-opacity-20',
+    'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700',
   ghost:
-    'bg-transparent text-gray-600 border border-transparent hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700',
+    'bg-transparent text-gray-600 border border-transparent hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700/60',
   danger:
-    'bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 border border-transparent',
+    'bg-red-500 text-white hover:bg-red-600 active:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 shadow-sm border border-transparent',
 };
 
 const sizeClasses: Record<NonNullable<ButtonProps['size']>, string> = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-5 py-2.5 text-base',
+  sm: 'px-3 py-1.5 text-xs min-h-[32px]',
+  md: 'px-4 py-2.5 text-sm min-h-[40px]',
+  lg: 'px-5 py-3 text-base min-h-[48px]',
 };
 
 export const Button = ({
@@ -56,7 +56,7 @@ export const Button = ({
       aria-label={ariaLabel}
       aria-expanded={ariaExpanded}
       className={[
-        'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-200',
+        'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200',
         variantClasses[variant],
         sizeClasses[size],
         isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',

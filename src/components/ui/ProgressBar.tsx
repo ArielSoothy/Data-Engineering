@@ -43,9 +43,9 @@ export const ProgressBar = ({
           )}
         </div>
       )}
-      <div className={['w-full bg-gray-200 dark:bg-gray-700 rounded-full', sizeClasses[size]].join(' ')}>
+      <div className={['w-full bg-gray-200 dark:bg-gray-700/50 rounded-full overflow-hidden', sizeClasses[size]].join(' ')}>
         <div
-          className={['rounded-full transition-all duration-300', colorClasses[color], sizeClasses[size]].join(' ')}
+          className={['rounded-full transition-all duration-500 ease-out', colorClasses[color], sizeClasses[size]].join(' ')}
           style={{ width: `${clamped}%` }}
         />
       </div>
