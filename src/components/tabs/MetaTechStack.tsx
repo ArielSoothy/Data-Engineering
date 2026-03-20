@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Search, CheckCircle } from 'lucide-react';
 import useQuestions from '../../hooks/useQuestions';
+import { Card, Badge, ProgressBar, Spinner, Button } from '../ui';
 
 const MetaTechStack = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -34,19 +35,27 @@ const MetaTechStack = () => {
     ? Math.round((completedCount / totalServices) * 100)
     : 0;
 
-  const categoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      'Query Engine': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-400',
-      'Batch Processing': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:bg-opacity-30 dark:text-purple-400',
+  const categoryColorMap: Record<string, 'blue' | 'purple' | 'yellow' | 'red' | 'green' | 'gray'> = {
+    'Query Engine': 'blue',
+    'Batch Processing': 'purple',
+    'Event Streaming': 'red',
+    'Transformation': 'green',
+    'Orchestration': 'yellow',
+  };
+
+  const getCategoryBadgeColor = (category: string): 'blue' | 'purple' | 'yellow' | 'red' | 'green' | 'gray' => {
+    return categoryColorMap[category] || 'gray';
+  };
+
+  // For categories not covered by Badge color options, use className overrides
+  const getCategoryClassName = (category: string): string => {
+    const customColors: Record<string, string> = {
       'Distributed Processing': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:bg-opacity-30 dark:text-orange-400',
-      'Event Streaming': 'bg-red-100 text-red-800 dark:bg-red-900 dark:bg-opacity-30 dark:text-red-400',
-      'Transformation': 'bg-green-100 text-green-800 dark:bg-green-900 dark:bg-opacity-30 dark:text-green-400',
-      'Orchestration': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:bg-opacity-30 dark:text-yellow-400',
       'Storage Format': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:bg-opacity-30 dark:text-teal-400',
       'Cloud Data Warehouse': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:bg-opacity-30 dark:text-indigo-400',
       'Stream Processing': 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:bg-opacity-30 dark:text-pink-400',
     };
-    return colors[category] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
+    return customColors[category] || '';
   };
 
   return (
@@ -59,20 +68,15 @@ const MetaTechStack = () => {
         </p>
       </div>
 
-      <div className="card mb-6">
+      <Card className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <div className="text-sm text-gray-500 dark:text-gray-400">Reviewed</div>
           <div className="text-sm font-medium">{completedCount}/{totalServices}</div>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full dark:bg-blue-500"
-            style={{ width: `${completionPercentage}%` }}
-          ></div>
-        </div>
-      </div>
+        <ProgressBar value={completionPercentage} />
+      </Card>
 
-      <div className="card mb-6">
+      <Card className="mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-grow relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -97,17 +101,17 @@ const MetaTechStack = () => {
             ))}
           </select>
         </div>
-      </div>
+      </Card>
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 dark:border-gray-600 border-t-blue-600 dark:border-t-blue-400"></div>
+          <Spinner className="mx-auto" />
           <p className="mt-2 text-gray-600 dark:text-gray-400">Loading tech stack...</p>
         </div>
       ) : error ? (
-        <div className="card p-6 text-center text-red-600 dark:text-red-400">
+        <Card className="text-center text-red-600 dark:text-red-400">
           <p>{error}</p>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-4">
           {filteredServices.map((service: any) => {
@@ -116,24 +120,28 @@ const MetaTechStack = () => {
             const isExpanded = expandedId === service.id;
 
             return (
-              <div
+              <Card
                 key={service.id}
-                className={`card border ${isReviewed
+                className={isReviewed
                   ? 'border-green-200 dark:border-green-800'
-                  : 'border-gray-200 dark:border-gray-700'
-                }`}
+                  : ''
+                }
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${categoryColor(service.category)}`}>
+                      <Badge
+                        size="sm"
+                        color={getCategoryBadgeColor(service.category)}
+                        className={getCategoryClassName(service.category)}
+                      >
                         {service.category}
-                      </span>
+                      </Badge>
                       {isReviewed && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:bg-opacity-30 dark:text-green-400 flex items-center">
+                        <Badge size="sm" color="green">
                           <CheckCircle size={12} className="mr-1" />
                           Reviewed
-                        </span>
+                        </Badge>
                       )}
                     </div>
                     <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
@@ -141,22 +149,26 @@ const MetaTechStack = () => {
                   </div>
 
                   <div className="flex items-center gap-2 ml-4 shrink-0">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => toggleQuestionCompletion(service.id, !isReviewed)}
-                      className={`p-1.5 rounded-full transition-colors ${isReviewed
+                      className={`p-1.5 rounded-full ${isReviewed
                         ? 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900 dark:hover:bg-opacity-20'
-                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                       }`}
-                      title={isReviewed ? 'Mark as not reviewed' : 'Mark as reviewed'}
+                      aria-label={isReviewed ? 'Mark as not reviewed' : 'Mark as reviewed'}
                     >
                       <CheckCircle size={20} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setExpandedId(isExpanded ? null : service.id)}
-                      className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
                       {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -206,16 +218,16 @@ const MetaTechStack = () => {
                     )}
                   </div>
                 )}
-              </div>
+              </Card>
             );
           })}
 
           {filteredServices.length === 0 && (
-            <div className="card p-6 text-center">
+            <Card className="text-center">
               <p className="text-gray-600 dark:text-gray-400">
                 No tools match your search. Try adjusting your filters.
               </p>
-            </div>
+            </Card>
           )}
         </div>
       )}

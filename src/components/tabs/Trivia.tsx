@@ -4,6 +4,7 @@ import { useQuestions } from '../../hooks/useQuestions';
 import { generateTriviaAnswers, type TriviaAnswer } from '../../services/triviaService';
 import { generateAITriviaQuestions, generateAITriviaQuestionsWeighted } from '../../services/aiTriviaService';
 import type { Question } from '../../hooks/useQuestions';
+import { Button, Card, Badge, ProgressBar, Spinner } from '../ui';
 
 interface TriviaQuestion extends Question {
   answers: TriviaAnswer[];
@@ -75,8 +76,8 @@ const Trivia = () => {
         }
 
         // Filter questions by selected difficulty
-        const filteredQuestions = selectedDifficulty === 'All' 
-          ? allQuestions 
+        const filteredQuestions = selectedDifficulty === 'All'
+          ? allQuestions
           : allQuestions.filter(q => q.difficulty === selectedDifficulty);
 
         // Select 20 random questions
@@ -200,7 +201,7 @@ const Trivia = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto"></div>
+          <Spinner size="lg" className="mx-auto" />
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading questions...</p>
         </div>
       </div>
@@ -211,7 +212,7 @@ const Trivia = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
         <div className="max-w-2xl mx-auto pt-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+          <Card className="text-center">
             <Target className="mx-auto h-16 w-16 text-blue-500 mb-6" />
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Interactive Trivia Challenge
@@ -238,14 +239,14 @@ const Trivia = () => {
               </label>
               <div className="flex flex-wrap gap-2 justify-center">
                 {['All', 'Easy', 'Medium', 'Hard'].map((difficulty) => (
-                  <button
+                  <Button
                     key={difficulty}
+                    variant={selectedDifficulty === difficulty ? 'primary' : 'ghost'}
                     onClick={() => setSelectedDifficulty(difficulty as 'All' | 'Easy' | 'Medium' | 'Hard')}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center 
-                      ${selectedDifficulty === difficulty ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+                    className={selectedDifficulty === difficulty ? 'shadow-md font-semibold' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold'}
                   >
                     {difficulty}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -256,21 +257,21 @@ const Trivia = () => {
                 Question Source:
               </label>
               <div className="flex flex-wrap gap-2 justify-center">
-                <button
+                <Button
+                  variant={questionSource === 'existing' ? 'primary' : 'ghost'}
                   onClick={() => setQuestionSource('existing')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center 
-                    ${questionSource === 'existing' ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+                  className={questionSource === 'existing' ? 'shadow-md font-semibold' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold'}
                 >
                   📚 Existing Questions
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant={questionSource === 'ai-generated' ? 'primary' : 'ghost'}
                   onClick={() => setQuestionSource('ai-generated')}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center 
-                    ${questionSource === 'ai-generated' ? 'bg-purple-500 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}
+                  icon={<Sparkles className="h-4 w-4" />}
+                  className={questionSource === 'ai-generated' ? 'bg-purple-500 hover:bg-purple-600 shadow-md font-semibold' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold'}
                 >
-                  <Sparkles className="mr-1 h-4 w-4" />
                   AI-Generated
-                </button>
+                </Button>
               </div>
               {questionSource === 'ai-generated' && (
                 <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
@@ -299,28 +300,21 @@ const Trivia = () => {
               </div>
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="lg"
               onClick={initializeTrivia}
               disabled={isLoading || (questionSource === 'existing' && isLoadingData)}
-              className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 flex items-center mx-auto"
+              loading={isLoading}
+              icon={!isLoading ? (questionSource === 'ai-generated' ? <Sparkles className="h-5 w-5" /> : <Shuffle className="h-5 w-5" />) : undefined}
+              className="mx-auto font-semibold"
             >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  {questionSource === 'ai-generated' ? 'Generating AI Questions...' : 'Preparing Questions...'}
-                </>
-              ) : (
-                <>
-                  {questionSource === 'ai-generated' ? (
-                    <Sparkles className="mr-2 h-5 w-5" />
-                  ) : (
-                    <Shuffle className="mr-2 h-5 w-5" />
-                  )}
-                  {questionSource === 'ai-generated' ? 'Generate AI Trivia' : 'Start Trivia Challenge'}
-                </>
-              )}
-            </button>
-          </div>
+              {isLoading
+                ? (questionSource === 'ai-generated' ? 'Generating AI Questions...' : 'Preparing Questions...')
+                : (questionSource === 'ai-generated' ? 'Generate AI Trivia' : 'Start Trivia Challenge')
+              }
+            </Button>
+          </Card>
         </div>
       </div>
     );
@@ -340,7 +334,7 @@ const Trivia = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
         <div className="max-w-2xl mx-auto pt-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+          <Card className="text-center">
             <div className="mb-6">
               {scorePercentage >= 80 ? (
                 <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
@@ -350,11 +344,11 @@ const Trivia = () => {
                 <XCircle className="mx-auto h-16 w-16 text-red-500" />
               )}
             </div>
-            
+
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Challenge Complete!
             </h2>
-            
+
             <div className="text-6xl font-bold mb-4">
               <span className={`${
                 scorePercentage >= 80 ? 'text-green-500' :
@@ -363,7 +357,7 @@ const Trivia = () => {
                 {scorePercentage}%
               </span>
             </div>
-            
+
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-6">
               You got {score} out of {questionsAnswered} questions correct
             </p>
@@ -387,7 +381,7 @@ const Trivia = () => {
                 </div>
               </div>
             )}
-            
+
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Performance Rating:</h3>
               <p className="text-gray-600 dark:text-gray-400">
@@ -396,15 +390,17 @@ const Trivia = () => {
                  "📚 Keep studying! Focus on the explanations and practice more."}
               </p>
             </div>
-            
-            <button
+
+            <Button
+              variant="primary"
+              size="lg"
               onClick={resetGame}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 flex items-center mx-auto"
+              icon={<RotateCcw className="h-5 w-5" />}
+              className="mx-auto font-semibold"
             >
-              <RotateCcw className="mr-2 h-5 w-5" />
               Try Another Challenge
-            </button>
-          </div>
+            </Button>
+          </Card>
         </div>
       </div>
     );
@@ -441,20 +437,18 @@ const Trivia = () => {
               </span>
             </div>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentQuestionIndex + 1) / triviaQuestions.length) * 100}%` }}
-            ></div>
-          </div>
+          <ProgressBar
+            value={((currentQuestionIndex + 1) / triviaQuestions.length) * 100}
+            size="sm"
+          />
         </div>
 
         {/* Question Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+        <Card className="mb-6">
           <div className="mb-4">
-            <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium mb-2">
+            <Badge color="blue" className="mb-2">
               {currentQuestion.difficulty || 'Medium'} • {currentQuestion.timeEstimate || 5} min
-            </span>
+            </Badge>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {currentQuestion.question}
             </h2>
@@ -466,9 +460,9 @@ const Trivia = () => {
               const isSelected = selectedAnswer === answer.id;
               const isCorrect = answer.isCorrect;
               const showResult = selectedAnswer !== null;
-              
+
               let buttonClass = "w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ";
-              
+
               if (showResult) {
                 if (isSelected && isCorrect) {
                   buttonClass += "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300";
@@ -506,11 +500,11 @@ const Trivia = () => {
               );
             })}
           </div>
-        </div>
+        </Card>
 
         {/* Explanation */}
         {showExplanation && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+          <Card className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
               Explanation
             </h3>
@@ -518,7 +512,7 @@ const Trivia = () => {
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 {currentQuestion.answer}
               </p>
-              
+
               {currentQuestion.pseudoCode && (
                 <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
                   <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
@@ -529,7 +523,7 @@ const Trivia = () => {
                   </pre>
                 </div>
               )}
-              
+
               {currentQuestion.aiApproach && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
                   <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">
@@ -541,29 +535,35 @@ const Trivia = () => {
                 </div>
               )}
             </div>
-          </div>
+          </Card>
         )}
 
         {/* Next Button */}
         {showExplanation && (
           <div className="text-center">
             {currentQuestionIndex < triviaQuestions.length - 1 ? (
-              <button
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={handleNextQuestion}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 flex items-center mx-auto"
+                icon={<ArrowRight className="h-5 w-5" />}
+                iconPosition="right"
+                className="mx-auto font-semibold"
               >
                 Next Question
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </button>
+              </Button>
             ) : endlessMode ? (
               <div>
-                <button
+                <Button
+                  variant="primary"
+                  size="lg"
                   onClick={loadMoreQuestions}
                   disabled={isLoadingMore}
-                  className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200"
+                  loading={isLoadingMore}
+                  className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 font-semibold"
                 >
                   {isLoadingMore ? 'Loading...' : 'Load 10 More Questions'}
-                </button>
+                </Button>
                 {Object.keys(topicAccuracy).length > 0 && (
                   <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                     Focusing on your weak areas

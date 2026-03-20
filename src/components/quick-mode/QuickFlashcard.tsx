@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { createEmptyCard, fsrs, Rating, State, type Card as FSRSCard, type Grade } from 'ts-fsrs';
-import { SkipForward, RotateCcw } from 'lucide-react';
+import { SkipForward, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { pushProgressDebounced } from '../../services/progressSync';
 import { useAppContext } from '../../context/AppContext';
@@ -208,17 +208,79 @@ export default function QuickFlashcard({ questions }: Props) {
   const fc = store[getFsrsId(current)];
   const stateLabel = !fc ? 'New' : fc.state === State.Review ? 'Review' : fc.state === State.Learning ? 'Learning' : 'Due';
 
+  const goTo = (idx: number) => {
+    const clamped = Math.max(0, Math.min(deck.length - 1, idx));
+    setCurrentIndex(clamped);
+    setShowAnswer(false);
+    setStats(s => { saveFCSession({ currentIndex: clamped, stats: s, deckLen: deck.length }); return s; });
+  };
+
+  const [jumpOpen, setJumpOpen] = useState(false);
+  const [jumpValue, setJumpValue] = useState('');
+
   return (
     <div className="max-w-lg mx-auto">
-      {/* Progress bar */}
-      <div className="flex items-center gap-3 mb-4 text-xs text-gray-500 dark:text-gray-400">
-        <span>{currentIndex + 1} / {deck.length}</span>
-        <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-          <div className="h-full bg-blue-500 transition-all" style={{ width: `${((currentIndex + 1) / deck.length) * 100}%` }} />
+      {/* Navigation + Progress */}
+      <div className="flex items-center gap-2 mb-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => goTo(currentIndex - 1)}
+          disabled={currentIndex === 0}
+          className="!p-2 !min-h-0"
+        >
+          <ChevronLeft size={18} />
+        </Button>
+
+        <div className="flex-1">
+          <div className="flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <button
+              onClick={() => { setJumpOpen(true); setJumpValue(String(currentIndex + 1)); }}
+              className="font-bold text-sm text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+            >
+              {currentIndex + 1} / {deck.length}
+            </button>
+            <span className="text-amber-500">{dueCount} due</span>
+            <span className="text-blue-500">{newCount} new</span>
+          </div>
+          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-500 transition-all" style={{ width: `${((currentIndex + 1) / deck.length) * 100}%` }} />
+          </div>
         </div>
-        <span className="text-amber-500">{dueCount} due</span>
-        <span className="text-blue-500">{newCount} new</span>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => goTo(currentIndex + 1)}
+          disabled={currentIndex >= deck.length - 1}
+          className="!p-2 !min-h-0"
+        >
+          <ChevronRight size={18} />
+        </Button>
       </div>
+
+      {/* Jump-to dialog */}
+      {jumpOpen && (
+        <div className="mb-4 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-3">
+          <span className="text-xs text-gray-500 dark:text-gray-400">Go to:</span>
+          <input
+            type="number"
+            min={1}
+            max={deck.length}
+            value={jumpValue}
+            onChange={e => setJumpValue(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { goTo(Number(jumpValue) - 1); setJumpOpen(false); }
+              if (e.key === 'Escape') setJumpOpen(false);
+            }}
+            autoFocus
+            className="w-16 px-2 py-1 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-center text-sm"
+          />
+          <span className="text-xs text-gray-400">/ {deck.length}</span>
+          <Button size="sm" variant="primary" onClick={() => { goTo(Number(jumpValue) - 1); setJumpOpen(false); }}>Go</Button>
+          <Button size="sm" variant="ghost" onClick={() => setJumpOpen(false)}>Cancel</Button>
+        </div>
+      )}
 
       {/* Flashcard */}
       <Card padding="lg" className="min-h-[280px] flex flex-col">
@@ -253,18 +315,10 @@ export default function QuickFlashcard({ questions }: Props) {
           </div>
         ) : (
           <div className="flex gap-2 mt-4">
-            <button onClick={() => markCard(Rating.Again)} className="flex-1 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-              Again
-            </button>
-            <button onClick={() => markCard(Rating.Hard)} className="flex-1 py-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 font-bold text-sm hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors">
-              Hard
-            </button>
-            <button onClick={() => markCard(Rating.Good)} className="flex-1 py-3 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-bold text-sm hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
-              Good
-            </button>
-            <button onClick={() => markCard(Rating.Easy)} className="flex-1 py-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold text-sm hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-              Easy
-            </button>
+            <Button variant="danger" size="md" className="flex-1" onClick={() => markCard(Rating.Again)}>Again</Button>
+            <Button variant="secondary" size="md" className="flex-1 !bg-orange-50 dark:!bg-orange-900/20 !text-orange-600 dark:!text-orange-400 hover:!bg-orange-100" onClick={() => markCard(Rating.Hard)}>Hard</Button>
+            <Button variant="secondary" size="md" className="flex-1 !bg-green-50 dark:!bg-green-900/20 !text-green-600 dark:!text-green-400 hover:!bg-green-100" onClick={() => markCard(Rating.Good)}>Good</Button>
+            <Button variant="primary" size="md" className="flex-1" onClick={() => markCard(Rating.Easy)}>Easy</Button>
           </div>
         )}
       </Card>

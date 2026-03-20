@@ -203,11 +203,11 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 text-center">
+          <Card padding="none" className="px-4 py-2 text-center rounded-xl">
             <Clock size={14} className="mx-auto mb-0.5 text-gray-400" />
             <div className="text-lg font-bold">{daysRemaining}</div>
             <div className="text-[10px] text-gray-400 uppercase tracking-wider">Days</div>
-          </div>
+          </Card>
         </div>
       </div>
 

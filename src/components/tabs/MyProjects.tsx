@@ -383,14 +383,16 @@ const MyProjects = () => {
           <span className="font-semibold text-amber-600 dark:text-amber-400">{interviews.length}</span> interview rounds
         </div>
         {selectedProjectId && (
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={clearFilter}
-            className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-full px-3 py-1 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+            icon={<Filter size={11} />}
+            className="!text-amber-700 dark:!text-amber-400 !bg-amber-50 dark:!bg-amber-900/20 !border-amber-200 dark:!border-amber-700 !rounded-full hover:!bg-amber-100 dark:hover:!bg-amber-900/30"
           >
-            <Filter size={11} />
             Filtering: {selectedProjectId ? projectById.get(selectedProjectId)?.shortName : ''}
             <X size={11} />
-          </button>
+          </Button>
         )}
       </div>
 

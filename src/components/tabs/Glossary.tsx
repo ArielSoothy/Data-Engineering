@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Book, Search, ChevronDown, ChevronUp, ExternalLink, HelpCircle, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
+import { Button, Card } from '../ui';
 
 interface Term {
   definition: string;
@@ -26,7 +27,7 @@ const Glossary = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeSection, setActiveSection] = useState<string>('junior');
   const [expandedTerms, setExpandedTerms] = useState<Set<string>>(new Set());
-  
+
   // Trivia state
   const [currentQuestion, setCurrentQuestion] = useState<{
     term: string;
@@ -67,7 +68,7 @@ const Glossary = () => {
   const getAllTerms = () => {
     if (!glossaryData) return [];
     const allTerms: Array<{ term: string; definition: string; section: string }> = [];
-    
+
     Object.entries(glossaryData).forEach(([sectionKey, section]) => {
       Object.entries(section.terms).forEach(([termKey, termData]) => {
         allTerms.push({
@@ -77,30 +78,30 @@ const Glossary = () => {
         });
       });
     });
-    
+
     return allTerms;
   };
 
   const generateTriviaQuestion = () => {
     const allTerms = getAllTerms();
     if (allTerms.length < 4) return null;
-    
+
     // Pick a random term for the question
     const randomIndex = Math.floor(Math.random() * allTerms.length);
     const correctTerm = allTerms[randomIndex];
-    
+
     // Generate 3 wrong answers from other terms
     const wrongAnswers = allTerms
       .filter((_, index) => index !== randomIndex)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3)
       .map(term => term.term);
-    
+
     // Combine and shuffle all options
     const allOptions = [correctTerm.term, ...wrongAnswers];
     const shuffledOptions = allOptions.sort(() => Math.random() - 0.5);
     const correctAnswer = shuffledOptions.indexOf(correctTerm.term);
-    
+
     return {
       term: correctTerm.term,
       definition: correctTerm.definition,
@@ -121,10 +122,10 @@ const Glossary = () => {
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (selectedAnswer !== null) return; // Already answered
-    
+
     setSelectedAnswer(answerIndex);
     setShowResult(true);
-    
+
     const isCorrect = answerIndex === currentQuestion?.correctAnswer;
     setScore(prev => ({
       correct: prev.correct + (isCorrect ? 1 : 0),
@@ -141,7 +142,7 @@ const Glossary = () => {
 
   const filterTerms = (terms: Record<string, Term>) => {
     if (!searchTerm) return terms;
-    
+
     const filtered: Record<string, Term> = {};
     Object.entries(terms).forEach(([key, term]) => {
       if (
@@ -202,18 +203,15 @@ const Glossary = () => {
       <div className="mb-8">
         <div className="flex flex-wrap gap-2">
           {sections.map((section) => (
-            <button
+            <Button
               key={section.key}
+              variant={activeSection === section.key ? 'primary' : 'ghost'}
               onClick={() => setActiveSection(section.key)}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
-                activeSection === section.key
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
+              className={activeSection === section.key ? 'shadow-lg' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}
             >
               <span className="text-lg">{section.icon}</span>
               <span className="font-medium">{section.label}</span>
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -222,7 +220,7 @@ const Glossary = () => {
         /* Trivia Section */
         <div className="space-y-6">
           {/* Trivia Header */}
-          <div className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 rounded-lg">
+          <Card padding="none" className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
@@ -242,29 +240,32 @@ const Glossary = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Trivia Controls */}
           <div className="flex flex-wrap gap-4 justify-center">
-            <button
+            <Button
+              variant="primary"
+              size="lg"
               onClick={startNewQuestion}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              icon={<HelpCircle size={20} />}
             >
-              <HelpCircle size={20} />
               New Question
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
               onClick={resetTrivia}
-              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
+              icon={<RotateCcw size={20} />}
+              className="bg-gray-600 text-white hover:bg-gray-700"
             >
-              <RotateCcw size={20} />
               Reset Score
-            </button>
+            </Button>
           </div>
 
           {/* Question Display */}
           {currentQuestion && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+            <Card>
               <div className="mb-6">
                 <div className="text-sm text-blue-600 dark:text-blue-400 mb-2 uppercase tracking-wide">
                   {currentQuestion.section} Level
@@ -282,7 +283,7 @@ const Glossary = () => {
               <div className="space-y-3">
                 {currentQuestion.options.map((option, index) => {
                   let buttonClass = "w-full p-4 text-left border rounded-lg transition-all ";
-                  
+
                   if (selectedAnswer === null) {
                     buttonClass += "border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20";
                   } else if (index === currentQuestion.correctAnswer) {
@@ -337,7 +338,7 @@ const Glossary = () => {
                   </p>
                 </div>
               )}
-            </div>
+            </Card>
           )}
 
           {!currentQuestion && (
@@ -346,12 +347,13 @@ const Glossary = () => {
               <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
                 Ready to test your knowledge?
               </p>
-              <button
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={startNewQuestion}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Start Trivia
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -367,7 +369,7 @@ const Glossary = () => {
                 placeholder="Search terms, definitions, or examples..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg
                          bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
                          focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -376,7 +378,7 @@ const Glossary = () => {
 
           {/* Current Section Header */}
           {currentSection && (
-            <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg">
+            <Card padding="none" className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 {currentSection.title}
               </h2>
@@ -387,7 +389,7 @@ const Glossary = () => {
                 {Object.keys(filteredTerms).length} terms
                 {searchTerm && ` (filtered from ${Object.keys(currentSection.terms).length})`}
               </div>
-            </div>
+            </Card>
           )}
 
           {/* Terms List */}
@@ -398,22 +400,20 @@ const Glossary = () => {
                 <p className="text-gray-500 dark:text-gray-400 text-lg">
                   No terms found matching "{searchTerm}"
                 </p>
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => setSearchTerm('')}
-                  className="mt-2 text-blue-600 dark:text-blue-400 hover:underline"
+                  className="mt-2 text-blue-600 dark:text-blue-400"
                 >
                   Clear search
-                </button>
+                </Button>
               </div>
             ) : (
               Object.entries(filteredTerms).map(([termKey, term]) => {
                 const isExpanded = expandedTerms.has(termKey);
-                
+
                 return (
-                  <div
-                    key={termKey}
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden"
-                  >
+                  <Card key={termKey} padding="none" className="overflow-hidden">
                     <button
                       onClick={() => toggleTerm(termKey)}
                       className="w-full p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -434,7 +434,7 @@ const Glossary = () => {
                         )}
                       </div>
                     </button>
-                    
+
                     {isExpanded && (
                       <div className="px-6 pb-6 border-t border-gray-100 dark:border-gray-700">
                         <div className="pt-4 space-y-4">
@@ -447,7 +447,7 @@ const Glossary = () => {
                               {(term as Term).example}
                             </p>
                           </div>
-                          
+
                           {(term as Term).when_to_use && (
                             <div>
                               <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
@@ -462,7 +462,7 @@ const Glossary = () => {
                         </div>
                       </div>
                     )}
-                  </div>
+                  </Card>
                 );
               })
             )}
@@ -471,19 +471,21 @@ const Glossary = () => {
       )}
 
       {/* Footer */}
-      <div className="mt-12 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-              Learning Path Recommendation
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">
-              Start with Junior terms, progress through Mid and Senior levels, then explore Meta Infrastructure and Tools sections. Test your knowledge with Trivia!
-            </p>
+      <Card className="mt-12" padding="none">
+        <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                Learning Path Recommendation
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                Start with Junior terms, progress through Mid and Senior levels, then explore Meta Infrastructure and Tools sections. Test your knowledge with Trivia!
+              </p>
+            </div>
+            <ExternalLink className="text-gray-400" size={20} />
           </div>
-          <ExternalLink className="text-gray-400" size={20} />
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

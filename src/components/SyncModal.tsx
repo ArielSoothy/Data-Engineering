@@ -47,9 +47,9 @@ export const SyncModal = ({ open, onClose, onSynced }: SyncModalProps) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <Button variant="ghost" size="sm" onClick={onClose} className="absolute top-4 right-4 !p-1" aria-label="Close">
           <X size={20} />
-        </button>
+        </Button>
 
         <div className="flex items-center gap-3 mb-4">
           <Cloud size={24} className="text-blue-500" />
@@ -71,9 +71,9 @@ export const SyncModal = ({ open, onClose, onSynced }: SyncModalProps) => {
               maxLength={30}
             />
             {existing && (
-              <button onClick={handleCopy} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" title="Copy code">
+              <Button variant="secondary" size="sm" onClick={handleCopy} className="!border-gray-300 dark:!border-gray-600" aria-label="Copy code">
                 {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} className="text-gray-400" />}
-              </button>
+              </Button>
             )}
           </div>
 

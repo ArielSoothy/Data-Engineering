@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layers, Zap, HelpCircle, Puzzle, ChevronDown, Check } from 'lucide-react';
-import { Spinner, Badge, ProgressBar } from '../ui';
+import { Spinner, Badge, Button, ProgressBar } from '../ui';
 import { useUnifiedQuestions } from '../../hooks/useUnifiedQuestions';
 import { useAppContext } from '../../context/AppContext';
 import { getTopicsForSubject } from '../../data/topics';
@@ -194,17 +194,19 @@ export default function QuickMode() {
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {/* Subject pills */}
         {subjectTabs.map(t => (
-          <button
+          <Button
             key={t.value}
+            variant={subject === t.value ? 'primary' : 'ghost'}
+            size="md"
             onClick={() => handleSubject(t.value)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${
+            className={`min-h-[40px] !rounded-lg ${
               subject === t.value
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                ? '!bg-blue-600 !text-white'
+                : '!bg-gray-100 dark:!bg-gray-800 !text-gray-600 dark:!text-gray-400 hover:!bg-gray-200 dark:hover:!bg-gray-700'
             }`}
           >
             {t.label}
-          </button>
+          </Button>
         ))}
 
         {/* Divider */}
@@ -213,22 +215,26 @@ export default function QuickMode() {
         {/* Difficulty pills */}
         {diffTabs.map(d => {
           const active = difficulty === d.value;
-          const colors: Record<string, string> = {
-            blue: active ? 'bg-blue-600 text-white' : '',
-            green: active ? 'bg-green-600 text-white' : '',
-            yellow: active ? 'bg-yellow-500 text-white' : '',
-            red: active ? 'bg-red-600 text-white' : '',
+          const activeColors: Record<string, string> = {
+            blue: '!bg-blue-600 !text-white',
+            green: '!bg-green-600 !text-white',
+            yellow: '!bg-yellow-500 !text-white',
+            red: '!bg-red-600 !text-white',
           };
           return (
-            <button
+            <Button
               key={d.value}
+              variant={active ? 'primary' : 'ghost'}
+              size="md"
               onClick={() => handleDifficulty(d.value)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] ${
-                colors[d.color] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              className={`min-h-[40px] !rounded-lg ${
+                active
+                  ? activeColors[d.color]
+                  : '!bg-gray-100 dark:!bg-gray-800 !text-gray-600 dark:!text-gray-400 hover:!bg-gray-200 dark:hover:!bg-gray-700'
               }`}
             >
               {d.label}
-            </button>
+            </Button>
           );
         })}
       </div>
