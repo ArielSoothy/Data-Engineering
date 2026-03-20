@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { createEmptyCard, fsrs, Rating, State, type Card as FSRSCard, type Grade } from 'ts-fsrs';
-import { SkipForward, RotateCcw, ChevronLeft, ChevronRight, List, X, CheckCircle } from 'lucide-react';
+import { SkipForward, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, List, CheckCircle } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { pushProgressDebounced } from '../../services/progressSync';
 import { useAppContext } from '../../context/AppContext';
@@ -91,7 +91,6 @@ export default function QuickFlashcard({ questions }: Props) {
   const [jumpOpen, setJumpOpen] = useState(false);
   const [jumpValue, setJumpValue] = useState('');
   const [listOpen, setListOpen] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
   // Scroll active question into view when list opens
@@ -275,27 +274,27 @@ export default function QuickFlashcard({ questions }: Props) {
         </Card>
       </div>
 
-      {/* Mobile question list toggle + drawer */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setListOpen(true)}
-        className="lg:hidden fixed bottom-20 right-4 z-30 !rounded-full !p-3 !min-h-0 shadow-lg !bg-white dark:!bg-gray-800 border border-gray-200 dark:border-gray-700"
-      >
-        <List size={20} />
-      </Button>
-
-      {listOpen && (
-        <div className="lg:hidden fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setListOpen(false)} />
-          <div ref={listRef} className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-2xl max-h-[70vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="font-bold text-sm">Questions ({deck.length})</h3>
-              <Button variant="ghost" size="sm" onClick={() => setListOpen(false)} className="!p-1 !min-h-0">
-                <X size={18} />
-              </Button>
+      {/* Mobile collapsible question list */}
+      <div className="lg:hidden absolute left-0 right-0 top-0" style={{ position: 'relative' }}>
+        <Card padding="none" className="mb-4 overflow-hidden">
+          {/* Collapsed bar — always visible */}
+          <button
+            onClick={() => setListOpen(o => !o)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <List size={16} className="text-gray-400" />
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Questions</span>
             </div>
-            <div className="overflow-y-auto flex-1 pb-safe">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">{currentIndex + 1}/{deck.length}</span>
+              <ChevronDown size={16} className={`text-gray-400 transition-transform ${listOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </button>
+
+          {/* Expanded list */}
+          {listOpen && (
+            <div className="border-t border-gray-100 dark:border-gray-700/60 max-h-[40vh] overflow-y-auto">
               {deck.map((q, i) => {
                 const mastery = getMastery(q);
                 return (
@@ -303,28 +302,28 @@ export default function QuickFlashcard({ questions }: Props) {
                     key={q.uid}
                     ref={i === currentIndex ? activeItemRef : undefined}
                     onClick={() => { goTo(i); setListOpen(false); }}
-                    className={`w-full text-left px-4 py-3 text-sm border-b border-gray-50 dark:border-gray-800 flex items-center gap-3 ${
+                    className={`w-full text-left px-4 py-2.5 text-sm border-b border-gray-50 dark:border-gray-800 flex items-center gap-3 ${
                       i === currentIndex
                         ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                         : 'text-gray-600 dark:text-gray-400'
                     }`}
                   >
-                    <span className="w-6 shrink-0 text-right text-gray-400 text-xs">{i + 1}</span>
+                    <span className="w-5 shrink-0 text-right text-gray-400 text-xs">{i + 1}</span>
                     {mastery === 'mastered' ? (
-                      <CheckCircle size={14} className="shrink-0 text-green-500" />
+                      <CheckCircle size={13} className="shrink-0 text-green-500" />
                     ) : mastery === 'learning' ? (
-                      <div className="w-3.5 h-3.5 rounded-full bg-yellow-400 shrink-0" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-400 shrink-0" />
                     ) : (
-                      <div className="w-3.5 h-3.5 rounded-full border border-gray-300 dark:border-gray-600 shrink-0" />
+                      <div className="w-3 h-3 rounded-full border border-gray-300 dark:border-gray-600 shrink-0" />
                     )}
-                    <span className="truncate">{q.question.slice(0, 60)}</span>
+                    <span className="truncate text-xs">{q.question.slice(0, 55)}</span>
                   </button>
                 );
               })}
             </div>
-          </div>
-        </div>
-      )}
+          )}
+        </Card>
+      </div>
 
       {/* Main flashcard area */}
       <div className="flex-1 min-w-0">
