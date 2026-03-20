@@ -113,8 +113,8 @@
       "question": "Write a query to find the Nth highest salary",
       "difficulty": "Medium",
       "timeEstimate": 8,
-      "answer": "-- Using DENSE_RANK() (e.g. 3rd highest)\nWITH ranked AS (\n  SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rank\n  FROM employees\n)\nSELECT DISTINCT salary\nFROM ranked\nWHERE rank = 3;\n\n-- Using LIMIT/OFFSET (PostgreSQL)\nSELECT DISTINCT salary\nFROM employees\nORDER BY salary DESC\nLIMIT 1 OFFSET 2;  -- 3rd highest (0-indexed)",
-      "pseudoCode": "-- For 3rd highest salary using DENSE_RANK()\nWITH RankedSalaries AS (\n  SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) as rank\n  FROM employees\n)\nSELECT DISTINCT salary\nFROM RankedSalaries\nWHERE rank = 3;\n\n-- Alternative using LIMIT/OFFSET\nSELECT DISTINCT salary\nFROM employees\nORDER BY salary DESC\nLIMIT 1 OFFSET 2; -- For 3rd highest (0-indexed)",
+      "answer": "-- e.g. 3rd highest\nSELECT DISTINCT salary\nFROM employees\nORDER BY salary DESC\nLIMIT 1 OFFSET 2;",
+      "pseudoCode": "-- Nth highest: OFFSET N-1\nSELECT DISTINCT salary\nFROM employees\nORDER BY salary DESC\nLIMIT 1 OFFSET N-1;",
       "aiApproach": "When choosing between window functions for ranking, remember: ROW_NUMBER() assigns unique sequential numbers (even for ties), RANK() leaves gaps after ties, and DENSE_RANK() doesn't leave gaps. The LIMIT/OFFSET approach is simpler but less flexible for handling ties and works differently across database systems."
     },
     {
@@ -195,7 +195,7 @@
       "difficulty": "Easy",
       "timeEstimate": 3,
       "answer": "SELECT employee_id, name, hire_date\nFROM employees\nWHERE hire_date >= CURRENT_DATE - INTERVAL '30 days';",
-      "pseudoCode": "-- Generic approach\nSELECT employee_id, name, hire_date\nFROM employees\nWHERE hire_date >= CURRENT_DATE - INTERVAL '30 days';\n\n-- SQL Server\nSELECT employee_id, name, hire_date\nFROM employees\nWHERE hire_date >= DATEADD(day, -30, GETDATE());\n\n-- PostgreSQL/MySQL\nSELECT employee_id, name, hire_date\nFROM employees\nWHERE hire_date >= NOW() - INTERVAL '30 days';",
+      "pseudoCode": "SELECT employee_id, name, hire_date\nFROM employees\nWHERE hire_date >= CURRENT_DATE - INTERVAL '30 days';",
       "aiApproach": "Date arithmetic is database-specific, so be aware of syntax differences. For rolling time periods like 'last 30 days', using a relative calculation from the current date is better than hardcoding dates. This ensures the query remains valid over time without manual updates."
     },
     {
@@ -267,7 +267,7 @@
       "difficulty": "Hard",
       "timeEstimate": 9,
       "answer": "WITH HighPerformers AS (\n  SELECT employee_id, name, department_id, salary\n  FROM employees WHERE performance_rating >= 4\n),\nDepartmentBudgets AS (\n  SELECT department_id, budget, location\n  FROM departments WHERE budget > 500000\n)\nSELECT hp.name, hp.salary, db.budget, db.location,\n  ROUND((hp.salary / db.budget) * 100, 2) AS salary_budget_ratio\nFROM HighPerformers hp\nJOIN DepartmentBudgets db ON hp.department_id = db.department_id\nWHERE (hp.salary / db.budget) * 100 < 10\nORDER BY salary_budget_ratio DESC;",
-      "pseudoCode": "WITH HighPerformers AS (\n  SELECT employee_id, name, department_id, salary\n  FROM employees\n  WHERE performance_rating >= 4\n),\nDepartmentBudgets AS (\n  SELECT department_id, budget, location\n  FROM departments\n  WHERE budget > 500000\n),\nAnalysisResult AS (\n  SELECT \n    hp.name,\n    hp.salary,\n    db.budget,\n    db.location,\n    ROUND((hp.salary / db.budget) * 100, 2) as salary_budget_ratio\n  FROM HighPerformers hp\n  JOIN DepartmentBudgets db ON hp.department_id = db.department_id\n)\nSELECT \n  name,\n  salary,\n  location,\n  salary_budget_ratio\nFROM AnalysisResult\nWHERE salary_budget_ratio < 10\nORDER BY salary_budget_ratio DESC;",
+      "pseudoCode": "WITH HighPerformers AS (\n  SELECT employee_id, name, department_id, salary\n  FROM employees\n  WHERE performance_rating >= 4\n),\nDepartmentBudgets AS (\n  SELECT department_id, budget, location\n  FROM departments\n  WHERE budget > 500000\n)\nSELECT hp.name, hp.salary, db.budget, db.location,\n  ROUND((hp.salary / db.budget) * 100, 2) AS salary_budget_ratio\nFROM HighPerformers hp\nJOIN DepartmentBudgets db ON hp.department_id = db.department_id\nWHERE (hp.salary / db.budget) * 100 < 10\nORDER BY salary_budget_ratio DESC;",
       "aiApproach": "Multiple CTEs create a sequence of logical building blocks, each with a meaningful name that documents its purpose. This modular approach makes complex queries easier to understand, maintain, and debug. It also allows the database optimizer to better process each CTE independently, potentially improving performance."
     },
     {
@@ -293,8 +293,8 @@
       "question": "What is query execution plan?",
       "difficulty": "Medium",
       "timeEstimate": 7,
-      "answer": "-- View execution plan\nEXPLAIN ANALYZE \nSELECT e.name, d.department_name\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nWHERE e.salary > 50000;\n\n-- SQL Server\nSET SHOWPLAN_ALL ON\nSELECT ...",
-      "pseudoCode": "-- View execution plan\nEXPLAIN ANALYZE \nSELECT e.name, d.department_name\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nWHERE e.salary > 50000;\n\n-- SQL Server\nSET SHOWPLAN_ALL ON\nSELECT ...",
+      "answer": "EXPLAIN ANALYZE\nSELECT e.name, d.department_name\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nWHERE e.salary > 50000;",
+      "pseudoCode": "EXPLAIN ANALYZE\nSELECT e.name, d.department_name\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nWHERE e.salary > 50000;",
       "aiApproach": "When analyzing execution plans, look for table scans (which read all rows and are generally slow) versus index seeks (which are typically faster). Pay attention to join types (nested loop, hash join, merge join), estimated versus actual rows processed, and cost percentages. These insights guide optimization efforts by showing where the database spends the most resources."
     },
     {
@@ -302,8 +302,8 @@
       "question": "How do you identify slow queries?",
       "difficulty": "Medium",
       "timeEstimate": 6,
-      "answer": "-- Find slow queries (SQL Server)\nSELECT \n  sql_text.text,\n  stats.execution_count,\n  stats.total_elapsed_time / 1000000.0 AS total_elapsed_time_seconds,\n  stats.avg_elapsed_time / 1000000.0 AS avg_elapsed_time_seconds\nFROM sys.dm_exec_query_stats stats\nCROSS APPLY sys.dm_exec_sql_text(stats.sql_handle) sql_text\nORDER BY stats.avg_elapsed_time DESC;\n\n-- PostgreSQL slow query log\n-- Set in postgresql.conf: log_min_duration_statement = 1000",
-      "pseudoCode": "-- Find slow queries (SQL Server)\nSELECT \n  sql_text.text,\n  stats.execution_count,\n  stats.total_elapsed_time / 1000000.0 AS total_elapsed_time_seconds,\n  stats.avg_elapsed_time / 1000000.0 AS avg_elapsed_time_seconds\nFROM sys.dm_exec_query_stats stats\nCROSS APPLY sys.dm_exec_sql_text(stats.sql_handle) sql_text\nORDER BY stats.avg_elapsed_time DESC;\n\n-- PostgreSQL slow query log\n-- Set in postgresql.conf: log_min_duration_statement = 1000",
+      "answer": "-- PostgreSQL: enable slow query logging\n-- In postgresql.conf: log_min_duration_statement = 1000\n\n-- Find slow queries via pg_stat_statements\nSELECT query, calls, mean_exec_time, total_exec_time\nFROM pg_stat_statements\nORDER BY mean_exec_time DESC\nLIMIT 10;",
+      "pseudoCode": "-- PostgreSQL: enable slow query logging\n-- In postgresql.conf: log_min_duration_statement = 1000\n\n-- Find slow queries via pg_stat_statements\nSELECT query, calls, mean_exec_time, total_exec_time\nFROM pg_stat_statements\nORDER BY mean_exec_time DESC\nLIMIT 10;",
       "aiApproach": "Proactive monitoring helps identify performance issues before they impact users. Look for high CPU usage, long execution times, many table scans, and queries causing blocking or waiting. Set up alerts for queries exceeding normal execution time thresholds, and use automated tools to detect performance degradation patterns over time."
     },
     {
