@@ -7,303 +7,209 @@ interface Props {
   template: 'array-to-dict' | 'array-to-set' | 'array-grouping';
 }
 
-const GROUP_COLORS = [
-  'indigo-400',
-  'emerald-400',
-  'amber-400',
-  'rose-400',
-  'purple-400',
+/* ────────────── Color helpers ────────────── */
+
+const VAR_COLORS: Record<string, string> = {
+  nums: 'text-sky-400',
+  target: 'text-orange-400',
+  seen: 'text-amber-400',
+  i: 'text-emerald-400',
+  num: 'text-pink-400',
+  diff: 'text-violet-400',
+  result: 'text-green-400',
+  s: 'text-sky-400',
+  t: 'text-orange-400',
+  count: 'text-amber-400',
+  c: 'text-pink-400',
+  strs: 'text-sky-400',
+  groups: 'text-amber-400',
+  key: 'text-violet-400',
+  k: 'text-orange-400',
+  freq: 'text-amber-400',
+};
+
+const GROUP_BG = [
+  'rgba(99,102,241,0.15)',  // indigo
+  'rgba(16,185,129,0.15)',  // emerald
+  'rgba(245,158,11,0.15)',  // amber
+  'rgba(244,63,94,0.15)',   // rose
+  'rgba(139,92,246,0.15)',  // violet
 ];
+const GROUP_BORDER = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
 
-function getCellStyle(
-  index: number,
-  currentIndex: number,
-  processedIndices: number[],
-  matchIndices: number[],
-  foundMatch: boolean
-): string {
-  if (foundMatch && matchIndices.includes(index)) {
-    return 'bg-green-100 dark:bg-green-900 border-green-500 ring-2 ring-green-400 scale-110 shadow-lg';
-  }
-  if (index === currentIndex) {
-    return 'bg-blue-100 dark:bg-blue-900 border-blue-500 scale-110 shadow-lg';
-  }
-  if (processedIndices.includes(index)) {
-    return 'bg-gray-200 dark:bg-gray-600 border-gray-400 opacity-60';
-  }
-  return 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600';
-}
+/* ────────────── Value renderer ────────────── */
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-      {children}
-    </h3>
-  );
-}
+function RenderValue({ value, compact }: { value: unknown; compact?: boolean }) {
+  if (value === null || value === undefined) return <span className="text-gray-500">None</span>;
 
-/* ---------- Array-to-Dict ---------- */
-function ArrayToDictView({ step }: { step: AnimStep }) {
-  const ds = step.dataState;
-  const array = (ds.array ?? []) as (string | number)[];
-  const currentIndex = (ds.currentIndex ?? -1) as number;
-  const processedIndices = (ds.processedIndices ?? []) as number[];
-  const dict = (ds.dict ?? {}) as Record<string, number>;
-  const computation = (ds.computation ?? '') as string;
-  const checkResult = (ds.checkResult ?? '') as string;
-  const result = ds.result as unknown;
-  const hasResult = result !== undefined;
-  const foundMatch = (ds.foundMatch ?? false) as boolean;
-  const matchIndices = (ds.matchIndices ?? []) as number[];
+  // Dict / object
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) return <span className="text-gray-500">{'{}'}</span>;
 
-  return (
-    <div className="space-y-4">
-      {/* Input Array */}
-      <div>
-        <SectionHeader>Input Array</SectionHeader>
-        <div className="relative flex flex-wrap gap-2 sm:gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          {array.map((val, i) => (
-            <div key={i} className="relative flex flex-col items-center">
-              <motion.div
-                layout
-                animate={{
-                  scale: i === currentIndex && !foundMatch ? 1.1 : 1,
-                }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg border-2 text-sm sm:text-base font-semibold transition-colors ${getCellStyle(
-                  i,
-                  currentIndex,
-                  processedIndices,
-                  matchIndices,
-                  foundMatch
-                )}`}
-              >
-                {val}
-              </motion.div>
-              <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                {i}
-              </span>
-              {/* Pointer triangle */}
-              <AnimatePresence>
-                {i === currentIndex && !foundMatch && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    className="absolute -bottom-3 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-blue-500"
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Computation */}
-      <AnimatePresence mode="wait">
-        {(computation || checkResult) && (
-          <motion.div
-            key={step.id}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
-            className="p-3 bg-blue-50 dark:bg-blue-950 rounded-xl border border-blue-200 dark:border-blue-800 space-y-1"
-          >
-            {computation && (
-              <p className="text-xs sm:text-sm font-mono text-blue-800 dark:text-blue-200">
-                {computation}
-              </p>
-            )}
-            {checkResult && (
-              <p className="text-xs sm:text-sm font-mono text-blue-600 dark:text-blue-300">
-                {checkResult}
-              </p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Dictionary */}
-      <div>
-        <SectionHeader>Dictionary (seen)</SectionHeader>
-        <div className="flex flex-wrap gap-2 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 min-h-[48px]">
+    // Grouped lists (array-grouping)
+    const isGrouped = entries.some(([, v]) => Array.isArray(v));
+    if (isGrouped) {
+      return (
+        <div className="flex flex-wrap gap-2 mt-1">
           <AnimatePresence>
-            {Object.entries(dict).map(([key, val]) => (
+            {entries.map(([k, v], gi) => (
               <motion.div
-                key={key}
-                initial={{ opacity: 0, scale: 0.5, y: -20 }}
+                key={k}
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-700 border-l-4 border-l-amber-500"
+                layout
+                className="rounded-lg p-2 min-w-[60px]"
+                style={{
+                  background: GROUP_BG[gi % GROUP_BG.length],
+                  border: `2px solid ${GROUP_BORDER[gi % GROUP_BORDER.length]}`,
+                }}
               >
-                <span className="text-xs sm:text-sm font-semibold text-amber-800 dark:text-amber-200">
-                  {key}
-                </span>
-                <span className="text-xs text-gray-400">:</span>
-                <span className="text-xs sm:text-sm font-mono text-gray-700 dark:text-gray-300">
-                  {val}
-                </span>
+                <div className="text-[10px] font-mono text-gray-400 mb-1">"{k}"</div>
+                <AnimatePresence>
+                  {(v as string[]).map((item) => (
+                    <motion.div
+                      key={item}
+                      initial={{ opacity: 0, x: -15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="text-xs font-mono text-gray-200 py-0.5"
+                    >
+                      "{item}"
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </motion.div>
             ))}
           </AnimatePresence>
-          {Object.keys(dict).length === 0 && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 italic">
-              empty
-            </span>
-          )}
         </div>
-      </div>
+      );
+    }
 
-      {/* Result */}
-      <AnimatePresence>
-        {hasResult && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="p-3 bg-green-50 dark:bg-green-950 rounded-xl border border-green-300 dark:border-green-700"
-          >
-            <SectionHeader>Result</SectionHeader>
-            <p className="text-sm sm:text-base font-mono font-bold text-green-700 dark:text-green-300">
-              {JSON.stringify(result)}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+    // Regular dict
+    return (
+      <span className="inline-flex flex-wrap items-center gap-0.5">
+        <span className="text-yellow-300">{'{'}</span>
+        <AnimatePresence>
+          {entries.map(([k, v], idx) => (
+            <motion.span
+              key={k}
+              initial={{ opacity: 0, scale: 0.5, y: -8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              className="inline-flex items-center"
+            >
+              {idx > 0 && <span className="text-gray-500 mr-1">,</span>}
+              <span className="text-cyan-300">{k}</span>
+              <span className="text-gray-500">:</span>
+              <span className="text-orange-300 ml-0.5">{String(v)}</span>
+            </motion.span>
+          ))}
+        </AnimatePresence>
+        <span className="text-yellow-300">{'}'}</span>
+      </span>
+    );
+  }
+
+  // Array / set
+  if (Array.isArray(value)) {
+    if (compact && value.length > 8) {
+      return <span className="text-cyan-300">[{value.slice(0, 6).join(', ')}, ...{value.length} items]</span>;
+    }
+    return (
+      <span className="text-cyan-300">
+        [{value.map((v, i) => (
+          <span key={i}>
+            {i > 0 && <span className="text-gray-500">, </span>}
+            {typeof v === 'string' ? `"${v}"` : String(v)}
+          </span>
+        ))}]
+      </span>
+    );
+  }
+
+  if (typeof value === 'boolean') return <span className="text-orange-300">{String(value)}</span>;
+  if (typeof value === 'number') return <span className="text-green-300">{value}</span>;
+  if (typeof value === 'string') return <span className="text-green-300">"{value}"</span>;
+  return <span>{String(value)}</span>;
 }
 
-/* ---------- Array-to-Set ---------- */
-function ArrayToSetView({ step }: { step: AnimStep }) {
-  const ds = step.dataState;
-  const array = (ds.array ?? []) as (string | number)[];
-  const currentIndex = (ds.currentIndex ?? -1) as number;
-  const processedIndices = (ds.processedIndices ?? []) as number[];
-  const seen = (ds.set ?? []) as (string | number)[];
-  const computation = (ds.computation ?? '') as string;
-  const checkResult = (ds.checkResult ?? '') as string;
-  const result = ds.result as unknown;
-  const hasResult = result !== undefined;
-  const foundMatch = (ds.foundMatch ?? false) as boolean;
-  const matchIndices = (ds.matchIndices ?? []) as number[];
-  const isTruthy = result === true || result === 'True';
+/* ────────────── Code Panel with line highlight ────────────── */
+
+function CodePanel({
+  code,
+  activeLine,
+  annotation,
+}: {
+  code: string;
+  activeLine: number;
+  annotation?: string;
+}) {
+  const lines = code.split('\n');
 
   return (
-    <div className="space-y-4">
-      {/* Input Array */}
-      <div>
-        <SectionHeader>Input Array</SectionHeader>
-        <div className="relative flex flex-wrap gap-2 sm:gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          {array.map((val, i) => (
-            <div key={i} className="relative flex flex-col items-center">
-              <motion.div
-                layout
-                animate={{
-                  scale: i === currentIndex && !foundMatch ? 1.1 : 1,
-                }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg border-2 text-sm sm:text-base font-semibold transition-colors ${getCellStyle(
-                  i,
-                  currentIndex,
-                  processedIndices,
-                  matchIndices,
-                  foundMatch
-                )}`}
-              >
-                {val}
-              </motion.div>
-              <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                {i}
-              </span>
-              <AnimatePresence>
-                {i === currentIndex && !foundMatch && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    className="absolute -bottom-3 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-blue-500"
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
+    <div className="rounded-xl overflow-hidden border border-gray-700 bg-[#0d1117]">
+      {/* Title bar */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-[#161b22] border-b border-gray-700">
+        <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+        <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
+        <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+        <span className="ml-2 text-xs text-gray-500 font-mono">solution.py</span>
       </div>
 
-      {/* Computation */}
-      <AnimatePresence mode="wait">
-        {(computation || checkResult) && (
-          <motion.div
-            key={step.id}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
-            className="p-3 bg-blue-50 dark:bg-blue-950 rounded-xl border border-blue-200 dark:border-blue-800 space-y-1"
-          >
-            {computation && (
-              <p className="text-xs sm:text-sm font-mono text-blue-800 dark:text-blue-200">
-                {computation}
-              </p>
-            )}
-            {checkResult && (
-              <p className="text-xs sm:text-sm font-mono text-blue-600 dark:text-blue-300">
-                {checkResult}
-              </p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Set */}
-      <div>
-        <SectionHeader>Set (seen)</SectionHeader>
-        <div className="flex flex-wrap gap-2 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 min-h-[48px]">
-          <AnimatePresence>
-            {seen.map((val) => (
-              <motion.div
-                key={String(val)}
-                initial={{ opacity: 0, scale: 0.5, y: -20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-700 text-xs sm:text-sm font-semibold text-amber-800 dark:text-amber-200"
-              >
-                {val}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {seen.length === 0 && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 italic">
-              empty
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Result */}
-      <AnimatePresence>
-        {hasResult && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={`p-3 rounded-xl border ${
-              isTruthy
-                ? 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700'
-                : 'bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700'
-            }`}
-          >
-            <SectionHeader>Result</SectionHeader>
-            <p
-              className={`text-sm sm:text-base font-mono font-bold ${
-                isTruthy
-                  ? 'text-green-700 dark:text-green-300'
-                  : 'text-gray-700 dark:text-gray-300'
+      {/* Code lines */}
+      <div className="py-2 text-[13px] leading-6 font-mono overflow-x-auto">
+        {lines.map((line, i) => {
+          const isActive = i === activeLine;
+          return (
+            <div
+              key={i}
+              className={`flex transition-colors duration-300 ${
+                isActive
+                  ? 'bg-yellow-500/15 border-l-2 border-yellow-400'
+                  : 'border-l-2 border-transparent'
               }`}
             >
-              {String(result)}
+              {/* Line number */}
+              <span className={`w-10 text-right pr-3 select-none flex-shrink-0 ${
+                isActive ? 'text-yellow-400' : 'text-gray-600'
+              }`}>
+                {i + 1}
+              </span>
+              {/* Execution arrow */}
+              <span className="w-5 flex-shrink-0 text-center">
+                {isActive && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -5 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-yellow-400 text-xs"
+                  >
+                    ▶
+                  </motion.span>
+                )}
+              </span>
+              {/* Code text */}
+              <span className={`pr-4 whitespace-pre ${
+                isActive ? 'text-gray-100' : 'text-gray-400'
+              }`}>
+                {line || ' '}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Annotation bar */}
+      <AnimatePresence mode="wait">
+        {annotation && (
+          <motion.div
+            key={annotation}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="border-t border-gray-700 px-4 py-2 bg-[#161b22]"
+          >
+            <p className="text-xs text-blue-300 font-mono">
+              💡 {annotation}
             </p>
           </motion.div>
         )}
@@ -312,180 +218,225 @@ function ArrayToSetView({ step }: { step: AnimStep }) {
   );
 }
 
-/* ---------- Array-Grouping ---------- */
-function ArrayGroupingView({ step }: { step: AnimStep }) {
-  const ds = step.dataState;
-  const array = (ds.array ?? []) as string[];
-  const currentIndex = (ds.currentIndex ?? -1) as number;
-  const processedIndices = (ds.processedIndices ?? []) as number[];
-  const groups = (ds.groups ?? {}) as Record<string, string[]>;
-  const computation = (ds.computation ?? '') as string;
-  const checkResult = (ds.checkResult ?? '') as string;
-  const foundMatch = (ds.foundMatch ?? false) as boolean;
-  const matchIndices = (ds.matchIndices ?? []) as number[];
+/* ────────────── Variables Panel ────────────── */
 
-  const groupKeys = Object.keys(groups);
-
+function VariablesPanel({
+  variables,
+  changedVars,
+}: {
+  variables: Record<string, unknown>;
+  changedVars: string[];
+}) {
   return (
-    <div className="space-y-4">
-      {/* Input Array */}
-      <div>
-        <SectionHeader>Input Array</SectionHeader>
-        <div className="relative flex flex-wrap gap-2 sm:gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          {array.map((val, i) => (
-            <div key={i} className="relative flex flex-col items-center">
-              <motion.div
-                layout
-                animate={{
-                  scale: i === currentIndex && !foundMatch ? 1.1 : 1,
-                }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className={`px-2 h-10 sm:h-12 flex items-center justify-center rounded-lg border-2 text-sm sm:text-base font-semibold transition-colors ${getCellStyle(
-                  i,
-                  currentIndex,
-                  processedIndices,
-                  matchIndices,
-                  foundMatch
-                )}`}
-              >
-                {val}
-              </motion.div>
-              <AnimatePresence>
-                {i === currentIndex && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    className="absolute -bottom-3 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-blue-500"
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
+    <div className="rounded-xl border border-gray-700 bg-[#0d1117] overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-2 bg-[#161b22] border-b border-gray-700">
+        <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Variables</span>
       </div>
 
-      {/* Computation */}
-      <AnimatePresence mode="wait">
-        {(computation || checkResult) && (
-          <motion.div
-            key={step.id}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
-            className="p-3 bg-blue-50 dark:bg-blue-950 rounded-xl border border-blue-200 dark:border-blue-800 space-y-1"
-          >
-            {computation && (
-              <p className="text-xs sm:text-sm font-mono text-blue-800 dark:text-blue-200">
-                {computation}
-              </p>
-            )}
-            {checkResult && (
-              <p className="text-xs sm:text-sm font-mono text-blue-600 dark:text-blue-300">
-                {checkResult}
-              </p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Variable list */}
+      <div className="p-3 space-y-2 text-[13px] font-mono">
+        <AnimatePresence>
+          {Object.entries(variables).map(([name, value]) => {
+            const justChanged = changedVars.includes(name);
+            const colorClass = VAR_COLORS[name] || 'text-gray-300';
+            const isComplex = typeof value === 'object' && value !== null;
 
-      {/* Groups */}
-      <div>
-        <SectionHeader>Groups</SectionHeader>
-        <div className="flex flex-wrap gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 min-h-[60px]">
-          <AnimatePresence>
-            {groupKeys.map((key, gi) => {
-              const color = GROUP_COLORS[gi % GROUP_COLORS.length];
-              return (
-                <motion.div
-                  key={key}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  layout
-                  className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 border-${color} bg-${color}/10 min-w-[70px]`}
-                  style={{
-                    borderColor: `var(--group-${gi})`,
-                  }}
-                >
-                  <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400 font-semibold">
-                    {key}
-                  </span>
-                  <div className="flex flex-col gap-1">
-                    <AnimatePresence>
-                      {groups[key].map((item) => (
-                        <motion.div
-                          key={item}
-                          initial={{ opacity: 0, x: -20, scale: 0.8 }}
-                          animate={{ opacity: 1, x: 0, scale: 1 }}
-                          transition={{
-                            type: 'spring',
-                            stiffness: 300,
-                            damping: 20,
-                          }}
-                          className={`px-2 py-1 rounded-md text-xs sm:text-sm font-medium text-center bg-${color}/20 text-gray-800 dark:text-gray-200`}
-                          style={{
-                            backgroundColor: getGroupBg(gi),
-                          }}
-                        >
-                          {item}
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
+            return (
+              <motion.div
+                key={name}
+                layout
+                initial={{ opacity: 0, x: 20 }}
+                animate={{
+                  opacity: 1,
+                  x: 0,
+                  scale: justChanged ? [1, 1.03, 1] : 1,
+                }}
+                transition={{
+                  layout: { type: 'spring', stiffness: 300, damping: 25 },
+                  scale: { duration: 0.4 },
+                }}
+                className={`rounded-lg px-3 py-2 transition-colors duration-300 ${
+                  justChanged
+                    ? 'bg-yellow-500/10 ring-1 ring-yellow-500/40'
+                    : 'bg-gray-800/50'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <span className={`${colorClass} font-semibold flex-shrink-0`}>{name}</span>
+                  <span className="text-gray-500">=</span>
+                  <div className={`${isComplex ? 'flex-1 min-w-0' : ''}`}>
+                    <RenderValue value={value} compact />
                   </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-          {groupKeys.length === 0 && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 italic">
-              no groups yet
-            </span>
-          )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+
+        {Object.keys(variables).length === 0 && (
+          <div className="text-gray-600 italic text-xs py-4 text-center">
+            No variables yet
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ────────────── Input Array visual (compact) ────────────── */
+
+function ArrayVisual({
+  array,
+  currentIndex,
+  matchIndices,
+  foundMatch,
+  processedIndices,
+}: {
+  array: (string | number)[];
+  currentIndex: number;
+  matchIndices: number[];
+  foundMatch: boolean;
+  processedIndices: number[];
+}) {
+  return (
+    <div className="rounded-xl border border-gray-700 bg-[#0d1117] overflow-hidden">
+      <div className="px-4 py-2 bg-[#161b22] border-b border-gray-700">
+        <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Memory</span>
+      </div>
+      <div className="p-3">
+        <div className="flex flex-wrap gap-1.5 items-end">
+          {array.map((val, i) => {
+            let bg = 'bg-gray-800 border-gray-600';
+            let textColor = 'text-gray-300';
+            let scale = 1;
+            let glow = '';
+
+            if (foundMatch && matchIndices.includes(i)) {
+              bg = 'bg-green-900/60 border-green-400';
+              textColor = 'text-green-300';
+              scale = 1.1;
+              glow = 'shadow-[0_0_12px_rgba(34,197,94,0.4)]';
+            } else if (i === currentIndex) {
+              bg = 'bg-blue-900/60 border-blue-400';
+              textColor = 'text-blue-200';
+              scale = 1.08;
+              glow = 'shadow-[0_0_8px_rgba(59,130,246,0.3)]';
+            } else if (processedIndices.includes(i)) {
+              bg = 'bg-gray-800/40 border-gray-700';
+              textColor = 'text-gray-600';
+            }
+
+            return (
+              <motion.div
+                key={i}
+                animate={{ scale }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                className={`flex flex-col items-center ${glow}`}
+              >
+                <div className={`w-10 h-10 flex items-center justify-center rounded-lg border-2 text-sm font-bold ${bg} ${textColor}`}>
+                  {typeof val === 'string' ? `"${val}"` : val}
+                </div>
+                <span className={`text-[9px] mt-0.5 ${
+                  i === currentIndex ? 'text-blue-400 font-bold' : 'text-gray-600'
+                }`}>
+                  [{i}]
+                </span>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
-function getGroupBg(index: number): string {
-  const bgs = [
-    'rgba(129,140,248,0.15)', // indigo
-    'rgba(52,211,153,0.15)', // emerald
-    'rgba(251,191,36,0.15)', // amber
-    'rgba(251,113,133,0.15)', // rose
-    'rgba(167,139,250,0.15)', // purple
-  ];
-  return bgs[index % bgs.length];
+/* ────────────── Result banner ────────────── */
+
+function ResultBanner({ result }: { result: unknown }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      className="rounded-xl border border-green-500/50 bg-green-500/10 px-4 py-3 flex items-center gap-3"
+    >
+      <span className="text-green-400 text-lg">✓</span>
+      <div>
+        <div className="text-xs text-green-400/70 uppercase tracking-wider font-semibold">Return</div>
+        <div className="text-green-300 font-mono font-bold">
+          <RenderValue value={result} />
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
-function getGroupBorder(index: number): string {
-  const borders = [
-    '#818cf8', // indigo-400
-    '#34d399', // emerald-400
-    '#fbbf24', // amber-400
-    '#fb7185', // rose-400
-    '#a78bfa', // purple-400
-  ];
-  return borders[index % borders.length];
-}
+/* ════════════════════════════════════════════
+   Main Component
+   ════════════════════════════════════════════ */
 
-/* ---------- Main Component ---------- */
 export default function HashMapViz({ steps, currentStep, template }: Props) {
   const step = steps[currentStep];
   if (!step) return null;
 
-  // Inject CSS variables for group colors
-  const groupStyle: React.CSSProperties = {};
-  for (let i = 0; i < GROUP_COLORS.length; i++) {
-    (groupStyle as Record<string, string>)[`--group-${i}`] = getGroupBorder(i);
+  const ds = step.dataState;
+  const activeLine = (ds.activeLine ?? -1) as number;
+  const code = (ds.code ?? '') as string;
+  const annotation = (ds.annotation ?? '') as string;
+  const changedVars = (ds.changedVars ?? []) as string[];
+  const result = ds.result;
+  const hasResult = result !== undefined;
+
+  // Build variables object for display
+  const variables: Record<string, unknown> = {};
+  const varNames = (ds.visibleVars ?? []) as string[];
+  for (const name of varNames) {
+    if (ds[name] !== undefined) {
+      variables[name] = ds[name];
+    }
   }
 
+  // Array visual data
+  const array = (ds.array ?? []) as (string | number)[];
+  const currentIndex = (ds.currentIndex ?? -1) as number;
+  const matchIndices = (ds.matchIndices ?? []) as number[];
+  const foundMatch = (ds.foundMatch ?? false) as boolean;
+  const processedIndices = (ds.processedIndices ?? []) as number[];
+  const showArrayVisual = array.length > 0 && currentIndex >= -1;
+
+  // Decide layout based on template
+  const isGrouping = template === 'array-grouping';
+
   return (
-    <div className="w-full" style={groupStyle}>
-      {template === 'array-to-dict' && <ArrayToDictView step={step} />}
-      {template === 'array-to-set' && <ArrayToSetView step={step} />}
-      {template === 'array-grouping' && <ArrayGroupingView step={step} />}
+    <div className="space-y-4">
+      {/* Code + Variables — side by side on desktop, stacked on mobile */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Code panel */}
+        <div className="flex-1 min-w-0">
+          <CodePanel code={code} activeLine={activeLine} annotation={annotation} />
+        </div>
+
+        {/* Variables panel */}
+        <div className="lg:w-80 flex-shrink-0">
+          <VariablesPanel variables={variables} changedVars={changedVars} />
+        </div>
+      </div>
+
+      {/* Memory visualization */}
+      {showArrayVisual && !isGrouping && (
+        <ArrayVisual
+          array={array}
+          currentIndex={currentIndex}
+          matchIndices={matchIndices}
+          foundMatch={foundMatch}
+          processedIndices={processedIndices}
+        />
+      )}
+
+      {/* Result */}
+      <AnimatePresence>
+        {hasResult && <ResultBanner result={result} />}
+      </AnimatePresence>
     </div>
   );
 }

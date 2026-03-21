@@ -2,32 +2,34 @@ import type { VisualConfig, AnimStep } from '../../components/visual-learning/ty
 
 /* ─────────────── helpers ─────────────── */
 
-function step(
+function mkStep(
   id: string,
   label: string,
   dataState: Record<string, unknown>,
-  highlights: AnimStep['highlights'] = []
 ): AnimStep {
-  return { id, label, highlights, dataState };
+  return { id, label, highlights: [], dataState };
 }
 
 /* ═══════════════════════════════════════
    Config 1 — Two Sum (lc-1)
    ═══════════════════════════════════════ */
-const twoSum: VisualConfig = {
-  questionId: 'lc-1',
-  template: 'array-to-dict',
-  title: 'Two Sum',
-  subtitle: 'Build a HashMap for O(1) lookups',
-  category: 'python',
-  solutionCode: `def two_sum(nums, target):
+
+const TWO_SUM_CODE = `def two_sum(nums, target):
     seen = {}
     for i, num in enumerate(nums):
         diff = target - num
         if diff in seen:
             return [seen[diff], i]
         seen[num] = i
-    return []`,
+    return []`;
+
+const twoSum: VisualConfig = {
+  questionId: 'lc-1',
+  template: 'array-to-dict',
+  title: 'Two Sum',
+  subtitle: 'Build a HashMap for O(1) lookups',
+  category: 'python',
+  solutionCode: TWO_SUM_CODE,
   inputs: [
     { key: 'array', label: 'nums', type: 'array', defaultValue: [2, 7, 11, 15], editable: true },
     { key: 'target', label: 'target', type: 'number', defaultValue: 9, editable: true },
@@ -39,75 +41,93 @@ const twoSum: VisualConfig = {
     const seen: Record<string, number> = {};
     const processed: number[] = [];
 
-    // Step 0 — start
-    steps.push(
-      step('start', 'Initialize empty dictionary seen = {}', {
-        array: nums,
-        currentIndex: -1,
-        processedIndices: [],
-        dict: {},
-        computation: '',
-        checkResult: '',
-      })
-    );
+    // Step 0 — function entry
+    steps.push(mkStep('start', 'Call two_sum with nums and target', {
+      code: TWO_SUM_CODE, activeLine: 0,
+      array: nums, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['nums', 'target'],
+      nums, target, changedVars: ['nums', 'target'],
+    }));
+
+    // Step 1 — init seen
+    steps.push(mkStep('init-seen', 'Initialize empty dictionary', {
+      code: TWO_SUM_CODE, activeLine: 1,
+      array: nums, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['nums', 'target', 'seen'],
+      nums, target, seen: {}, changedVars: ['seen'],
+    }));
 
     for (let i = 0; i < nums.length; i++) {
       const num = nums[i];
       const diff = target - num;
-      const found = diff in seen;
+      const found = String(diff) in seen;
+
+      // Loop iteration — for line
+      steps.push(mkStep(`loop-${i}`, `Loop: i=${i}, num=${num}`, {
+        code: TWO_SUM_CODE, activeLine: 2,
+        array: nums, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['nums', 'target', 'seen', 'i', 'num'],
+        nums, target, seen: { ...seen }, i, num, changedVars: ['i', 'num'],
+      }));
+
+      // Compute diff
+      steps.push(mkStep(`diff-${i}`, `Compute diff = ${target} - ${num} = ${diff}`, {
+        code: TWO_SUM_CODE, activeLine: 3,
+        array: nums, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['nums', 'target', 'seen', 'i', 'num', 'diff'],
+        nums, target, seen: { ...seen }, i, num, diff,
+        changedVars: ['diff'],
+        annotation: `diff = target - num = ${target} - ${num} = ${diff}`,
+      }));
 
       if (found) {
-        const j = seen[diff];
-        steps.push(
-          step(`match-${i}`, `Match! diff=${diff} found at index ${j}`, {
-            array: nums,
-            currentIndex: i,
-            processedIndices: [...processed],
-            dict: { ...seen },
-            computation: `diff = ${target} - ${num} = ${diff}`,
-            checkResult: `${diff} found at index ${j}!`,
-            foundMatch: true,
-            matchIndices: [j, i],
-            result: [j, i],
-          }, [
-            { elementId: `cell-${i}`, action: 'match', color: 'green-500' },
-            { elementId: `cell-${j}`, action: 'match', color: 'green-500' },
-          ])
-        );
+        const j = seen[String(diff)];
+        // Check — found!
+        steps.push(mkStep(`found-${i}`, `${diff} IS in seen at index ${j} — match!`, {
+          code: TWO_SUM_CODE, activeLine: 4,
+          array: nums, currentIndex: i, processedIndices: [...processed],
+          matchIndices: [j, i], foundMatch: true,
+          visibleVars: ['nums', 'target', 'seen', 'i', 'num', 'diff'],
+          nums, target, seen: { ...seen }, i, num, diff,
+          changedVars: [],
+          annotation: `✅ ${diff} found in seen! seen[${diff}] = ${j}`,
+        }));
+
+        // Return
+        steps.push(mkStep(`return-${i}`, `Return [${j}, ${i}]`, {
+          code: TWO_SUM_CODE, activeLine: 5,
+          array: nums, currentIndex: i, processedIndices: [...processed],
+          matchIndices: [j, i], foundMatch: true,
+          visibleVars: ['nums', 'target', 'seen', 'i', 'num', 'diff'],
+          nums, target, seen: { ...seen }, i, num, diff,
+          result: [j, i], changedVars: [],
+          annotation: `Return indices [${j}, ${i}] — nums[${j}]=${nums[j]} + nums[${i}]=${nums[i]} = ${target}`,
+        }));
         return steps;
       }
 
-      // Not found — check + add in one step
+      // Check — not found, add to seen
       seen[String(num)] = i;
       processed.push(i);
 
-      steps.push(
-        step(`process-${i}`, `Process nums[${i}]=${num}: diff=${diff} not in seen, add {${num}: ${i}}`, {
-          array: nums,
-          currentIndex: i,
-          processedIndices: [...processed],
-          dict: { ...seen },
-          computation: `diff = ${target} - ${num} = ${diff}`,
-          checkResult: `${diff} not in seen`,
-        }, [
-          { elementId: `cell-${i}`, action: 'highlight', color: 'blue-500' },
-          { elementId: `dict-${num}`, action: 'add', color: 'amber-500' },
-        ])
-      );
+      steps.push(mkStep(`add-${i}`, `${diff} not in seen → add seen[${num}] = ${i}`, {
+        code: TWO_SUM_CODE, activeLine: 6,
+        array: nums, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['nums', 'target', 'seen', 'i', 'num', 'diff'],
+        nums, target, seen: { ...seen }, i, num, diff,
+        changedVars: ['seen'],
+        annotation: `❌ ${diff} not in seen → store seen[${num}] = ${i}`,
+      }));
     }
 
-    // No match found
-    steps.push(
-      step('end', 'No two numbers sum to target', {
-        array: nums,
-        currentIndex: -1,
-        processedIndices: [...processed],
-        dict: { ...seen },
-        computation: '',
-        checkResult: 'No valid pair found',
-        result: [],
-      })
-    );
+    // No match
+    steps.push(mkStep('no-match', 'No two numbers sum to target', {
+      code: TWO_SUM_CODE, activeLine: 7,
+      array: nums, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['nums', 'target', 'seen'],
+      nums, target, seen: { ...seen },
+      result: [], changedVars: [],
+    }));
 
     return steps;
   },
@@ -116,91 +136,85 @@ const twoSum: VisualConfig = {
 /* ═══════════════════════════════════════
    Config 2 — Contains Duplicate (lc-3)
    ═══════════════════════════════════════ */
+
+const CONTAINS_DUP_CODE = `def contains_duplicate(nums):
+    seen = set()
+    for num in nums:
+        if num in seen:
+            return True
+        seen.add(num)
+    return False`;
+
 const containsDuplicate: VisualConfig = {
   questionId: 'lc-3',
   template: 'array-to-set',
   title: 'Contains Duplicate',
   subtitle: 'Use a Set for O(1) membership checks',
   category: 'python',
-  solutionCode: `def contains_duplicate(nums):
-    seen = set()
-    for num in nums:
-        if num in seen:
-            return True
-        seen.add(num)
-    return False`,
+  solutionCode: CONTAINS_DUP_CODE,
   inputs: [
     { key: 'array', label: 'nums', type: 'array', defaultValue: [1, 2, 3, 1], editable: true },
   ],
   generateSteps: (inputs) => {
     const nums = inputs.array as number[];
     const steps: AnimStep[] = [];
-    const seen: (string | number)[] = [];
+    const seen = new Set<number>();
     const processed: number[] = [];
 
-    steps.push(
-      step('start', 'Initialize empty set seen = set()', {
-        array: nums,
-        currentIndex: -1,
-        processedIndices: [],
-        set: [],
-        computation: '',
-        checkResult: '',
-      })
-    );
+    steps.push(mkStep('start', 'Initialize empty set', {
+      code: CONTAINS_DUP_CODE, activeLine: 1,
+      array: nums, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['nums', 'seen'], nums, seen: [] as number[], changedVars: ['seen'],
+    }));
 
     for (let i = 0; i < nums.length; i++) {
       const num = nums[i];
-      const found = seen.includes(num);
+      const isDup = seen.has(num);
 
-      if (found) {
-        steps.push(
-          step(`dup-${i}`, `Duplicate found! ${num} is already in seen`, {
-            array: nums,
-            currentIndex: i,
-            processedIndices: [...processed],
-            set: [...seen],
-            computation: `Check: ${num} in seen?`,
-            checkResult: `${num} is in seen! Return True`,
-            foundMatch: true,
-            matchIndices: [i],
-            result: true as unknown,
-          }, [
-            { elementId: `cell-${i}`, action: 'match', color: 'green-500' },
-          ])
-        );
+      // Loop
+      steps.push(mkStep(`loop-${i}`, `Check num=${num}`, {
+        code: CONTAINS_DUP_CODE, activeLine: 2,
+        array: nums, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['nums', 'seen', 'num'], nums, num, seen: [...seen], changedVars: ['num'],
+      }));
+
+      if (isDup) {
+        steps.push(mkStep(`found-${i}`, `${num} IS in seen — duplicate!`, {
+          code: CONTAINS_DUP_CODE, activeLine: 3,
+          array: nums, currentIndex: i, processedIndices: [...processed],
+          matchIndices: [i, nums.indexOf(num)], foundMatch: true,
+          visibleVars: ['nums', 'seen', 'num'], nums, num, seen: [...seen],
+          changedVars: [],
+          annotation: `✅ ${num} already in seen!`,
+        }));
+        steps.push(mkStep(`return-${i}`, 'Return True', {
+          code: CONTAINS_DUP_CODE, activeLine: 4,
+          array: nums, currentIndex: i, processedIndices: [...processed],
+          matchIndices: [i, nums.indexOf(num)], foundMatch: true,
+          visibleVars: ['nums', 'seen', 'num'], nums, num, seen: [...seen],
+          result: true, changedVars: [],
+        }));
         return steps;
       }
 
-      seen.push(num);
+      seen.add(num);
       processed.push(i);
 
-      steps.push(
-        step(`process-${i}`, `Check ${num}: not in seen, add to set`, {
-          array: nums,
-          currentIndex: i,
-          processedIndices: [...processed],
-          set: [...seen],
-          computation: `Check: ${num} in seen?`,
-          checkResult: `${num} not in seen. Add ${num}`,
-        }, [
-          { elementId: `cell-${i}`, action: 'highlight', color: 'blue-500' },
-          { elementId: `set-${num}`, action: 'add', color: 'amber-500' },
-        ])
-      );
+      steps.push(mkStep(`add-${i}`, `${num} not in seen → add it`, {
+        code: CONTAINS_DUP_CODE, activeLine: 5,
+        array: nums, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['nums', 'seen', 'num'], nums, num, seen: [...seen],
+        changedVars: ['seen'],
+        annotation: `❌ ${num} not in seen → seen.add(${num})`,
+      }));
     }
 
-    steps.push(
-      step('end', 'No duplicates found, return False', {
-        array: nums,
-        currentIndex: -1,
-        processedIndices: [...processed],
-        set: [...seen],
-        computation: '',
-        checkResult: 'All elements are unique',
-        result: false as unknown,
-      })
-    );
+    steps.push(mkStep('no-dup', 'No duplicates found', {
+      code: CONTAINS_DUP_CODE, activeLine: 6,
+      array: nums, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['nums', 'seen'], nums, seen: [...seen],
+      result: false, changedVars: [],
+    }));
 
     return steps;
   },
@@ -209,13 +223,8 @@ const containsDuplicate: VisualConfig = {
 /* ═══════════════════════════════════════
    Config 3 — Valid Anagram (lc-2)
    ═══════════════════════════════════════ */
-const validAnagram: VisualConfig = {
-  questionId: 'lc-2',
-  template: 'array-to-dict',
-  title: 'Valid Anagram',
-  subtitle: 'Count character frequencies with a HashMap',
-  category: 'python',
-  solutionCode: `def is_anagram(s, t):
+
+const ANAGRAM_CODE = `def is_anagram(s, t):
     if len(s) != len(t):
         return False
     count = {}
@@ -225,7 +234,15 @@ const validAnagram: VisualConfig = {
         count[c] = count.get(c, 0) - 1
         if count[c] < 0:
             return False
-    return True`,
+    return True`;
+
+const validAnagram: VisualConfig = {
+  questionId: 'lc-2',
+  template: 'array-to-dict',
+  title: 'Valid Anagram',
+  subtitle: 'Count character frequencies with a HashMap',
+  category: 'python',
+  solutionCode: ANAGRAM_CODE,
   inputs: [
     { key: 'array', label: 's', type: 'string', defaultValue: 'anagram', editable: true },
     { key: 'target', label: 't', type: 'string', defaultValue: 'nagaram', editable: true },
@@ -233,124 +250,95 @@ const validAnagram: VisualConfig = {
   generateSteps: (inputs) => {
     const s = String(inputs.array);
     const t = String(inputs.target);
-    const sChars = s.split('');
-    const tChars = t.split('');
     const steps: AnimStep[] = [];
     const count: Record<string, number> = {};
 
+    const sArr = s.split('');
+    const tArr = t.split('');
+
     // Length check
+    steps.push(mkStep('len-check', `Check lengths: len("${s}")=${s.length}, len("${t}")=${t.length}`, {
+      code: ANAGRAM_CODE, activeLine: 1,
+      array: sArr, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['s', 't'], s, t, changedVars: ['s', 't'],
+      annotation: s.length === t.length ? `✅ Same length (${s.length})` : `❌ Different lengths!`,
+    }));
+
     if (s.length !== t.length) {
-      steps.push(
-        step('len-check', `len("${s}") != len("${t}"), return False`, {
-          array: sChars,
-          currentIndex: -1,
-          processedIndices: [],
-          dict: {},
-          computation: `len("${s}") = ${s.length}, len("${t}") = ${t.length}`,
-          checkResult: 'Lengths differ! Return False',
-          result: false as unknown,
-        })
-      );
+      steps.push(mkStep('len-fail', 'Different lengths → not anagram', {
+        code: ANAGRAM_CODE, activeLine: 2,
+        array: sArr, currentIndex: -1, processedIndices: [], matchIndices: [],
+        visibleVars: ['s', 't'], s, t, result: false, changedVars: [],
+      }));
       return steps;
     }
 
-    steps.push(
-      step('start', `Lengths match (${s.length}). Count chars in s`, {
-        array: sChars,
-        currentIndex: -1,
-        processedIndices: [],
-        dict: {},
-        computation: `len("${s}") = len("${t}") = ${s.length}`,
-        checkResult: '',
-      })
-    );
+    // Init count
+    steps.push(mkStep('init', 'Initialize count dict', {
+      code: ANAGRAM_CODE, activeLine: 3,
+      array: sArr, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['s', 't', 'count'], s, t, count: {}, changedVars: ['count'],
+    }));
 
-    // Phase 1: count chars in s
-    const processedPhase1: number[] = [];
-    for (let i = 0; i < sChars.length; i++) {
-      const c = sChars[i];
-      count[c] = (count[c] ?? 0) + 1;
-      processedPhase1.push(i);
+    // Count s chars (summarize — show every 2 chars)
+    const processed: number[] = [];
+    for (let i = 0; i < sArr.length; i++) {
+      const c = sArr[i];
+      count[c] = (count[c] || 0) + 1;
+      processed.push(i);
 
-      steps.push(
-        step(`count-s-${i}`, `s[${i}]='${c}': count['${c}'] = ${count[c]}`, {
-          array: sChars,
-          currentIndex: i,
-          processedIndices: [...processedPhase1],
-          dict: { ...count },
-          computation: `count['${c}'] = ${count[c] - 1} + 1 = ${count[c]}`,
-          checkResult: '',
-        }, [
-          { elementId: `cell-${i}`, action: 'highlight', color: 'blue-500' },
-          { elementId: `dict-${c}`, action: 'add', color: 'amber-500', value: count[c] },
-        ])
-      );
+      if (i % 2 === 0 || i === sArr.length - 1) {
+        steps.push(mkStep(`count-s-${i}`, `Count '${c}' in s: count['${c}'] = ${count[c]}`, {
+          code: ANAGRAM_CODE, activeLine: 5,
+          array: sArr, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+          visibleVars: ['s', 't', 'count', 'c'], s, t, count: { ...count }, c,
+          changedVars: ['count', 'c'],
+        }));
+      }
     }
 
-    // Transition step
-    steps.push(
-      step('phase2', 'Now subtract chars in t from counts', {
-        array: tChars,
-        currentIndex: -1,
-        processedIndices: [],
-        dict: { ...count },
-        computation: 'Phase 2: decrement for each char in t',
-        checkResult: '',
-      })
-    );
-
-    // Phase 2: subtract chars in t
-    const processedPhase2: number[] = [];
-    for (let i = 0; i < tChars.length; i++) {
-      const c = tChars[i];
-      count[c] = (count[c] ?? 0) - 1;
-      processedPhase2.push(i);
+    // Subtract t chars
+    const processed2: number[] = [];
+    for (let i = 0; i < tArr.length; i++) {
+      const c = tArr[i];
+      count[c] = (count[c] || 0) - 1;
+      processed2.push(i);
 
       if (count[c] < 0) {
-        steps.push(
-          step(`count-t-${i}`, `t[${i}]='${c}': count['${c}'] = ${count[c]} < 0! Return False`, {
-            array: tChars,
-            currentIndex: i,
-            processedIndices: [...processedPhase2],
-            dict: { ...count },
-            computation: `count['${c}'] = ${count[c] + 1} - 1 = ${count[c]}`,
-            checkResult: `count['${c}'] < 0, return False`,
-            foundMatch: true,
-            matchIndices: [i],
-            result: false as unknown,
-          })
-        );
+        steps.push(mkStep(`sub-t-${i}`, `Subtract '${c}' in t: count['${c}'] = ${count[c]} < 0!`, {
+          code: ANAGRAM_CODE, activeLine: 8,
+          array: tArr, currentIndex: i, processedIndices: [...processed2], matchIndices: [],
+          visibleVars: ['s', 't', 'count', 'c'], s, t, count: { ...count }, c,
+          changedVars: ['count'], foundMatch: true,
+          annotation: `❌ count['${c}'] went negative — not an anagram`,
+        }));
+        steps.push(mkStep('fail', 'Return False', {
+          code: ANAGRAM_CODE, activeLine: 9,
+          array: tArr, currentIndex: i, processedIndices: [...processed2], matchIndices: [],
+          visibleVars: ['s', 't', 'count'], s, t, count: { ...count },
+          result: false, changedVars: [],
+        }));
         return steps;
       }
 
-      steps.push(
-        step(`count-t-${i}`, `t[${i}]='${c}': count['${c}'] = ${count[c]}`, {
-          array: tChars,
-          currentIndex: i,
-          processedIndices: [...processedPhase2],
-          dict: { ...count },
-          computation: `count['${c}'] = ${count[c] + 1} - 1 = ${count[c]}`,
-          checkResult: `count['${c}'] >= 0, OK`,
-        }, [
-          { elementId: `cell-${i}`, action: 'highlight', color: 'blue-500' },
-          { elementId: `dict-${c}`, action: 'highlight', color: 'amber-500', value: count[c] },
-        ])
-      );
+      if (i % 2 === 0 || i === tArr.length - 1) {
+        steps.push(mkStep(`sub-t-${i}`, `Subtract '${c}' in t: count['${c}'] = ${count[c]}`, {
+          code: ANAGRAM_CODE, activeLine: 7,
+          array: tArr, currentIndex: i, processedIndices: [...processed2], matchIndices: [],
+          visibleVars: ['s', 't', 'count', 'c'], s, t, count: { ...count }, c,
+          changedVars: ['count', 'c'],
+        }));
+      }
     }
 
-    steps.push(
-      step('end', 'All counts are zero. Valid anagram!', {
-        array: tChars,
-        currentIndex: -1,
-        processedIndices: [...processedPhase2],
-        dict: { ...count },
-        computation: '',
-        checkResult: 'All counts zero. Return True',
-        foundMatch: true,
-        matchIndices: [],
-        result: true as unknown,
-      })
-    );
+    // Success
+    steps.push(mkStep('success', 'All counts are 0 → valid anagram!', {
+      code: ANAGRAM_CODE, activeLine: 10,
+      array: tArr, currentIndex: -1, processedIndices: [...processed2], matchIndices: [],
+      visibleVars: ['s', 't', 'count'], s, t, count: { ...count },
+      result: true, changedVars: [],
+      annotation: '✅ All character counts balanced to zero',
+    }));
 
     return steps;
   },
@@ -359,28 +347,25 @@ const validAnagram: VisualConfig = {
 /* ═══════════════════════════════════════
    Config 4 — Group Anagrams (lc-8)
    ═══════════════════════════════════════ */
-const groupAnagrams: VisualConfig = {
-  questionId: 'lc-8',
-  template: 'array-grouping',
-  title: 'Group Anagrams',
-  subtitle: 'Sort keys to group equivalent strings',
-  category: 'python',
-  solutionCode: `def group_anagrams(strs):
+
+const GROUP_ANAGRAMS_CODE = `def group_anagrams(strs):
     groups = {}
     for s in strs:
         key = ''.join(sorted(s))
         if key not in groups:
             groups[key] = []
         groups[key].append(s)
-    return list(groups.values())`,
+    return list(groups.values())`;
+
+const groupAnagrams: VisualConfig = {
+  questionId: 'lc-8',
+  template: 'array-grouping',
+  title: 'Group Anagrams',
+  subtitle: 'Sort keys to group equivalent strings',
+  category: 'python',
+  solutionCode: GROUP_ANAGRAMS_CODE,
   inputs: [
-    {
-      key: 'array',
-      label: 'strs',
-      type: 'array',
-      defaultValue: ['eat', 'tea', 'tan', 'ate', 'nat', 'bat'],
-      editable: true,
-    },
+    { key: 'array', label: 'strs', type: 'array', defaultValue: ['eat','tea','tan','ate','nat','bat'], editable: true },
   ],
   generateSteps: (inputs) => {
     const strs = inputs.array as string[];
@@ -388,83 +373,73 @@ const groupAnagrams: VisualConfig = {
     const groups: Record<string, string[]> = {};
     const processed: number[] = [];
 
-    steps.push(
-      step('start', 'Initialize empty groups dictionary', {
-        array: strs,
-        currentIndex: -1,
-        processedIndices: [],
-        groups: {},
-        computation: '',
-        checkResult: '',
-      })
-    );
+    steps.push(mkStep('start', 'Initialize empty groups dict', {
+      code: GROUP_ANAGRAMS_CODE, activeLine: 1,
+      array: strs, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['strs', 'groups'], strs, groups: {},
+      changedVars: ['groups'],
+    }));
 
     for (let i = 0; i < strs.length; i++) {
       const s = strs[i];
       const key = s.split('').sort().join('');
-      const isNew = !(key in groups);
 
-      if (isNew) {
-        groups[key] = [];
-      }
+      // Compute key
+      steps.push(mkStep(`key-${i}`, `sorted("${s}") → "${key}"`, {
+        code: GROUP_ANAGRAMS_CODE, activeLine: 3,
+        array: strs, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['strs', 'groups', 's', 'key'], strs, groups: JSON.parse(JSON.stringify(groups)), s, key,
+        changedVars: ['s', 'key'],
+        annotation: `Sort letters of "${s}" → "${key}"`,
+      }));
+
+      // Add to group
+      if (!groups[key]) groups[key] = [];
       groups[key].push(s);
       processed.push(i);
 
-      const desc = isNew
-        ? `"${s}" -> sorted key "${key}" (new group). Add "${s}"`
-        : `"${s}" -> sorted key "${key}" (existing group). Add "${s}"`;
-
-      steps.push(
-        step(`group-${i}`, desc, {
-          array: strs,
-          currentIndex: i,
-          processedIndices: [...processed],
-          groups: JSON.parse(JSON.stringify(groups)),
-          computation: `key = ''.join(sorted("${s}")) = "${key}"`,
-          checkResult: isNew
-            ? `New group "${key}". Append "${s}"`
-            : `Group "${key}" exists. Append "${s}"`,
-        }, [
-          { elementId: `cell-${i}`, action: 'highlight', color: 'blue-500' },
-          { elementId: `group-${key}`, action: 'add', color: 'amber-500', value: s },
-        ])
-      );
+      steps.push(mkStep(`group-${i}`, `Add "${s}" to groups["${key}"]`, {
+        code: GROUP_ANAGRAMS_CODE, activeLine: 6,
+        array: strs, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['strs', 'groups', 's', 'key'], strs, groups: JSON.parse(JSON.stringify(groups)), s, key,
+        changedVars: ['groups'],
+      }));
     }
 
-    steps.push(
-      step('end', `Done! ${Object.keys(groups).length} groups formed`, {
-        array: strs,
-        currentIndex: -1,
-        processedIndices: [...processed],
-        groups: JSON.parse(JSON.stringify(groups)),
-        computation: '',
-        checkResult: `Return ${Object.keys(groups).length} groups`,
-        result: Object.values(groups) as unknown,
-      })
-    );
+    // Return
+    const result = Object.values(groups);
+    steps.push(mkStep('return', `Return ${result.length} groups`, {
+      code: GROUP_ANAGRAMS_CODE, activeLine: 7,
+      array: strs, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['strs', 'groups'], strs, groups: JSON.parse(JSON.stringify(groups)),
+      result, changedVars: [],
+    }));
 
     return steps;
   },
 };
 
 /* ═══════════════════════════════════════
-   Config 5 — Top K Frequent Elements (lc-23)
+   Config 5 — Top K Frequent (lc-23)
    ═══════════════════════════════════════ */
+
+const TOP_K_CODE = `def top_k_frequent(nums, k):
+    count = {}
+    for num in nums:
+        count[num] = count.get(num, 0) + 1
+    sorted_keys = sorted(count.keys(),
+        key=lambda x: count[x], reverse=True)
+    return sorted_keys[:k]`;
+
 const topKFrequent: VisualConfig = {
   questionId: 'lc-23',
   template: 'array-to-dict',
   title: 'Top K Frequent Elements',
   subtitle: 'Count frequencies, then sort',
   category: 'python',
-  solutionCode: `def top_k_frequent(nums, k):
-    count = {}
-    for num in nums:
-        count[num] = count.get(num, 0) + 1
-    sorted_items = sorted(count.keys(),
-        key=lambda x: count[x], reverse=True)
-    return sorted_items[:k]`,
+  solutionCode: TOP_K_CODE,
   inputs: [
-    { key: 'array', label: 'nums', type: 'array', defaultValue: [1, 1, 1, 2, 2, 3], editable: true },
+    { key: 'array', label: 'nums', type: 'array', defaultValue: [1,1,1,2,2,3], editable: true },
     { key: 'target', label: 'k', type: 'number', defaultValue: 2, editable: true },
   ],
   generateSteps: (inputs) => {
@@ -474,67 +449,55 @@ const topKFrequent: VisualConfig = {
     const count: Record<string, number> = {};
     const processed: number[] = [];
 
-    steps.push(
-      step('start', 'Phase 1: Count frequencies', {
-        array: nums,
-        currentIndex: -1,
-        processedIndices: [],
-        dict: {},
-        computation: 'count = {}',
-        checkResult: '',
-      })
-    );
+    steps.push(mkStep('start', 'Initialize empty count dict', {
+      code: TOP_K_CODE, activeLine: 1,
+      array: nums, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['nums', 'k', 'count'], nums, k, count: {},
+      changedVars: ['count'],
+    }));
 
-    // Phase 1: count frequencies
+    // Count phase
     for (let i = 0; i < nums.length; i++) {
       const num = nums[i];
-      const key = String(num);
-      count[key] = (count[key] ?? 0) + 1;
+      count[String(num)] = (count[String(num)] || 0) + 1;
       processed.push(i);
 
-      steps.push(
-        step(`count-${i}`, `nums[${i}]=${num}: count[${num}] = ${count[key]}`, {
-          array: nums,
-          currentIndex: i,
-          processedIndices: [...processed],
-          dict: { ...count },
-          computation: `count[${num}] = ${count[key] - 1 || 0} + 1 = ${count[key]}`,
-          checkResult: '',
-        }, [
-          { elementId: `cell-${i}`, action: 'highlight', color: 'blue-500' },
-          { elementId: `dict-${num}`, action: 'add', color: 'amber-500', value: count[key] },
-        ])
-      );
+      // Show every element or when count changes meaningfully
+      steps.push(mkStep(`count-${i}`, `count[${num}] = ${count[String(num)]}`, {
+        code: TOP_K_CODE, activeLine: 3,
+        array: nums, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['nums', 'k', 'count', 'num'], nums, k, count: { ...count }, num,
+        changedVars: ['count', 'num'],
+      }));
     }
 
-    // Phase 2: sort and pick top k
-    const sorted = Object.entries(count)
-      .sort((a, b) => b[1] - a[1]);
-    const topK = sorted.slice(0, k).map(([key]) => Number(key));
+    // Sort phase
+    const sorted = Object.keys(count).sort((a, b) => count[b] - count[a]);
+    steps.push(mkStep('sort', `Sort by frequency: [${sorted.join(', ')}]`, {
+      code: TOP_K_CODE, activeLine: 4,
+      array: nums, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['nums', 'k', 'count', 'sorted_keys'], nums, k, count: { ...count },
+      sorted_keys: sorted.map(Number),
+      changedVars: ['sorted_keys'],
+      annotation: `Sorted by count descending: ${sorted.map(s => `${s}(×${count[s]})`).join(', ')}`,
+    }));
 
-    steps.push(
-      step('sort', `Phase 2: Sort by frequency, pick top ${k}`, {
-        array: nums,
-        currentIndex: -1,
-        processedIndices: [...processed],
-        dict: { ...count },
-        computation: `Sorted: ${sorted.map(([key, val]) => `${key}(${val})`).join(', ')}`,
-        checkResult: `Top ${k}: [${topK.join(', ')}]`,
-        foundMatch: true,
-        matchIndices: [],
-        result: topK as unknown,
-      }, sorted.slice(0, k).map(([key]) => ({
-        elementId: `dict-${key}`,
-        action: 'match' as const,
-        color: 'green-500',
-      })))
-    );
+    // Take k
+    const result = sorted.slice(0, k).map(Number);
+    steps.push(mkStep('return', `Return top ${k}: [${result.join(', ')}]`, {
+      code: TOP_K_CODE, activeLine: 6,
+      array: nums, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['nums', 'k', 'count', 'sorted_keys'], nums, k, count: { ...count },
+      sorted_keys: sorted.map(Number),
+      result, changedVars: [],
+      annotation: `Take first ${k} from sorted: [${result.join(', ')}]`,
+    }));
 
     return steps;
   },
 };
 
-/* ═══════════════ Export ═══════════════ */
+/* ═══════════════════════════════════════ */
 
 const pythonConfigs: VisualConfig[] = [
   twoSum,
