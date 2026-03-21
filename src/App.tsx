@@ -27,6 +27,7 @@ const CheatSheet = lazy(() => import('./components/tabs/CheatSheet'));
 const LeetCodePractice = lazy(() => import('./components/tabs/LeetCodePractice'));
 const ApiTest = lazy(() => import('./components/ApiTest').then(m => ({ default: m.ApiTest })));
 const ApiDiagnostic = lazy(() => import('./components/ApiDiagnostic').then(m => ({ default: m.ApiDiagnostic })));
+const VisualLearning = lazy(() => import('./components/visual-learning/VisualLearning'));
 
 const DarkModeInitializer = () => {
   const { preferences } = useAppContext();
@@ -78,6 +79,7 @@ function App() {
                 <Route path="/study" element={<StudyHub />} />
                 <Route path="/api-test" element={<ApiTest />} />
                 <Route path="/api-diagnostic" element={<ApiDiagnostic />} />
+                <Route path="/visual" element={<VisualLearning />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>

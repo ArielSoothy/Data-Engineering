@@ -16,6 +16,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.55.0",
     "axios": "^1.10.0",
+    "framer-motion": "^12.38.0",
     "lucide-react": "^0.511.0",
     "monaco-editor": "^0.52.2",
     "pyodide": "^0.27.6",
