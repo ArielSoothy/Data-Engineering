@@ -7,7 +7,7 @@ interface ButtonProps {
   iconPosition?: 'left' | 'right';
   loading?: boolean;
   disabled?: boolean;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
   type?: 'button' | 'submit';
   className?: string;
   children?: React.ReactNode;
