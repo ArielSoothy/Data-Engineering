@@ -10,8 +10,8 @@ export const AI_MODELS = {
 export const DEFAULT_SYNC_CODE = 'my-code-123';
 
 export const CATEGORY_TOTALS: Record<string, number> = {
-  sqlBasics: 40,
-  sqlAdvanced: 55,
+  sqlBasics: 37,
+  sqlAdvanced: 52,
   pythonBasics: 15,
   pythonAdvanced: 38,
   decompositionScenarios: 5,

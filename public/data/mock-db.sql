@@ -1,394 +1,9 @@
--- Mock Database for SQL Interview Questions
--- Base tables setup
-CREATE TABLE IF NOT EXISTS departments (
-    department_id INTEGER PRIMARY KEY,
-    department_name TEXT NOT NULL,
-    location TEXT,
-    budget DECIMAL(15,2),
-    manager_id INTEGER
-);
-
-CREATE TABLE IF NOT EXISTS employees (
-    employee_id INTEGER PRIMARY KEY,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
-    email TEXT,
-    department_id INTEGER,
-    salary DECIMAL(10,2),
-    hire_date DATE,
-    manager_id INTEGER,
-    job_title TEXT,
-    FOREIGN KEY (department_id) REFERENCES departments(department_id),
-    FOREIGN KEY (manager_id) REFERENCES employees(employee_id)
-);
-
-CREATE TABLE IF NOT EXISTS payroll (
-    payroll_id INTEGER PRIMARY KEY,
-    employee_id INTEGER,
-    salary DECIMAL(10,2),
-    effective_date DATE,
-    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
-);
-
--- Salary reviews table for year-over-year comparisons
-CREATE TABLE IF NOT EXISTS salary_reviews (
-    review_id INTEGER PRIMARY KEY,
-    employee_id INTEGER,
-    review_date DATE,
-    salary DECIMAL(10,2),
-    performance_rating INTEGER,
-    FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
-);
-
--- Orders table for running sum examples
-CREATE TABLE IF NOT EXISTS orders (
-    order_id INTEGER PRIMARY KEY,
-    customer_id INTEGER,
-    order_date DATE,
-    amount DECIMAL(10,2),
-    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Order Items table for normalized order-product relationships
-CREATE TABLE IF NOT EXISTS order_items (
-    order_item_id INTEGER PRIMARY KEY,
-    order_id INTEGER,
-    product_id INTEGER,
-    quantity INTEGER,
-    unit_price DECIMAL(10,2),
-    FOREIGN KEY (order_id) REFERENCES orders(order_id),
-    FOREIGN KEY (product_id) REFERENCES catalog_products(product_id)
-);
-
--- Order summary table for denormalization examples
-CREATE TABLE IF NOT EXISTS order_summary (
-    order_id INTEGER,
-    customer_name TEXT,
-    product_name TEXT,
-    quantity INTEGER,
-    price DECIMAL(10,2),
-    total_amount DECIMAL(10,2)
-);
-
--- Clean orders table for deduplication examples
-DROP TABLE IF EXISTS orders_clean;
-CREATE TABLE orders_clean AS
-SELECT DISTINCT * FROM orders;
-
--- Customers table
-CREATE TABLE IF NOT EXISTS customers (
-    customer_id INTEGER PRIMARY KEY,
-    first_name TEXT,
-    last_name TEXT,
-    email TEXT,
-    signup_date DATE
-);
-
--- Employees clean table (for deduplication examples)
-DROP TABLE IF EXISTS employees_clean;
-CREATE TABLE employees_clean AS
-SELECT DISTINCT * FROM employees;
-
--- Sales data for percentage calculations
-CREATE TABLE IF NOT EXISTS sales_data (
-    sale_id INTEGER PRIMARY KEY,
-    salesperson_id INTEGER,
-    customer_id INTEGER,
-    product_id INTEGER,
-    sale_date DATE,
-    sales_amount DECIMAL(10,2),
-    FOREIGN KEY (salesperson_id) REFERENCES employees(employee_id),
-    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
-);
-
--- Stock prices table for trend analysis
-CREATE TABLE IF NOT EXISTS stock_prices (
-    price_id INTEGER PRIMARY KEY,
-    stock_symbol TEXT,
-    date_recorded DATE,
-    stock_price DECIMAL(10,2),
-    volume INTEGER
-);
-
--- Catalog products table (renamed from 'products' to avoid conflict with Meta grocery schema)
-CREATE TABLE IF NOT EXISTS catalog_products (
-    product_id INTEGER PRIMARY KEY,
-    product_name TEXT,
-    category TEXT,
-    price DECIMAL(10,2),
-    inventory INTEGER
-);
-
--- Projects table
-CREATE TABLE IF NOT EXISTS projects (
-    project_id INTEGER PRIMARY KEY,
-    project_name TEXT NOT NULL,
-    start_date DATE,
-    end_date DATE,
-    budget DECIMAL(15,2),
-    status TEXT,
-    assigned_employee_id INTEGER,
-    FOREIGN KEY (assigned_employee_id) REFERENCES employees(employee_id)
-);
-
--- Transactions table
-CREATE TABLE IF NOT EXISTS transactions (
-    transaction_id INTEGER PRIMARY KEY,
-    account_id INTEGER,
-    transaction_date DATE,
-    amount DECIMAL(10,2),
-    transaction_type TEXT,
-    description TEXT,
-    created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Log events table
-CREATE TABLE IF NOT EXISTS log_events (
-    log_id INTEGER PRIMARY KEY,
-    event_timestamp TIMESTAMP,
-    level TEXT, -- 'INFO', 'WARNING', 'ERROR', etc.
-    source TEXT,
-    message TEXT,
-    user_id INTEGER
-);
-
--- Generic practice tables
-CREATE TABLE IF NOT EXISTS table1 (
-    id INTEGER PRIMARY KEY,
-    column1 INTEGER,
-    column2 TEXT,
-    column3 DATE
-);
-
-CREATE TABLE IF NOT EXISTS table2 (
-    id INTEGER PRIMARY KEY,
-    column1 INTEGER,
-    column2 TEXT,
-    column3 DECIMAL(10,2),
-    table1_id INTEGER,
-    FOREIGN KEY (table1_id) REFERENCES table1(id)
-);
-
-CREATE TABLE IF NOT EXISTS table3 (
-    id INTEGER PRIMARY KEY,
-    column1 TEXT,
-    column2 INTEGER,
-    column3 BOOLEAN,
-    table2_id INTEGER,
-    FOREIGN KEY (table2_id) REFERENCES table2(id)
-);
-
--- Sample data
-INSERT OR IGNORE INTO departments (department_id, department_name, location, budget, manager_id) VALUES
-    (1, 'Engineering', 'Seattle', 1200000.00, NULL),
-    (2, 'Sales', 'New York', 900000.00, NULL),
-    (3, 'Marketing', 'San Francisco', 800000.00, NULL),
-    (4, 'HR', 'Chicago', 500000.00, NULL);
-
-INSERT OR IGNORE INTO employees (employee_id, first_name, last_name, email, department_id, salary, hire_date, manager_id, job_title) VALUES
-    (1, 'John', 'Smith', 'john.smith@company.com', 1, 100000.00, '2020-01-15', NULL, 'CTO'),
-    (2, 'Alice', 'Johnson', 'alice.j@company.com', 1, 95000.00, '2020-02-01', 1, 'Sr. Developer'),
-    (3, 'Bob', 'Wilson', 'bob.w@company.com', 2, 85000.00, '2020-03-15', NULL, 'Sales Director'),
-    (4, 'Carol', 'Davis', 'carol.d@company.com', 3, 90000.00, '2020-04-01', NULL, 'Marketing Director'),
-    (5, 'Eve', 'Brown', 'eve.b@company.com', 4, 75000.00, '2020-05-15', NULL, 'HR Director'),
-    (6, 'Frank', 'Miller', 'frank.m@company.com', 2, 82000.00, '2020-06-01', 3, 'Account Executive'),
-    (7, 'Grace', 'Taylor', 'grace.t@company.com', 1, 98000.00, '2020-07-15', 1, 'Sr. Developer'),
-    (8, 'Henry', 'Clark', 'henry.c@company.com', 1, 85000.00, '2020-08-01', 1, 'Developer'),
-    (9, 'Ivy', 'Lee', 'ivy.l@company.com', 3, 78000.00, '2020-09-15', 4, 'Marketing Manager'),
-    (10, 'Jack', 'Wright', 'jack.w@company.com', 2, 80000.00, '2020-10-01', 3, 'Account Executive');
-
--- Now update the department manager_id references
-UPDATE departments SET manager_id = 1 WHERE department_id = 1;
-UPDATE departments SET manager_id = 3 WHERE department_id = 2;
-UPDATE departments SET manager_id = 4 WHERE department_id = 3;
-UPDATE departments SET manager_id = 5 WHERE department_id = 4;
-
-INSERT OR IGNORE INTO table1 (id, column1, column2, column3) VALUES
-    (1, 100, 'Value A', '2023-01-01'),
-    (2, 200, 'Value B', '2023-02-01'),
-    (3, 300, 'Value C', '2023-03-01'),
-    (4, 400, 'Value D', '2023-04-01'),
-    (5, 500, 'Value E', '2023-05-01');
-
-INSERT OR IGNORE INTO table2 (id, column1, column2, column3, table1_id) VALUES
-    (1, 10, 'First', 1000.50, 1),
-    (2, 20, 'Second', 2000.75, 1),
-    (3, 30, 'Third', 3000.25, 2),
-    (4, 40, 'Fourth', 4000.00, 3),
-    (5, 50, 'Fifth', 5000.50, 3),
-    (6, 60, 'Sixth', 6000.75, 4);
-
-INSERT OR IGNORE INTO table3 (id, column1, column2, column3, table2_id) VALUES
-    (1, 'Row 1', 1000, true, 1),
-    (2, 'Row 2', 2000, false, 2),
-    (3, 'Row 3', 3000, true, 2),
-    (4, 'Row 4', 4000, false, 3),
-    (5, 'Row 5', 5000, true, 4),
-    (6, 'Row 6', 6000, false, 5),
-    (7, 'Row 7', 7000, true, 6);
-
--- Payroll history with some duplicate entries to simulate ETL errors
-INSERT OR IGNORE INTO payroll (payroll_id, employee_id, salary, effective_date) VALUES
-    (1, 1, 95000.00, '2020-01-15'),
-    (2, 1, 98000.00, '2021-01-15'),
-    (3, 1, 100000.00, '2022-01-15'),
-    (4, 1, 100000.00, '2022-01-15'),  -- Duplicate entry
-    (5, 2, 90000.00, '2020-02-01'),
-    (6, 2, 92000.00, '2021-02-01'),
-    (7, 2, 95000.00, '2022-02-01'),
-    (8, 2, 95000.00, '2022-02-01'),  -- Duplicate entry
-    (9, 3, 80000.00, '2020-03-15'),
-    (10, 3, 82000.00, '2021-03-15'),
-    (11, 3, 85000.00, '2022-03-15');
-
--- Salary reviews data
-INSERT OR IGNORE INTO salary_reviews (review_id, employee_id, review_date, salary, performance_rating) VALUES
-    (1, 1, '2020-12-15', 95000.00, 4),
-    (2, 1, '2021-12-15', 98000.00, 5),
-    (3, 1, '2022-12-15', 100000.00, 5),
-    (4, 2, '2020-12-01', 90000.00, 3),
-    (5, 2, '2021-12-01', 92000.00, 4),
-    (6, 2, '2022-12-01', 95000.00, 4),
-    (7, 3, '2020-12-15', 80000.00, 3),
-    (8, 3, '2021-12-15', 82000.00, 3),
-    (9, 3, '2022-12-15', 85000.00, 4);
-
--- Customer data
-INSERT OR IGNORE INTO customers (customer_id, first_name, last_name, email, signup_date) VALUES
-    (1, 'Michael', 'Jones', 'michael.j@example.com', '2020-01-10'),
-    (2, 'Sarah', 'Williams', 'sarah.w@example.com', '2020-02-15'),
-    (3, 'David', 'Brown', 'david.b@example.com', '2020-03-20'),
-    (4, 'Jennifer', 'Miller', 'jennifer.m@example.com', '2020-04-25'),
-    (5, 'Robert', 'Davis', 'robert.d@example.com', '2020-05-30');
-
--- Orders data
-INSERT OR IGNORE INTO orders (order_id, customer_id, order_date, amount, created_timestamp) VALUES
-    (1, 1, '2023-01-15', 250.00, '2023-01-15 09:30:00'),
-    (2, 2, '2023-01-20', 120.50, '2023-01-20 10:15:00'),
-    (3, 3, '2023-02-05', 75.25, '2023-02-05 11:45:00'),
-    (4, 1, '2023-02-10', 310.75, '2023-02-10 14:20:00'),
-    (5, 4, '2023-02-15', 420.00, '2023-02-15 16:30:00'),
-    (6, 2, '2023-03-01', 85.50, '2023-03-01 09:15:00'),
-    (7, 5, '2023-03-10', 150.00, '2023-03-10 13:10:00'),
-    (8, 3, '2023-03-15', 200.25, '2023-03-15 15:45:00'),
-    (9, 1, '2023-04-05', 175.00, '2023-04-05 11:20:00'),
-    (10, 4, '2023-04-20', 95.75, '2023-04-20 10:05:00');
-
--- Products data
-INSERT OR IGNORE INTO catalog_products (product_id, product_name, category, price, inventory) VALUES
-    (1, 'Laptop Pro', 'Electronics', 1200.00, 50),
-    (2, 'Smartphone X', 'Electronics', 800.00, 100),
-    (3, 'Office Chair', 'Furniture', 120.00, 30),
-    (4, 'Desk Lamp', 'Furniture', 45.00, 80),
-    (5, 'Notebook', 'Stationery', 5.00, 500);
-
--- Sales data
-INSERT OR IGNORE INTO sales_data (sale_id, salesperson_id, customer_id, product_id, sale_date, sales_amount) VALUES
-    (1, 3, 1, 1, '2023-01-15', 1200.00),
-    (2, 6, 2, 2, '2023-01-20', 800.00),
-    (3, 10, 3, 3, '2023-02-05', 120.00),
-    (4, 3, 1, 4, '2023-02-10', 45.00),
-    (5, 6, 4, 1, '2023-02-15', 1200.00),
-    (6, 10, 2, 5, '2023-03-01', 5.00),
-    (7, 3, 5, 2, '2023-03-10', 800.00),
-    (8, 6, 3, 1, '2023-03-15', 1200.00),
-    (9, 10, 1, 3, '2023-04-05', 120.00),
-    (10, 3, 4, 5, '2023-04-20', 5.00);
-
--- Projects data
-INSERT OR IGNORE INTO projects (project_id, project_name, start_date, end_date, budget, status, assigned_employee_id) VALUES
-    (1, 'Website Redesign', '2023-01-10', '2023-03-15', 50000.00, 'Completed', 2),
-    (2, 'Mobile App Development', '2023-02-01', '2023-05-30', 120000.00, 'In Progress', 7),
-    (3, 'Database Migration', '2023-01-15', '2023-04-20', 75000.00, 'Completed', 8),
-    (4, 'CRM Implementation', '2023-03-01', '2023-07-15', 200000.00, 'In Progress', 1),
-    (5, 'Network Security Audit', '2023-03-10', '2023-04-10', 30000.00, 'Completed', 2),
-    (6, 'ERP Integration', '2023-04-01', '2023-09-30', 250000.00, 'In Progress', 7),
-    (7, 'Cloud Migration', '2023-02-15', '2023-05-15', 100000.00, 'In Progress', 8),
-    (8, 'Social Media Campaign', '2023-01-05', '2023-03-05', 25000.00, 'Completed', 9),
-    (9, 'HR System Implementation', '2023-03-15', '2023-06-15', 80000.00, 'In Progress', 5),
-    (10, 'Sales Training Program', '2023-04-01', '2023-05-15', 15000.00, 'In Progress', 3);
-
--- Transactions data
-INSERT OR IGNORE INTO transactions (transaction_id, account_id, transaction_date, amount, transaction_type, description, created_timestamp) VALUES
-    (1, 101, '2023-01-05', 500.00, 'DEPOSIT', 'Initial deposit', '2023-01-05 09:15:00'),
-    (2, 102, '2023-01-10', 1000.00, 'DEPOSIT', 'Salary payment', '2023-01-10 10:30:00'),
-    (3, 101, '2023-01-15', -200.00, 'WITHDRAWAL', 'ATM withdrawal', '2023-01-15 14:20:00'),
-    (4, 103, '2023-01-20', 750.00, 'DEPOSIT', 'Client payment', '2023-01-20 16:45:00'),
-    (5, 102, '2023-01-25', -300.00, 'PAYMENT', 'Utility bill', '2023-01-25 09:10:00'),
-    (6, 101, '2023-02-01', 1200.00, 'DEPOSIT', 'Salary payment', '2023-02-01 11:05:00'),
-    (7, 103, '2023-02-05', -150.00, 'WITHDRAWAL', 'ATM withdrawal', '2023-02-05 15:30:00'),
-    (8, 102, '2023-02-10', -450.00, 'PAYMENT', 'Rent payment', '2023-02-10 09:45:00'),
-    (9, 101, '2023-02-15', -120.00, 'PAYMENT', 'Phone bill', '2023-02-15 14:15:00'),
-    (10, 103, '2023-02-20', 2000.00, 'DEPOSIT', 'Bonus payment', '2023-02-20 10:20:00'),
-    (11, 101, '2023-02-25', -500.00, 'PAYMENT', 'Credit card bill', '2023-02-25 16:30:00'),
-    (12, 102, '2023-03-01', 1000.00, 'DEPOSIT', 'Salary payment', '2023-03-01 09:15:00'),
-    (13, 103, '2023-03-05', -200.00, 'WITHDRAWAL', 'Cash withdrawal', '2023-03-05 13:40:00'),
-    (14, 101, '2023-03-10', -350.00, 'PAYMENT', 'Insurance premium', '2023-03-10 15:20:00'),
-    (15, 102, '2023-03-15', -70.00, 'PAYMENT', 'Internet bill', '2023-03-15 10:05:00');
-
--- Log events data
-INSERT OR IGNORE INTO log_events (log_id, event_timestamp, level, source, message, user_id) VALUES
-    (1, '2023-01-15 08:30:15', 'INFO', 'Authentication Service', 'User login successful', 1),
-    (2, '2023-01-15 09:45:22', 'WARNING', 'Payment Gateway', 'Payment attempt timeout', 3),
-    (3, '2023-01-15 10:15:30', 'ERROR', 'Database Service', 'Connection pool exhausted', NULL),
-    (4, '2023-01-15 11:20:45', 'INFO', 'User Management', 'New user registered', 5),
-    (5, '2023-01-15 12:05:18', 'INFO', 'File Service', 'File upload completed', 2),
-    (6, '2023-01-15 13:30:22', 'WARNING', 'API Gateway', 'Rate limit exceeded', 4),
-    (7, '2023-01-15 14:45:35', 'ERROR', 'Authentication Service', 'Invalid credentials', NULL),
-    (8, '2023-01-15 15:10:12', 'INFO', 'Email Service', 'Newsletter sent successfully', NULL),
-    (9, '2023-01-15 16:25:50', 'WARNING', 'Storage Service', 'Disk space below 10%', NULL),
-    (10, '2023-01-15 17:40:28', 'INFO', 'User Management', 'Password changed', 3),
-    (11, '2023-01-16 09:15:33', 'INFO', 'Authentication Service', 'User logout', 2),
-    (12, '2023-01-16 10:30:45', 'ERROR', 'Payment Gateway', 'Transaction failed', 5),
-    (13, '2023-01-16 11:20:15', 'INFO', 'Search Service', 'Search index rebuilt', NULL),
-    (14, '2023-01-16 12:45:22', 'WARNING', 'Cache Service', 'Cache eviction rate high', NULL),
-    (15, '2023-01-16 13:50:40', 'INFO', 'Authentication Service', 'User login successful', 4);
-
--- Order Items data
-INSERT OR IGNORE INTO order_items (order_item_id, order_id, product_id, quantity, unit_price) VALUES
-    (1, 1, 1, 1, 1200.00),
-    (2, 1, 5, 10, 5.00),
-    (3, 2, 2, 1, 800.00),
-    (4, 3, 3, 1, 120.00),
-    (5, 4, 1, 1, 1200.00),
-    (6, 4, 4, 3, 45.00),
-    (7, 5, 1, 1, 1200.00),
-    (8, 5, 2, 1, 800.00),
-    (9, 6, 5, 17, 5.00),
-    (10, 7, 2, 1, 800.00),
-    (11, 8, 3, 2, 120.00),
-    (12, 9, 4, 4, 45.00),
-    (13, 10, 5, 20, 5.00);
-
--- Order Summary data (denormalized)
-INSERT OR IGNORE INTO order_summary (order_id, customer_name, product_name, quantity, price, total_amount) VALUES
-    (1, 'Michael Jones', 'Laptop Pro', 1, 1200.00, 1200.00),
-    (1, 'Michael Jones', 'Notebook', 10, 5.00, 50.00),
-    (2, 'Sarah Williams', 'Smartphone X', 1, 800.00, 800.00),
-    (3, 'David Brown', 'Office Chair', 1, 120.00, 120.00),
-    (4, 'Michael Jones', 'Laptop Pro', 1, 1200.00, 1200.00),
-    (4, 'Michael Jones', 'Desk Lamp', 3, 45.00, 135.00),
-    (5, 'Jennifer Miller', 'Laptop Pro', 1, 1200.00, 1200.00),
-    (5, 'Jennifer Miller', 'Smartphone X', 1, 800.00, 800.00),
-    (6, 'Sarah Williams', 'Notebook', 17, 5.00, 85.00),
-    (7, 'Robert Davis', 'Smartphone X', 1, 800.00, 800.00),
-    (8, 'David Brown', 'Office Chair', 2, 120.00, 240.00),
-    (9, 'Michael Jones', 'Desk Lamp', 4, 45.00, 180.00),
-    (10, 'Jennifer Miller', 'Notebook', 20, 5.00, 100.00);
-
--- Stock prices data
-INSERT OR IGNORE INTO stock_prices (price_id, stock_symbol, date_recorded, stock_price, volume) VALUES
-    (1, 'ACME', '2023-01-01', 150.00, 1000000),
-    (2, 'ACME', '2023-01-02', 152.50, 1200000),
-    (3, 'ACME', '2023-01-03', 148.75, 900000),
-    (4, 'ACME', '2023-01-04', 153.25, 1100000),
-    (5, 'ACME', '2023-01-05', 155.00, 1300000),
-    (6, 'XYZ', '2023-01-01', 75.00, 500000),
-    (7, 'XYZ', '2023-01-02', 76.25, 550000),
-    (8, 'XYZ', '2023-01-03', 74.50, 480000),
-    (9, 'XYZ', '2023-01-04', 77.00, 520000),
-    (10, 'XYZ', '2023-01-05', 76.50, 510000);
+-- Mock Database for Meta DE Interview Practice
+-- ============================================================
+-- Schemas: Bookstore (Q1-8), Grocery (Q16-20),
+--          Payment (Q21-28), User Events (Q500-524)
+-- SQLite-compatible (sql.js): TEXT for dates, REAL for decimals
+-- ============================================================
 
 -- ============================================================
 -- Meta DE Interview Practice: Bookstore Schema
@@ -934,3 +549,170 @@ INSERT OR IGNORE INTO payment_banks_staging (bank_id, subsidiary_id, bank_name, 
     (7, 5, 'Santander Group',      'BSCHESMM', 'ES', 1, '2024-03-01'),
     (8, 1, 'Wells Fargo',          'WFBIUS6S', 'US', 1, '2024-03-01'),
     (9, 4, 'Itau Unibanco',        'ITAUBRSP', 'BR', 1, '2024-03-01');
+
+-- ============================================================
+-- User Events Table (for DAU/WAU, funnel, sessionization patterns)
+-- ============================================================
+-- Used by sql-advanced questions 500-524:
+--   - Sessionization (30-min gap)
+--   - DAU/WAU/MAU calculations
+--   - Conversion funnels
+--   - Streak detection
+--   - Power user identification
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS user_events (
+    event_id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    event_type TEXT NOT NULL,
+    event_ts TEXT NOT NULL
+);
+
+-- 100 events across 20 users over 30 days
+-- Mix of event types: page_view, click, search, purchase, app_open, add_to_cart, checkout_start
+-- Patterns:
+--   Users 1-5: power users (daily activity, multiple event types)
+--   Users 6-10: regular users (every 2-3 days)
+--   Users 11-15: casual users (weekly)
+--   Users 16-20: churned users (active early, then stopped)
+
+INSERT INTO user_events (event_id, user_id, event_type, event_ts) VALUES
+    -- User 1: power user, daily activity
+    (1,  1, 'page_view',      '2024-03-01 08:15:00'),
+    (2,  1, 'search',         '2024-03-01 08:20:00'),
+    (3,  1, 'click',          '2024-03-01 08:22:00'),
+    (4,  1, 'add_to_cart',    '2024-03-01 08:25:00'),
+    (5,  1, 'purchase',       '2024-03-01 08:30:00'),
+    (6,  1, 'page_view',      '2024-03-02 09:00:00'),
+    (7,  1, 'click',          '2024-03-02 09:05:00'),
+    (8,  1, 'page_view',      '2024-03-03 10:15:00'),
+    (9,  1, 'search',         '2024-03-03 10:20:00'),
+    (10, 1, 'purchase',       '2024-03-03 10:45:00'),
+    (11, 1, 'page_view',      '2024-03-04 08:00:00'),
+    (12, 1, 'click',          '2024-03-05 11:30:00'),
+    (13, 1, 'page_view',      '2024-03-06 09:00:00'),
+    (14, 1, 'search',         '2024-03-07 14:00:00'),
+    (15, 1, 'purchase',       '2024-03-07 14:15:00'),
+
+    -- User 2: power user
+    (16, 2, 'page_view',      '2024-03-01 10:00:00'),
+    (17, 2, 'search',         '2024-03-01 10:05:00'),
+    (18, 2, 'page_view',      '2024-03-02 11:00:00'),
+    (19, 2, 'click',          '2024-03-02 11:10:00'),
+    (20, 2, 'add_to_cart',    '2024-03-02 11:15:00'),
+    (21, 2, 'page_view',      '2024-03-03 08:30:00'),
+    (22, 2, 'page_view',      '2024-03-04 09:00:00'),
+    (23, 2, 'search',         '2024-03-05 13:00:00'),
+    (24, 2, 'purchase',       '2024-03-05 13:20:00'),
+    (25, 2, 'page_view',      '2024-03-06 10:00:00'),
+
+    -- User 3: power user with sessions
+    (26, 3, 'app_open',       '2024-03-01 07:00:00'),
+    (27, 3, 'page_view',      '2024-03-01 07:02:00'),
+    (28, 3, 'search',         '2024-03-01 07:10:00'),
+    (29, 3, 'page_view',      '2024-03-01 09:00:00'),
+    (30, 3, 'click',          '2024-03-01 09:05:00'),
+    (31, 3, 'page_view',      '2024-03-02 08:00:00'),
+    (32, 3, 'search',         '2024-03-03 14:00:00'),
+    (33, 3, 'click',          '2024-03-03 14:02:00'),
+    (34, 3, 'add_to_cart',    '2024-03-03 14:05:00'),
+    (35, 3, 'checkout_start', '2024-03-03 14:06:00'),
+    (36, 3, 'purchase',       '2024-03-03 14:10:00'),
+    (37, 3, 'page_view',      '2024-03-04 10:00:00'),
+    (38, 3, 'page_view',      '2024-03-05 08:00:00'),
+
+    -- User 4: power user
+    (39, 4, 'page_view',      '2024-03-01 12:00:00'),
+    (40, 4, 'click',          '2024-03-01 12:05:00'),
+    (41, 4, 'page_view',      '2024-03-02 13:00:00'),
+    (42, 4, 'search',         '2024-03-03 09:00:00'),
+    (43, 4, 'purchase',       '2024-03-04 15:00:00'),
+    (44, 4, 'page_view',      '2024-03-05 10:00:00'),
+    (45, 4, 'page_view',      '2024-03-06 11:00:00'),
+
+    -- User 5: power user
+    (46, 5, 'app_open',       '2024-03-01 06:00:00'),
+    (47, 5, 'page_view',      '2024-03-01 06:02:00'),
+    (48, 5, 'search',         '2024-03-02 07:00:00'),
+    (49, 5, 'click',          '2024-03-02 07:05:00'),
+    (50, 5, 'page_view',      '2024-03-03 08:00:00'),
+    (51, 5, 'add_to_cart',    '2024-03-04 09:00:00'),
+    (52, 5, 'purchase',       '2024-03-04 09:10:00'),
+    (53, 5, 'page_view',      '2024-03-05 10:00:00'),
+
+    -- User 6: regular user (every 2-3 days)
+    (54, 6, 'page_view',      '2024-03-01 14:00:00'),
+    (55, 6, 'click',          '2024-03-01 14:10:00'),
+    (56, 6, 'page_view',      '2024-03-03 15:00:00'),
+    (57, 6, 'search',         '2024-03-05 11:00:00'),
+    (58, 6, 'page_view',      '2024-03-07 09:00:00'),
+    (59, 6, 'purchase',       '2024-03-07 09:15:00'),
+
+    -- User 7: regular user
+    (60, 7, 'page_view',      '2024-03-02 10:00:00'),
+    (61, 7, 'search',         '2024-03-02 10:05:00'),
+    (62, 7, 'page_view',      '2024-03-04 12:00:00'),
+    (63, 7, 'click',          '2024-03-06 14:00:00'),
+    (64, 7, 'page_view',      '2024-03-08 09:00:00'),
+
+    -- User 8: regular user
+    (65, 8, 'app_open',       '2024-03-01 08:00:00'),
+    (66, 8, 'page_view',      '2024-03-01 08:05:00'),
+    (67, 8, 'page_view',      '2024-03-03 10:00:00'),
+    (68, 8, 'search',         '2024-03-06 11:00:00'),
+    (69, 8, 'click',          '2024-03-06 11:05:00'),
+
+    -- User 9: regular user
+    (70, 9, 'page_view',      '2024-03-02 16:00:00'),
+    (71, 9, 'page_view',      '2024-03-04 17:00:00'),
+    (72, 9, 'search',         '2024-03-07 10:00:00'),
+
+    -- User 10: regular user
+    (73, 10, 'page_view',     '2024-03-01 09:00:00'),
+    (74, 10, 'click',         '2024-03-03 11:00:00'),
+    (75, 10, 'page_view',     '2024-03-05 14:00:00'),
+    (76, 10, 'search',        '2024-03-08 10:00:00'),
+
+    -- User 11: casual user (weekly)
+    (77, 11, 'page_view',     '2024-03-01 10:00:00'),
+    (78, 11, 'page_view',     '2024-03-08 10:00:00'),
+
+    -- User 12: casual user
+    (79, 12, 'page_view',     '2024-03-03 12:00:00'),
+    (80, 12, 'search',        '2024-03-03 12:05:00'),
+
+    -- User 13: casual user
+    (81, 13, 'page_view',     '2024-03-05 15:00:00'),
+    (82, 13, 'click',         '2024-03-05 15:10:00'),
+
+    -- User 14: casual user
+    (83, 14, 'app_open',      '2024-03-02 08:00:00'),
+    (84, 14, 'page_view',     '2024-03-02 08:02:00'),
+
+    -- User 15: casual user
+    (85, 15, 'page_view',     '2024-03-07 13:00:00'),
+
+    -- User 16: churned (active early, stopped)
+    (86, 16, 'page_view',     '2024-02-01 10:00:00'),
+    (87, 16, 'search',        '2024-02-01 10:05:00'),
+    (88, 16, 'click',         '2024-02-02 11:00:00'),
+    (89, 16, 'page_view',     '2024-02-03 09:00:00'),
+
+    -- User 17: churned
+    (90, 17, 'page_view',     '2024-02-01 14:00:00'),
+    (91, 17, 'page_view',     '2024-02-02 15:00:00'),
+    (92, 17, 'search',        '2024-02-05 10:00:00'),
+
+    -- User 18: churned
+    (93, 18, 'app_open',      '2024-02-03 08:00:00'),
+    (94, 18, 'page_view',     '2024-02-03 08:05:00'),
+    (95, 18, 'click',         '2024-02-04 09:00:00'),
+
+    -- User 19: churned
+    (96, 19, 'page_view',     '2024-02-02 12:00:00'),
+    (97, 19, 'search',        '2024-02-02 12:10:00'),
+
+    -- User 20: churned
+    (98, 20, 'page_view',     '2024-02-01 16:00:00'),
+    (99, 20, 'click',         '2024-02-01 16:05:00'),
+    (100, 20, 'page_view',    '2024-02-03 10:00:00');

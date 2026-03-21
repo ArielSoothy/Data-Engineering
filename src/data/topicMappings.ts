@@ -7,7 +7,7 @@ import type { QuestionSource } from '../types/studyHub';
 type TopicMap = Record<number, string>;
 
 const sqlBasics: TopicMap = {
-  1: 'SELECT/WHERE', 2: 'UNION/Set Ops', 3: 'CTEs/Subqueries', 4: 'JOINs', 5: 'Indexes',
+  1: 'SELECT/WHERE', 2: 'UNION/Set Ops', 3: 'CTEs/Subqueries', 4: 'JOINs',
   6: 'Window Functions', 7: 'JOINs', 8: 'JOINs', 9: 'Aggregation/GROUP BY', 10: 'Window Functions',
   11: 'Aggregation/GROUP BY', 12: 'JOINs', 13: 'Window Functions', 14: 'Aggregation/GROUP BY',
   15: 'Aggregation/GROUP BY', 16: 'Aggregation/GROUP BY', 17: 'Aggregation/GROUP BY',
@@ -15,10 +15,11 @@ const sqlBasics: TopicMap = {
   21: 'Aggregation/GROUP BY', 22: 'NULL Handling', 23: 'NULL Handling',
   24: 'CTEs/Subqueries', 25: 'CTEs/Subqueries', 26: 'CTEs/Subqueries',
   27: 'CTEs/Subqueries', 28: 'CTEs/Subqueries', 29: 'CTEs/Subqueries', 30: 'CTEs/Subqueries',
-  31: 'Indexes', 32: 'Indexes', 33: 'PostgreSQL', 34: 'PostgreSQL',
-  35: 'Data Engineering Patterns', 36: 'Data Engineering Patterns',
-  37: 'Data Engineering Patterns', 38: 'Data Engineering Patterns',
-  39: 'Data Engineering Patterns', 40: 'PostgreSQL',
+  // New Meta-focused questions
+  41: 'Aggregation/GROUP BY', 42: 'Aggregation/GROUP BY', // CASE WHEN patterns
+  43: 'Window Functions', 44: 'Window Functions',           // LAG/LEAD
+  45: 'PostgreSQL', 46: 'PostgreSQL',                       // String functions, DATE_TRUNC/EXTRACT
+  47: 'JOINs', 48: 'NULL Handling',                         // Same-day analysis, COALESCE
 };
 
 const sqlAdvanced: TopicMap = {
@@ -26,8 +27,7 @@ const sqlAdvanced: TopicMap = {
   5: 'Data Engineering Patterns', 6: 'Window Functions', 7: 'Window Functions',
   8: 'Window Functions', 9: 'Window Functions', 10: 'Window Functions',
   11: 'Window Functions', 12: 'Window Functions', 13: 'Data Engineering Patterns',
-  14: 'Data Engineering Patterns', 15: 'Window Functions', 16: 'Data Engineering Patterns',
-  17: 'Data Engineering Patterns', 18: 'Data Engineering Patterns',
+  15: 'Window Functions', 16: 'Data Engineering Patterns',
   19: 'CTEs/Subqueries', 20: 'Data Engineering Patterns',
   21: 'Aggregation/GROUP BY', 22: 'Window Functions', 23: 'Data Engineering Patterns',
   24: 'Window Functions', 25: 'Window Functions', 26: 'Window Functions',
@@ -49,9 +49,11 @@ const sqlAdvanced: TopicMap = {
 
 const pythonBasics: TopicMap = {
   1: 'Data Structures', 2: 'Data Structures', 3: 'Syntax', 4: 'Lists/Comprehensions',
-  5: 'Data Structures', 6: 'Pandas', 7: 'Pandas', 8: 'Pandas', 9: 'Pandas', 10: 'Pandas',
-  11: 'Pandas', 12: 'Pandas', 13: 'Pandas', 14: 'Pandas', 15: 'Pandas',
+  5: 'Data Structures',
   16: 'Lists/Comprehensions', 17: 'Dicts/Counters', 18: 'Sets', 19: 'Strings', 20: 'Dicts/Counters',
+  // New Meta DE pattern questions
+  21: 'Dicts/Counters', 22: 'Dicts/Counters', 23: 'Data Structures',
+  24: 'Dicts/Counters', 25: 'Dicts/Counters',
 };
 
 const pythonAdvanced: TopicMap = {

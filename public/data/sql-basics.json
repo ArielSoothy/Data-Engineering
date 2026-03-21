@@ -37,15 +37,6 @@
       "aiApproach": "Visualize JOINs using Venn diagrams: INNER JOIN is the intersection, LEFT JOIN is the left circle plus intersection, RIGHT JOIN is the right circle plus intersection, and FULL JOIN is the union of both circles."
     },
     {
-      "id": 5,
-      "question": "What is the difference between a clustered and non-clustered index?",
-      "difficulty": "Medium",
-      "timeEstimate": 6,
-      "answer": "-- Create clustered index\nCREATE CLUSTERED INDEX IX_Customers_ID\nON Customers(CustomerID)\n\n-- Create non-clustered index\nCREATE NONCLUSTERED INDEX IX_Customers_Name\nON Customers(CustomerName)",
-      "pseudoCode": "-- Create clustered index\nCREATE CLUSTERED INDEX IX_Customers_ID\nON Customers(CustomerID)\n\n-- Create non-clustered index\nCREATE NONCLUSTERED INDEX IX_Customers_Name\nON Customers(CustomerName)",
-      "aiApproach": "Think of a clustered index like a phone book sorted by last name, and non-clustered indices like additional reference pages that point to the main entries."
-    },
-    {
       "id": 6,
       "question": "Write a query to find the second highest salary from an employee table",
       "difficulty": "Medium",
@@ -271,94 +262,76 @@
       "aiApproach": "Multiple CTEs create a sequence of logical building blocks, each with a meaningful name that documents its purpose. This modular approach makes complex queries easier to understand, maintain, and debug. It also allows the database optimizer to better process each CTE independently, potentially improving performance."
     },
     {
-      "id": 31,
-      "question": "What are indexes and how do they improve performance?",
+      "id": 41,
+      "question": "Use CASE WHEN with aggregation to count users by status category",
       "difficulty": "Medium",
       "timeEstimate": 6,
-      "answer": "-- Create indexes\nCREATE INDEX idx_employee_department ON employees(department_id);\nCREATE INDEX idx_salary_date ON employees(salary, hire_date);",
-      "pseudoCode": "-- Create indexes\nCREATE INDEX idx_employee_department ON employees(department_id);\nCREATE INDEX idx_salary_date ON employees(salary, hire_date);",
-      "aiApproach": "Indexes speed up SELECT queries but slow down INSERT/UPDATE/DELETE operations. Consider indexing columns frequently used in WHERE clauses, JOIN conditions, and ORDER BY/GROUP BY operations. Use composite indexes for queries filtering on multiple columns. Monitor index usage and avoid over-indexing, as each index increases storage requirements and write operation overhead."
+      "answer": "SELECT\n  COUNT(CASE WHEN status = 'active' THEN 1 END) AS active_count,\n  COUNT(CASE WHEN status = 'inactive' THEN 1 END) AS inactive_count,\n  COUNT(CASE WHEN status = 'pending' THEN 1 END) AS pending_count\nFROM users;",
+      "pseudoCode": "SELECT\n  COUNT(CASE WHEN status = 'active' THEN 1 END) AS active_count,\n  COUNT(CASE WHEN status = 'inactive' THEN 1 END) AS inactive_count,\n  COUNT(CASE WHEN status = 'pending' THEN 1 END) AS pending_count\nFROM users;",
+      "aiApproach": "CASE WHEN inside aggregate functions is the standard pivot technique in PostgreSQL. Each CASE returns a value only for matching rows, so COUNT/SUM only counts those rows. This pattern replaces multiple queries or subqueries with a single table scan."
     },
     {
-      "id": 32,
-      "question": "Explain the difference between clustered and non-clustered indexes",
-      "difficulty": "Medium",
-      "timeEstimate": 6,
-      "answer": "-- Clustered index (automatically created with PRIMARY KEY)\nCREATE TABLE employees (\n  employee_id INT PRIMARY KEY, -- Clustered index\n  name VARCHAR(100)\n);\n\n-- Non-clustered index\nCREATE NONCLUSTERED INDEX idx_name ON employees(name);",
-      "pseudoCode": "-- Clustered index (automatically created with PRIMARY KEY)\nCREATE TABLE employees (\n  employee_id INT PRIMARY KEY, -- Clustered index\n  name VARCHAR(100)\n);\n\n-- Non-clustered index\nCREATE NONCLUSTERED INDEX idx_name ON employees(name);",
-      "aiApproach": "Think of a clustered index like a phone book (sorted by last name), while non-clustered indexes are like reference pages pointing to the main content. Clustered indexes are typically faster for range queries and accessing adjacent records. Non-clustered indexes excel in exact matches and when you need multiple different indexing strategies on the same table."
-    },
-    {
-      "id": 33,
-      "question": "What is query execution plan?",
+      "id": 42,
+      "question": "Calculate the percentage of orders that are 'completed' vs 'cancelled' using CASE WHEN",
       "difficulty": "Medium",
       "timeEstimate": 7,
-      "answer": "EXPLAIN ANALYZE\nSELECT e.name, d.department_name\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nWHERE e.salary > 50000;",
-      "pseudoCode": "EXPLAIN ANALYZE\nSELECT e.name, d.department_name\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nWHERE e.salary > 50000;",
-      "aiApproach": "When analyzing execution plans, look for table scans (which read all rows and are generally slow) versus index seeks (which are typically faster). Pay attention to join types (nested loop, hash join, merge join), estimated versus actual rows processed, and cost percentages. These insights guide optimization efforts by showing where the database spends the most resources."
+      "answer": "SELECT\n  ROUND(100.0 * SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_completed,\n  ROUND(100.0 * SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_cancelled\nFROM orders;",
+      "pseudoCode": "SELECT\n  ROUND(100.0 * SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_completed,\n  ROUND(100.0 * SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_cancelled\nFROM orders;",
+      "aiApproach": "The 100.0 multiplier forces decimal division (avoids integer truncation). SUM(CASE WHEN ... THEN 1 ELSE 0 END) counts matching rows. Dividing by COUNT(*) gives the fraction. ROUND controls decimal places. This is the standard Meta pattern for percentage-of-total questions."
     },
     {
-      "id": 34,
-      "question": "How do you identify slow queries?",
+      "id": 43,
+      "question": "Use LAG to calculate day-over-day revenue change and percentage change",
       "difficulty": "Medium",
-      "timeEstimate": 6,
-      "answer": "-- PostgreSQL: enable slow query logging\n-- In postgresql.conf: log_min_duration_statement = 1000\n\n-- Find slow queries via pg_stat_statements\nSELECT query, calls, mean_exec_time, total_exec_time\nFROM pg_stat_statements\nORDER BY mean_exec_time DESC\nLIMIT 10;",
-      "pseudoCode": "-- PostgreSQL: enable slow query logging\n-- In postgresql.conf: log_min_duration_statement = 1000\n\n-- Find slow queries via pg_stat_statements\nSELECT query, calls, mean_exec_time, total_exec_time\nFROM pg_stat_statements\nORDER BY mean_exec_time DESC\nLIMIT 10;",
-      "aiApproach": "Proactive monitoring helps identify performance issues before they impact users. Look for high CPU usage, long execution times, many table scans, and queries causing blocking or waiting. Set up alerts for queries exceeding normal execution time thresholds, and use automated tools to detect performance degradation patterns over time."
-    },
-    {
-      "id": 35,
-      "question": "What is normalization? Explain 1NF, 2NF, 3NF",
-      "difficulty": "Medium",
-      "timeEstimate": 8,
-      "answer": "-- Unnormalized table\nCREATE TABLE Orders (\n  order_id INT,\n  customer_name VARCHAR(100),\n  customer_address VARCHAR(200),\n  product1 VARCHAR(100),\n  product2 VARCHAR(100)\n);\n\n-- Normalized (3NF) tables\nCREATE TABLE Customers (\n  customer_id INT PRIMARY KEY,\n  customer_name VARCHAR(100),\n  customer_address VARCHAR(200)\n);\n\nCREATE TABLE Products (\n  product_id INT PRIMARY KEY,\n  product_name VARCHAR(100)\n);\n\nCREATE TABLE Orders (\n  order_id INT PRIMARY KEY,\n  customer_id INT,\n  FOREIGN KEY (customer_id) REFERENCES Customers(customer_id)\n);\n\nCREATE TABLE OrderItems (\n  order_id INT,\n  product_id INT,\n  quantity INT,\n  FOREIGN KEY (order_id) REFERENCES Orders(order_id),\n  FOREIGN KEY (product_id) REFERENCES Products(product_id)\n);",
-      "pseudoCode": "-- Unnormalized table\nCREATE TABLE Orders (\n  order_id INT,\n  customer_name VARCHAR(100),\n  customer_address VARCHAR(200),\n  product1 VARCHAR(100),\n  product2 VARCHAR(100)\n);\n\n-- Normalized (3NF) tables\nCREATE TABLE Customers (\n  customer_id INT PRIMARY KEY,\n  customer_name VARCHAR(100),\n  customer_address VARCHAR(200)\n);\n\nCREATE TABLE Products (\n  product_id INT PRIMARY KEY,\n  product_name VARCHAR(100)\n);\n\nCREATE TABLE Orders (\n  order_id INT PRIMARY KEY,\n  customer_id INT,\n  FOREIGN KEY (customer_id) REFERENCES Customers(customer_id)\n);\n\nCREATE TABLE OrderItems (\n  order_id INT,\n  product_id INT,\n  quantity INT,\n  FOREIGN KEY (order_id) REFERENCES Orders(order_id),\n  FOREIGN KEY (product_id) REFERENCES Products(product_id)\n);",
-      "aiApproach": "Normalization prevents data anomalies (insert, update, delete) by organizing data efficiently. However, highly normalized databases may require more complex queries with multiple joins. For read-heavy workloads, consider strategic denormalization to balance performance and data integrity."
-    },
-    {
-      "id": 36,
-      "question": "What is denormalization and when would you use it?",
-      "difficulty": "Medium",
-      "timeEstimate": 6,
-      "answer": "-- Normalized tables require joins\nSELECT c.customer_name, SUM(oi.quantity * p.price)\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nJOIN order_items oi ON o.order_id = oi.order_id\nJOIN products p ON oi.product_id = p.product_id\nGROUP BY c.customer_name;\n\n-- Denormalized table (faster query)\nCREATE TABLE order_summary (\n  order_id INT,\n  customer_name VARCHAR(100),\n  product_name VARCHAR(100),\n  quantity INT,\n  price DECIMAL(10,2),\n  total_amount DECIMAL(10,2)\n);\n\nSELECT customer_name, SUM(total_amount)\nFROM order_summary\nGROUP BY customer_name;",
-      "pseudoCode": "-- Normalized tables require joins\nSELECT c.customer_name, SUM(oi.quantity * p.price)\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nJOIN order_items oi ON o.order_id = oi.order_id\nJOIN products p ON oi.product_id = p.product_id\nGROUP BY c.customer_name;\n\n-- Denormalized table (faster query)\nCREATE TABLE order_summary (\n  order_id INT,\n  customer_name VARCHAR(100),\n  product_name VARCHAR(100),\n  quantity INT,\n  price DECIMAL(10,2),\n  total_amount DECIMAL(10,2)\n);\n\nSELECT customer_name, SUM(total_amount)\nFROM order_summary\nGROUP BY customer_name;",
-      "aiApproach": "Denormalization trades storage space and update complexity for query performance. It's a common technique in data warehouses and reporting systems. Before denormalizing, analyze your workload's read/write ratio and identify the most critical queries that need optimization. Consider materialized views as an alternative that provides denormalization benefits with less maintenance overhead."
-    },
-    {
-      "id": 37,
-      "question": "How do you handle large datasets in SQL?",
-      "difficulty": "Hard",
-      "timeEstimate": 8,
-      "answer": "-- Partitioning (PostgreSQL)\nCREATE TABLE sales (\n  sale_id INT, sale_date DATE, amount DECIMAL(10,2)\n) PARTITION BY RANGE (sale_date);\n\nCREATE TABLE sales_2023 PARTITION OF sales\nFOR VALUES FROM ('2023-01-01') TO ('2024-01-01');\n\n-- Pagination\nSELECT * FROM large_table ORDER BY id LIMIT 1000 OFFSET 5000;\n\n-- Batch processing\nUPDATE large_table SET status = 'processed'\nWHERE id BETWEEN 1 AND 10000 AND status = 'pending';",
-      "pseudoCode": "-- Partitioning example (PostgreSQL)\nCREATE TABLE sales (\n  sale_id INT,\n  sale_date DATE,\n  amount DECIMAL(10,2)\n) PARTITION BY RANGE (sale_date);\n\nCREATE TABLE sales_2023 PARTITION OF sales\nFOR VALUES FROM ('2023-01-01') TO ('2024-01-01');\n\n-- Pagination\nSELECT * FROM large_table\nORDER BY id\nLIMIT 1000 OFFSET 5000;\n\n-- Batch processing\nUPDATE large_table \nSET status = 'processed'\nWHERE id BETWEEN 1 AND 10000\nAND status = 'pending';",
-      "aiApproach": "For large datasets, focus on minimizing the amount of data processed. Use appropriate WHERE clauses to limit rows early, select only necessary columns, leverage partitioning for logical data segmentation, and implement caching strategies for frequently accessed data. Consider distributed database solutions for extremely large datasets that exceed single-server capabilities."
-    },
-    {
-      "id": 38,
-      "question": "What are partitions in databases?",
-      "difficulty": "Hard",
       "timeEstimate": 7,
-      "answer": "-- Range partitioning by date\nCREATE TABLE orders (\n  order_id INT,\n  order_date DATE,\n  customer_id INT,\n  amount DECIMAL(10,2)\n) \nPARTITION BY RANGE (YEAR(order_date)) (\n  PARTITION p2022 VALUES LESS THAN (2023),\n  PARTITION p2023 VALUES LESS THAN (2024),\n  PARTITION p2024 VALUES LESS THAN (2025)\n);\n\n-- Hash partitioning\nCREATE TABLE customers (\n  customer_id INT,\n  name VARCHAR(100)\n)\nPARTITION BY HASH(customer_id) PARTITIONS 4;",
-      "pseudoCode": "-- Range partitioning by date\nCREATE TABLE orders (\n  order_id INT,\n  order_date DATE,\n  customer_id INT,\n  amount DECIMAL(10,2)\n) \nPARTITION BY RANGE (YEAR(order_date)) (\n  PARTITION p2022 VALUES LESS THAN (2023),\n  PARTITION p2023 VALUES LESS THAN (2024),\n  PARTITION p2024 VALUES LESS THAN (2025)\n);\n\n-- Hash partitioning\nCREATE TABLE customers (\n  customer_id INT,\n  name VARCHAR(100)\n)\nPARTITION BY HASH(customer_id) PARTITIONS 4;",
-      "aiApproach": "Partitioning enables efficient querying of large tables by eliminating irrelevant data from searches. When a query includes the partitioning key, the database can perform partition pruning, scanning only relevant partitions instead of the entire table. This significantly improves performance for large tables. Design your partitioning strategy based on your most common query patterns."
+      "answer": "SELECT\n  report_date,\n  revenue,\n  LAG(revenue) OVER (ORDER BY report_date) AS prev_day_revenue,\n  revenue - LAG(revenue) OVER (ORDER BY report_date) AS revenue_change,\n  ROUND(100.0 * (revenue - LAG(revenue) OVER (ORDER BY report_date)) / LAG(revenue) OVER (ORDER BY report_date), 2) AS pct_change\nFROM daily_revenue\nORDER BY report_date;",
+      "pseudoCode": "SELECT\n  report_date,\n  revenue,\n  LAG(revenue) OVER (ORDER BY report_date) AS prev_day_revenue,\n  revenue - LAG(revenue) OVER (ORDER BY report_date) AS revenue_change,\n  ROUND(100.0 * (revenue - LAG(revenue) OVER (ORDER BY report_date))\n    / LAG(revenue) OVER (ORDER BY report_date), 2) AS pct_change\nFROM daily_revenue\nORDER BY report_date;",
+      "aiApproach": "LAG(column, 1) accesses the previous row's value. The first row returns NULL since there's no previous row. For percentage change, divide the difference by the previous value. Always handle the NULL first-row case in production code with COALESCE or a WHERE clause."
     },
     {
-      "id": 39,
-      "question": "Explain the concept of database sharding",
-      "difficulty": "Hard",
-      "timeEstimate": 9,
-      "answer": "-- Example: User data sharding by user_id\n-- Shard 1: user_id % 3 = 0\n-- Shard 2: user_id % 3 = 1  \n-- Shard 3: user_id % 3 = 2\n\n-- Application logic determines shard\nfunction getShardForUser(user_id) {\n  return user_id % 3;\n}\n\n-- Query specific shard\n-- For user_id = 12 (12 % 3 = 0, goes to Shard 1)\nSELECT * FROM users_shard_1 WHERE user_id = 12;",
-      "pseudoCode": "-- Example: User data sharding by user_id\n-- Shard 1: user_id % 3 = 0\n-- Shard 2: user_id % 3 = 1  \n-- Shard 3: user_id % 3 = 2\n\n-- Application logic determines shard\nfunction getShardForUser(user_id) {\n  return user_id % 3;\n}\n\n-- Query specific shard\n-- For user_id = 12 (12 % 3 = 0, goes to Shard 1)\nSELECT * FROM users_shard_1 WHERE user_id = 12;",
-      "aiApproach": "Sharding enables horizontal scaling but adds application complexity. Consider it when a single database can no longer handle your workload. The key challenges include managing cross-shard queries (which are complex), rebalancing data across shards, handling transactions across multiple shards, and maintaining consistent schema changes. Select a sharding key that minimizes the need for cross-shard operations."
-    },
-    {
-      "id": 40,
-      "question": "How do you optimize a slow-running query?",
+      "id": 44,
+      "question": "Use LEAD to find users whose next login was more than 7 days later",
       "difficulty": "Medium",
-      "timeEstimate": 8,
-      "answer": "-- 1. Add indexes on filtered/joined columns\nCREATE INDEX idx_hire_date ON employees(hire_date);\nCREATE INDEX idx_project_emp ON projects(assigned_employee_id);\n\n-- 2. Use CTE to filter early, reducing rows before JOIN\nWITH recent_employees AS (\n  SELECT employee_id, name, department_id\n  FROM employees WHERE hire_date > '2020-01-01'\n)\nSELECT re.name, d.department_name, COUNT(p.project_id)\nFROM recent_employees re\nLEFT JOIN departments d ON re.department_id = d.department_id\nLEFT JOIN projects p ON re.employee_id = p.assigned_employee_id\nGROUP BY re.name, d.department_name;",
-      "pseudoCode": "-- Original slow query\nSELECT e.name, d.department_name, COUNT(p.project_id)\nFROM employees e\nLEFT JOIN departments d ON e.department_id = d.department_id\nLEFT JOIN projects p ON e.employee_id = p.assigned_employee_id\nWHERE e.hire_date > '2020-01-01'\nGROUP BY e.name, d.department_name;\n\n-- Optimization steps:\n\n-- 1. Add indexes\nCREATE INDEX idx_hire_date ON employees(hire_date);\nCREATE INDEX idx_dept_emp ON employees(department_id);\nCREATE INDEX idx_project_emp ON projects(assigned_employee_id);\n\n-- 2. Filter early\nWITH recent_employees AS (\n  SELECT employee_id, name, department_id\n  FROM employees\n  WHERE hire_date > '2020-01-01'\n)\nSELECT re.name, d.department_name, COUNT(p.project_id)\nFROM recent_employees re\nLEFT JOIN departments d ON re.department_id = d.department_id\nLEFT JOIN projects p ON re.employee_id = p.assigned_employee_id\nGROUP BY re.name, d.department_name;\n\n-- 3. Consider materialized views for repeated queries\nCREATE MATERIALIZED VIEW employee_project_summary AS\nSELECT e.name, d.department_name, COUNT(p.project_id) as project_count\nFROM employees e\nLEFT JOIN departments d ON e.department_id = d.department_id\nLEFT JOIN projects p ON e.employee_id = p.assigned_employee_id\nGROUP BY e.name, d.department_name;",
-      "aiApproach": "Query optimization requires systematic analysis and testing. Focus on the biggest performance gains first. Always check for proper indexes on columns used in WHERE clauses and JOIN conditions. Avoid SELECT * and instead select only necessary columns. Use appropriate JOIN types based on your data relationships. Filter data as early as possible in the query to reduce the working set. Consider query rewriting techniques like CTEs or temporary tables for complex logic. Keep database statistics up-to-date for better query planning."
+      "timeEstimate": 7,
+      "answer": "WITH login_gaps AS (\n  SELECT\n    user_id,\n    login_date,\n    LEAD(login_date) OVER (PARTITION BY user_id ORDER BY login_date) AS next_login,\n    LEAD(login_date) OVER (PARTITION BY user_id ORDER BY login_date) - login_date AS days_to_next\n  FROM user_logins\n)\nSELECT user_id, login_date, next_login, days_to_next\nFROM login_gaps\nWHERE days_to_next > 7;",
+      "pseudoCode": "WITH login_gaps AS (\n  SELECT\n    user_id,\n    login_date,\n    LEAD(login_date) OVER (\n      PARTITION BY user_id ORDER BY login_date\n    ) AS next_login,\n    LEAD(login_date) OVER (\n      PARTITION BY user_id ORDER BY login_date\n    ) - login_date AS days_to_next\n  FROM user_logins\n)\nSELECT user_id, login_date, next_login, days_to_next\nFROM login_gaps\nWHERE days_to_next > 7;",
+      "aiApproach": "LEAD looks forward to the next row, while LAG looks backward. PARTITION BY user_id ensures comparisons stay within the same user. Date subtraction gives days between events. This pattern detects churn risk, engagement gaps, or activity drops \u2014 all common Meta interview themes."
+    },
+    {
+      "id": 45,
+      "question": "Extract the domain from email addresses and count users per domain",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "SELECT\n  SUBSTRING(email FROM POSITION('@' IN email) + 1) AS domain,\n  COUNT(*) AS user_count\nFROM users\nWHERE email LIKE '%@%.%'\nGROUP BY domain\nORDER BY user_count DESC;",
+      "pseudoCode": "SELECT\n  SUBSTRING(email FROM POSITION('@' IN email) + 1) AS domain,\n  COUNT(*) AS user_count\nFROM users\nWHERE email LIKE '%@%.%'\nGROUP BY domain\nORDER BY user_count DESC;",
+      "aiApproach": "POSITION finds the index of '@' in the string. SUBSTRING extracts from that index + 1 to the end. LIKE with wildcards validates the email format. In PostgreSQL, you can also use SPLIT_PART(email, '@', 2) as a simpler alternative. This pattern comes up in user segmentation questions at Meta."
+    },
+    {
+      "id": 46,
+      "question": "Count events per month using DATE_TRUNC and extract the day of week with EXTRACT",
+      "difficulty": "Medium",
+      "timeEstimate": 6,
+      "answer": "-- Monthly event counts\nSELECT\n  DATE_TRUNC('month', event_ts) AS month,\n  COUNT(*) AS event_count\nFROM user_events\nGROUP BY DATE_TRUNC('month', event_ts)\nORDER BY month;\n\n-- Events by day of week (1=Mon, 7=Sun in PostgreSQL)\nSELECT\n  EXTRACT(DOW FROM event_ts) AS day_of_week,\n  COUNT(*) AS event_count\nFROM user_events\nGROUP BY EXTRACT(DOW FROM event_ts)\nORDER BY day_of_week;",
+      "pseudoCode": "-- Monthly event counts\nSELECT\n  DATE_TRUNC('month', event_ts) AS month,\n  COUNT(*) AS event_count\nFROM user_events\nGROUP BY DATE_TRUNC('month', event_ts)\nORDER BY month;\n\n-- Events by day of week\nSELECT\n  EXTRACT(DOW FROM event_ts) AS day_of_week,\n  COUNT(*) AS event_count\nFROM user_events\nGROUP BY EXTRACT(DOW FROM event_ts)\nORDER BY day_of_week;",
+      "aiApproach": "DATE_TRUNC truncates a timestamp to the specified precision (month, week, day, hour). EXTRACT pulls a specific field from a date/timestamp. These are the two most important date functions for Meta interviews. DATE_TRUNC is especially common for time-series GROUP BY queries."
+    },
+    {
+      "id": 47,
+      "question": "Find users who made a purchase on the same day they signed up (self-join on date)",
+      "difficulty": "Medium",
+      "timeEstimate": 7,
+      "answer": "SELECT DISTINCT u.user_id, u.signup_date\nFROM users u\nJOIN purchases p\n  ON u.user_id = p.user_id\n  AND u.signup_date = p.purchase_date;",
+      "pseudoCode": "SELECT DISTINCT u.user_id, u.signup_date\nFROM users u\nJOIN purchases p\n  ON u.user_id = p.user_id\n  AND u.signup_date = p.purchase_date;",
+      "aiApproach": "Joining on both the user ID AND a date condition is the standard same-day analysis pattern. It's equivalent to a correlated subquery but often cleaner. Adding DISTINCT avoids duplicates if a user made multiple purchases. This exact pattern appears in Meta Official bookstore questions (Q2: sales on registration day)."
+    },
+    {
+      "id": 48,
+      "question": "Use COALESCE to handle NULL values in arithmetic expressions",
+      "difficulty": "Easy",
+      "timeEstimate": 5,
+      "answer": "-- Problem: NULL + 5 = NULL (any operation with NULL returns NULL)\nSELECT\n  user_id,\n  base_salary,\n  bonus,\n  base_salary + bonus AS wrong_total,              -- NULL if bonus is NULL\n  base_salary + COALESCE(bonus, 0) AS correct_total -- treats NULL as 0\nFROM employees;\n\n-- COALESCE with multiple fallbacks\nSELECT\n  user_id,\n  COALESCE(preferred_name, first_name, 'Unknown') AS display_name\nFROM users;",
+      "pseudoCode": "-- Problem: NULL + 5 = NULL\nSELECT\n  user_id,\n  base_salary,\n  bonus,\n  base_salary + bonus AS wrong_total,              -- NULL if bonus is NULL\n  base_salary + COALESCE(bonus, 0) AS correct_total -- treats NULL as 0\nFROM employees;\n\n-- COALESCE with multiple fallbacks\nSELECT\n  user_id,\n  COALESCE(preferred_name, first_name, 'Unknown') AS display_name\nFROM users;",
+      "aiApproach": "NULL propagation is a classic interview trap: any arithmetic with NULL returns NULL. COALESCE returns the first non-NULL argument, so COALESCE(bonus, 0) replaces NULL with 0. This is safer than IFNULL (MySQL-specific) or NVL (Oracle-specific) because COALESCE is ANSI SQL and works everywhere."
     }
   ]
 }
