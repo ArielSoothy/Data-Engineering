@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Eye, Code2, Database, ChevronDown, ChevronUp } from 'lucide-react';
+import { Eye, Code2, Database, Brain, GitBranch, Wrench } from 'lucide-react';
 import { allVisualConfigs } from '../../data/visual-learning';
 import type { AnimStep } from './types';
 import { useStepAnimation } from './useStepAnimation';
@@ -13,7 +13,6 @@ type Category = 'all' | 'python' | 'sql';
 export default function VisualLearning() {
   const [category, setCategory] = useState<Category>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [showCode, setShowCode] = useState(false);
   const [inputOverrides, setInputOverrides] = useState<Record<string, unknown>>({});
 
   // Filter configs by category
@@ -76,7 +75,6 @@ export default function VisualLearning() {
   const handleSelectQuestion = (id: string) => {
     setSelectedId(id);
     setInputOverrides({});
-    setShowCode(false);
   };
 
   // Render the appropriate visualization component
@@ -227,20 +225,89 @@ export default function VisualLearning() {
             />
           )}
 
-          {/* Solution code (collapsible) */}
-          {selectedConfig && (
-            <button
-              onClick={() => setShowCode(!showCode)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
-            >
-              <span className="font-medium">Solution Code</span>
-              {showCode ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
+          {/* 4-Step Thinking Framework */}
+          {selectedConfig && selectedConfig.thinking && (
+            <div className="rounded-2xl border border-gray-700/50 overflow-hidden bg-gradient-to-b from-[#0d1117] to-[#161b22]">
+              <div className="px-5 py-3 border-b border-gray-700/50">
+                <span className="text-sm font-semibold text-gray-300 tracking-wide">How to Think About This</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-0 md:divide-x md:divide-gray-700/40">
+                {/* Step 1: Logic */}
+                <div className="p-4 group">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+                      <Brain size={13} className="text-rose-400" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-rose-400/70 uppercase tracking-widest font-semibold">Step 1</span>
+                      <span className="text-xs text-rose-300 font-semibold ml-2">Logic</span>
+                    </div>
+                  </div>
+                  <p className="text-[13px] text-gray-300 leading-relaxed pl-8">
+                    {selectedConfig.thinking.logic}
+                  </p>
+                </div>
+
+                {/* Step 2: Decomposition */}
+                <div className="p-4 border-t md:border-t-0 border-gray-700/40 group">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <GitBranch size={13} className="text-amber-400" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-amber-400/70 uppercase tracking-widest font-semibold">Step 2</span>
+                      <span className="text-xs text-amber-300 font-semibold ml-2">Decompose</span>
+                    </div>
+                  </div>
+                  <p className="text-[13px] text-gray-300 leading-relaxed pl-8">
+                    {selectedConfig.thinking.decomposition}
+                  </p>
+                </div>
+
+                {/* Step 3: Translation */}
+                <div className="p-4 border-t md:border-t-0 border-gray-700/40 group">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                      <Wrench size={13} className="text-cyan-400" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-cyan-400/70 uppercase tracking-widest font-semibold">Step 3</span>
+                      <span className="text-xs text-cyan-300 font-semibold ml-2">Translate</span>
+                    </div>
+                  </div>
+                  <p className="text-[13px] text-gray-300 leading-relaxed pl-8 font-mono">
+                    {selectedConfig.thinking.translation}
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
-          {showCode && selectedConfig && (
-            <pre className="bg-gray-900 text-gray-100 rounded-xl p-4 text-sm font-mono overflow-x-auto border border-gray-700">
-              {selectedConfig.solutionCode}
-            </pre>
+
+          {/* Pseudo code + Solution code */}
+          {selectedConfig && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Pseudo code */}
+              <div className="rounded-xl border border-gray-700 overflow-hidden">
+                <div className="px-4 py-2 bg-[#161b22] border-b border-gray-700 flex items-center gap-2">
+                  <Eye size={14} className="text-amber-400" />
+                  <span className="text-xs text-amber-400 font-semibold uppercase tracking-wider">Pseudo Code</span>
+                </div>
+                <pre className="bg-gray-900 text-amber-200/80 p-4 text-sm font-mono overflow-x-auto whitespace-pre-wrap">
+                  {selectedConfig.pseudoCode}
+                </pre>
+              </div>
+
+              {/* Solution */}
+              <div className="rounded-xl border border-gray-700 overflow-hidden">
+                <div className="px-4 py-2 bg-[#161b22] border-b border-gray-700 flex items-center gap-2">
+                  <Code2 size={14} className="text-green-400" />
+                  <span className="text-xs text-green-400 font-semibold uppercase tracking-wider">Solution</span>
+                </div>
+                <pre className="bg-gray-900 text-gray-100 p-4 text-sm font-mono overflow-x-auto">
+                  {selectedConfig.solutionCode}
+                </pre>
+              </div>
+            </div>
           )}
         </div>
       </div>

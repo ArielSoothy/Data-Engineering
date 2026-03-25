@@ -22,6 +22,17 @@ const innerJoinConfig: VisualConfig = {
   title: 'INNER JOIN',
   subtitle: 'Match rows from two tables by a shared column',
   category: 'sql',
+  thinking: {
+    logic: 'Combine data from two tables where they share a matching key.',
+    decomposition: 'For each row in table A, find the matching row in table B. Only keep rows that match in BOTH tables.',
+    translation: 'INNER JOIN ... ON a.key = b.key. Only matched rows survive.',
+  },
+  pseudoCode: `1. Take two tables (employees, departments)
+2. For each row in left table:
+   a. Look for a matching row in right table (same department_id)
+   b. If match found → combine both rows into result
+   c. If no match → skip (row is excluded)
+3. Only matched rows appear in output`,
   solutionCode: `SELECT e.first_name, e.last_name, d.department_name
 FROM employees e
 INNER JOIN departments d ON e.department_id = d.department_id;`,
@@ -177,6 +188,18 @@ const leftJoinConfig: VisualConfig = {
   title: 'LEFT JOIN',
   subtitle: 'Keep all left rows, NULL when no match on the right',
   category: 'sql',
+  thinking: {
+    logic: 'Get all rows from the left table, even if they have no match on the right.',
+    decomposition: 'Keep every left row. If match exists → combine. If no match → fill right columns with NULL.',
+    translation: 'LEFT JOIN ... ON. Trigger: "never", "missing", "don\'t have". Filter NULLs with WHERE right.col IS NULL.',
+  },
+  pseudoCode: `1. Take two tables (employees, departments)
+2. For each row in LEFT table:
+   a. Look for a matching row in right table
+   b. If match found → combine both rows
+   c. If NO match → keep left row, fill right columns with NULL
+3. ALL left rows appear in output (matched or not)
+Use for: "find things that DON'T exist" → WHERE right.col IS NULL`,
   solutionCode: `SELECT e.first_name, e.last_name, d.department_name
 FROM employees e
 LEFT JOIN departments d ON e.department_id = d.department_id;`,
@@ -338,6 +361,17 @@ const groupByConfig: VisualConfig = {
   title: 'GROUP BY + HAVING',
   subtitle: 'Group rows and filter groups by aggregate condition',
   category: 'sql',
+  thinking: {
+    logic: 'Count employees per department, but only show departments with more than 1.',
+    decomposition: 'Group rows by department. Count each group. Filter: only keep groups where count > 1.',
+    translation: 'GROUP BY column. COUNT(*). HAVING COUNT(*) > 1. (HAVING = WHERE for groups.)',
+  },
+  pseudoCode: `1. Look at all rows in the table
+2. GROUP BY: put rows with same department_id together
+3. COUNT(*): count how many rows in each group
+4. HAVING: only keep groups where count > 1
+   (HAVING = WHERE but for groups)
+5. Return department_id and count for surviving groups`,
   solutionCode: `SELECT department_id, COUNT(*) AS emp_count
 FROM employees
 GROUP BY department_id
@@ -437,6 +471,18 @@ const caseWhenConfig: VisualConfig = {
   title: 'CASE WHEN',
   subtitle: 'Categorize rows based on conditions',
   category: 'sql',
+  thinking: {
+    logic: 'Count how many users are active, inactive, and pending — as separate columns.',
+    decomposition: 'For each row, check status. Assign 1 to the matching category column. COUNT each category.',
+    translation: 'COUNT(CASE WHEN status = X THEN 1 END) for each category. Pivot: rows → columns.',
+  },
+  pseudoCode: `1. For each row, check the status column
+2. CASE WHEN status = 'active' → count as 1 for active_count
+   CASE WHEN status = 'inactive' → count as 1 for inactive_count
+   CASE WHEN status = 'pending' → count as 1 for pending_count
+3. COUNT adds up the 1s per category
+4. Result: one row with three columns (pivot)
+Think of it as: rows → columns transformation`,
   solutionCode: `SELECT
   COUNT(CASE WHEN status = 'active' THEN 1 END) AS active_count,
   COUNT(CASE WHEN status = 'inactive' THEN 1 END) AS inactive_count,
@@ -521,6 +567,17 @@ const lagConfig: VisualConfig = {
   title: 'LAG — Day-Over-Day Change',
   subtitle: 'Access previous row values with window functions',
   category: 'sql',
+  thinking: {
+    logic: 'Show each day\'s revenue alongside the previous day\'s, and the difference.',
+    decomposition: 'Order by date. For each row, look at the previous row\'s revenue. Subtract to get change.',
+    translation: 'LAG(revenue) OVER (ORDER BY date). Subtract: revenue - LAG(revenue). First row = NULL (no previous).',
+  },
+  pseudoCode: `1. Order all rows by date
+2. For each row, LAG looks at the PREVIOUS row's revenue
+   - First row has no previous → NULL
+3. Subtract: current revenue - previous revenue = change
+4. Result: each row shows today's revenue, yesterday's, and the difference
+Trigger: "day over day", "compared to previous", "growth"`,
   solutionCode: `SELECT
   report_date, revenue,
   LAG(revenue) OVER (ORDER BY report_date) AS prev_revenue,

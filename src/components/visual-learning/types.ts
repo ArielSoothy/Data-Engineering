@@ -31,12 +31,20 @@ export interface InputField {
   editable: boolean;
 }
 
+export interface ThinkingSteps {
+  logic: string;
+  decomposition: string;
+  translation: string;
+}
+
 export interface VisualConfig {
   questionId: string;
   template: VisualizationTemplate;
   title: string;
   subtitle: string;
   category: 'python' | 'sql';
+  thinking: ThinkingSteps;
+  pseudoCode: string;
   solutionCode: string;
   inputs: InputField[];
   generateSteps: (inputs: Record<string, unknown>) => AnimStep[];

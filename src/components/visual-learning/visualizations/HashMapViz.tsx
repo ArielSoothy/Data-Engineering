@@ -135,85 +135,287 @@ function RenderValue({ value, compact }: { value: unknown; compact?: boolean }) 
 
 /* ────────────── Code Panel with line highlight ────────────── */
 
+function formatVal(val: unknown): string {
+  if (val === null || val === undefined) return 'None';
+  if (typeof val === 'string') return `"${val}"`;
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  if (Array.isArray(val)) {
+    if (val.length === 0) return '[]';
+    if (val.length > 5) return `[...${val.length} items]`;
+    return `[${val.map(v => formatVal(v)).join(', ')}]`;
+  }
+  if (typeof val === 'object') {
+    const entries = Object.entries(val as Record<string, unknown>);
+    if (entries.length === 0) return '{}';
+    return `{${entries.map(([k, v]) => `${k}: ${formatVal(v)}`).join(', ')}}`;
+  }
+  return String(val);
+}
+
+// Build full code mirror with all variables replaced by current values
+function buildLiveCode(code: string, vars: Record<string, unknown>): string {
+  const lines = code.split('\n');
+
+  // Separate scalars (replace everywhere) from dicts/objects (only show as current value on their init line)
+  const scalars: Record<string, string> = {};  // dept, name, num, key, target, etc
+  const dicts: Record<string, string> = {};    // top_name, top_salary, seen, count, etc
+  const skipVars = new Set(['code']);
+
+  for (const [name, val] of Object.entries(vars)) {
+    if (skipVars.has(name)) continue;
+    if (name === 'emp') {
+      // Show emp compactly
+      if (typeof val === 'string' && val.includes('name:')) {
+        const nameMatch = val.match(/name: "([^"]+)"/);
+        const deptMatch = val.match(/dept: "([^"]+)"/);
+        const salMatch = val.match(/salary: (\d+)/);
+        if (nameMatch) {
+          scalars[name] = `{${nameMatch[1]}, ${deptMatch?.[1] ?? '?'}, $${salMatch?.[1] ?? '?'}}`;
+          continue;
+        }
+      }
+      scalars[name] = formatVal(val);
+    } else if (name === 'employees') {
+      dicts[name] = `[${(val as unknown[]).length} employees]`;
+    } else if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+      dicts[name] = formatVal(val);
+    } else if (Array.isArray(val)) {
+      if (val.length > 5) {
+        dicts[name] = `[${val.length} items]`;
+      } else {
+        scalars[name] = formatVal(val);
+      }
+    } else {
+      scalars[name] = formatVal(val);
+    }
+  }
+
+  // Sort scalars by name length descending
+  const sortedScalars = Object.entries(scalars).sort(([a], [b]) => b.length - a.length);
+
+  return lines.map(line => {
+    const trimmed = line.trimStart();
+    const indent = line.slice(0, line.length - trimmed.length);
+
+    // Simple assignment: "varname = ..." → show current value on right side
+    const simpleAssign = trimmed.match(/^(\w+)\s*=\s*(.*)/);
+    if (simpleAssign) {
+      const varName = simpleAssign[0].split(' = ')[0];
+      const currentVal = dicts[varName] ?? scalars[varName];
+      if (currentVal !== undefined) {
+        return indent + varName + ' = ' + currentVal;
+      }
+    }
+
+    // Subscript assignment: "x[y] = z" → keep x, replace y with scalar, resolve z
+    const subscriptAssign = trimmed.match(/^(\w+)\[(.+?)\]\s*=\s*(.*)/);
+    if (subscriptAssign) {
+      const objName = subscriptAssign[1];
+      let subscript = subscriptAssign[2];
+      let rhs = subscriptAssign[3];
+
+      // Resolve emp["field"] FIRST before any other replacement
+      const empFieldMatch = rhs.match(/emp\["(\w+)"\]/);
+      if (empFieldMatch) {
+        const empStr = scalars['emp'] ?? '';
+        const parts = empStr.replace(/[{}$]/g, '').split(', ');
+        if (empFieldMatch[1] === 'name' && parts[0]) rhs = `"${parts[0]}"`;
+        else if (empFieldMatch[1] === 'salary' && parts[2]) rhs = parts[2];
+        else if (empFieldMatch[1] === 'department' && parts[1]) rhs = `"${parts[1]}"`;
+      }
+
+      // Replace scalars in subscript (dept → "Engineering") but skip emp
+      for (const [name, formatted] of sortedScalars) {
+        if (name === 'emp') continue;
+        const regex = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+        subscript = subscript.replace(regex, formatted);
+        rhs = rhs.replace(regex, formatted);
+      }
+
+      return indent + objName + '[' + subscript + '] = ' + rhs;
+    }
+
+    // For all other lines: replace scalars, resolve emp["field"] patterns, handle employees
+    let result = indent + trimmed;
+
+    // On for lines, show emp as the current item but keep "for emp in ..."
+    if (trimmed.startsWith('for ') && scalars['emp']) {
+      // "for emp in employees:" → "for {Charlie, Engineering, $110000} in [6 employees]:"
+      result = result.replace(/\bfor emp\b/, `for ${scalars['emp']}`);
+      if (dicts['employees']) result = result.replace(/\bemployees\b/g, dicts['employees']);
+      return result;
+    }
+
+    // Resolve emp["field"] patterns BEFORE replacing emp as a scalar
+    if (result.includes('emp["')) {
+      const empStr = scalars['emp'] ?? '';
+      const parts = empStr.replace(/[{}$]/g, '').split(', ');
+      result = result.replace(/emp\["name"\]/g, parts[0] ? `"${parts[0]}"` : 'emp["name"]');
+      result = result.replace(/emp\["salary"\]/g, parts[2] ?? 'emp["salary"]');
+      result = result.replace(/emp\["department"\]/g, parts[1] ? `"${parts[1]}"` : 'emp["department"]');
+    }
+
+    // Replace employees references
+    if (dicts['employees']) {
+      result = result.replace(/\bemployees\b/g, dicts['employees']);
+    }
+
+    // Replace scalars everywhere (skip emp since we handled it above)
+    for (const [name, formatted] of sortedScalars) {
+      if (name === 'emp') continue;
+      const regex = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+      result = result.replace(regex, formatted);
+    }
+
+    // On condition lines (if), show dict contents but handle empty dict edge case
+    if (trimmed.startsWith('if ')) {
+      for (const [name, formatted] of Object.entries(dicts)) {
+        if (name === 'employees') continue;
+        const regex = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+        result = result.replace(regex, formatted);
+      }
+      // Clean up impossible lookups like {}["Engineering"] → (empty)
+      result = result.replace(/\{\}\["[^"]*"\]/g, '(empty)');
+      // Clean up "not in {}" → "not in {} → NEW"
+      result = result.replace(/not in \{\}/g, 'not in {} → NEW');
+    }
+
+    // On return lines, show actual return value
+    if (trimmed.startsWith('return ')) {
+      for (const [name, formatted] of Object.entries(dicts)) {
+        if (name === 'employees') continue;
+        const regex = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+        result = result.replace(regex, formatted);
+      }
+    }
+
+    return result;
+  }).join('\n');
+}
+
 function CodePanel({
   code,
   activeLine,
   annotation,
+  variables,
 }: {
   code: string;
   activeLine: number;
   annotation?: string;
+  variables?: Record<string, unknown>;
 }) {
   const lines = code.split('\n');
 
+  // Build full code mirror with current values
+  const liveCode = variables && Object.keys(variables).length > 0
+    ? buildLiveCode(code, variables)
+    : null;
+  const liveLines = liveCode?.split('\n') ?? [];
+
   return (
-    <div className="rounded-xl overflow-hidden border border-gray-700 bg-[#0d1117]">
-      {/* Title bar */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-[#161b22] border-b border-gray-700">
-        <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-        <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-        <div className="w-3 h-3 rounded-full bg-[#28c840]" />
-        <span className="ml-2 text-xs text-gray-500 font-mono">solution.py</span>
+    <div className="space-y-3">
+      {/* Original code */}
+      <div className="rounded-xl overflow-hidden border border-gray-700 bg-[#0d1117]">
+        {/* Title bar */}
+        <div className="flex items-center gap-2 px-4 py-2 bg-[#161b22] border-b border-gray-700">
+          <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+          <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
+          <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+          <span className="ml-2 text-xs text-gray-500 font-mono">solution.py</span>
+        </div>
+
+        {/* Code lines */}
+        <div className="py-2 text-[13px] leading-6 font-mono overflow-x-auto">
+          {lines.map((line, i) => {
+            const isActive = i === activeLine;
+            return (
+              <div
+                key={i}
+                className={`flex transition-colors duration-300 ${
+                  isActive
+                    ? 'bg-yellow-500/15 border-l-2 border-yellow-400'
+                    : 'border-l-2 border-transparent'
+                }`}
+              >
+                <span className={`w-10 text-right pr-3 select-none flex-shrink-0 ${
+                  isActive ? 'text-yellow-400' : 'text-gray-600'
+                }`}>
+                  {i + 1}
+                </span>
+                <span className="w-5 flex-shrink-0 text-center">
+                  {isActive && (
+                    <motion.span
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="text-yellow-400 text-xs"
+                    >
+                      ▶
+                    </motion.span>
+                  )}
+                </span>
+                <span className={`pr-4 whitespace-pre ${
+                  isActive ? 'text-gray-100' : 'text-gray-400'
+                }`}>
+                  {line || ' '}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Annotation bar */}
+        <div className="border-t border-gray-700 px-4 py-2 bg-[#161b22] min-h-[36px] flex items-center">
+          <AnimatePresence mode="wait">
+            {annotation && (
+              <motion.p
+                key={annotation}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-xs text-blue-300 font-mono"
+              >
+                💡 {annotation}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Code lines */}
-      <div className="py-2 text-[13px] leading-6 font-mono overflow-x-auto">
-        {lines.map((line, i) => {
-          const isActive = i === activeLine;
-          return (
-            <div
-              key={i}
-              className={`flex transition-colors duration-300 ${
-                isActive
-                  ? 'bg-yellow-500/15 border-l-2 border-yellow-400'
-                  : 'border-l-2 border-transparent'
-              }`}
-            >
-              {/* Line number */}
-              <span className={`w-10 text-right pr-3 select-none flex-shrink-0 ${
-                isActive ? 'text-yellow-400' : 'text-gray-600'
-              }`}>
-                {i + 1}
-              </span>
-              {/* Execution arrow */}
-              <span className="w-5 flex-shrink-0 text-center">
-                {isActive && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -5 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="text-yellow-400 text-xs"
-                  >
-                    ▶
-                  </motion.span>
-                )}
-              </span>
-              {/* Code text */}
-              <span className={`pr-4 whitespace-pre ${
-                isActive ? 'text-gray-100' : 'text-gray-400'
-              }`}>
-                {line || ' '}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Annotation bar */}
-      <AnimatePresence mode="wait">
-        {annotation && (
-          <motion.div
-            key={annotation}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="border-t border-gray-700 px-4 py-2 bg-[#161b22]"
-          >
-            <p className="text-xs text-blue-300 font-mono">
-              💡 {annotation}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Live values — full code mirror with actual values */}
+      {liveCode && (
+        <div className="rounded-xl overflow-hidden border border-cyan-800/50 bg-[#0a1628]">
+          <div className="flex items-center gap-2 px-4 py-2 bg-[#0d1f3c] border-b border-cyan-800/30">
+            <span className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Live Values</span>
+          </div>
+          <div className="py-2 text-[13px] leading-6 font-mono overflow-x-auto">
+            {liveLines.map((line, i) => {
+              const isActive = i === activeLine;
+              return (
+                <div
+                  key={i}
+                  className={`flex transition-colors duration-300 ${
+                    isActive
+                      ? 'bg-cyan-500/10 border-l-2 border-cyan-400'
+                      : 'border-l-2 border-transparent'
+                  }`}
+                >
+                  <span className={`w-10 text-right pr-3 select-none flex-shrink-0 ${
+                    isActive ? 'text-cyan-400' : 'text-gray-700'
+                  }`}>
+                    {i + 1}
+                  </span>
+                  <span className="w-5 flex-shrink-0" />
+                  <span className={`pr-4 whitespace-pre ${
+                    isActive ? 'text-cyan-200' : 'text-cyan-400/40'
+                  }`}>
+                    {line || ' '}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -327,6 +529,9 @@ function ArrayVisual({
               textColor = 'text-gray-600';
             }
 
+            const isString = typeof val === 'string';
+            const isLong = isString && val.length > 4;
+
             return (
               <motion.div
                 key={i}
@@ -334,8 +539,8 @@ function ArrayVisual({
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 className={`flex flex-col items-center ${glow}`}
               >
-                <div className={`w-10 h-10 flex items-center justify-center rounded-lg border-2 text-sm font-bold ${bg} ${textColor}`}>
-                  {typeof val === 'string' ? `"${val}"` : val}
+                <div className={`${isLong ? 'px-2 min-w-[3rem]' : 'w-10'} h-10 flex items-center justify-center rounded-lg border-2 ${isLong ? 'text-xs' : 'text-sm'} font-bold ${bg} ${textColor}`}>
+                  {isString ? `"${val}"` : val}
                 </div>
                 <span className={`text-[9px] mt-0.5 ${
                   i === currentIndex ? 'text-blue-400 font-bold' : 'text-gray-600'
@@ -367,6 +572,26 @@ function ResultBanner({ result }: { result: unknown }) {
           <RenderValue value={result} />
         </div>
       </div>
+    </motion.div>
+  );
+}
+
+/* ────────────── Floating value pill ────────────── */
+
+function FloatingPill({ label, stepKey }: { label: string; stepKey: string }) {
+  return (
+    <motion.div
+      key={stepKey}
+      initial={{ opacity: 0, y: -30, scale: 0.7 }}
+      animate={{
+        opacity: [0, 1, 1, 0],
+        y: [-30, 0, 0, 30],
+        scale: [0.7, 1.1, 1, 0.8],
+      }}
+      transition={{ duration: 1.2, times: [0, 0.2, 0.7, 1] }}
+      className="absolute left-1/2 -translate-x-1/2 top-1 z-10 px-3 py-1.5 rounded-full bg-amber-500/90 text-black text-xs font-bold font-mono shadow-lg shadow-amber-500/30 pointer-events-none"
+    >
+      {label}
     </motion.div>
   );
 }
@@ -407,17 +632,38 @@ export default function HashMapViz({ steps, currentStep, template }: Props) {
   // Decide layout based on template
   const isGrouping = template === 'array-grouping';
 
+  // Detect WRITE/CHECK steps for floating pill
+  const stepLabel = step.label;
+  const isWriteStep = stepLabel.startsWith('WRITE');
+  const isCheckStep = stepLabel.startsWith('CHECK');
+
+  // Extract a short floating label from annotation
+  let floatingLabel = '';
+  if (isWriteStep && changedVars.length > 0) {
+    // Show what's being written: e.g. "Alice → top_name"
+    const dept = ds.dept as string ?? '';
+    const empName = (ds.emp as string)?.match(/name: "([^"]+)"/)?.[1] ?? '';
+    if (empName && dept) floatingLabel = `"${empName}" → top_name["${dept}"]`;
+  } else if (isCheckStep) {
+    floatingLabel = '🔍 checking top_salary...';
+  }
+
   return (
     <div className="space-y-4">
       {/* Code + Variables — side by side on desktop, stacked on mobile */}
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Code panel */}
         <div className="flex-1 min-w-0">
-          <CodePanel code={code} activeLine={activeLine} annotation={annotation} />
+          <CodePanel code={code} activeLine={activeLine} annotation={annotation} variables={variables} />
         </div>
 
-        {/* Variables panel */}
-        <div className="lg:w-80 flex-shrink-0">
+        {/* Variables panel — with floating pill */}
+        <div className="lg:w-80 flex-shrink-0 relative">
+          <AnimatePresence mode="wait">
+            {floatingLabel && (
+              <FloatingPill label={floatingLabel} stepKey={`pill-${step.id}`} />
+            )}
+          </AnimatePresence>
           <VariablesPanel variables={variables} changedVars={changedVars} />
         </div>
       </div>
