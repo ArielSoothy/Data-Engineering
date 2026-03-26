@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Eye, Code2, Database, Brain, GitBranch, Wrench } from 'lucide-react';
+import { Eye, Code2, Database, Brain, GitBranch, Wrench, AlertTriangle, Scale } from 'lucide-react';
 import { allVisualConfigs } from '../../data/visual-learning';
 import type { AnimStep } from './types';
 import { useStepAnimation } from './useStepAnimation';
@@ -279,6 +279,43 @@ export default function VisualLearning() {
                     {selectedConfig.thinking.translation}
                   </p>
                 </div>
+                {/* Edge Cases & Trade-offs row */}
+                {(selectedConfig.thinking.edgeCases || selectedConfig.thinking.tradeOffs) && (
+                  <>
+                    {selectedConfig.thinking.edgeCases && (
+                      <div className="p-4 border-t border-gray-700/40 group">
+                        <div className="flex items-center gap-2.5 mb-2">
+                          <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                            <AlertTriangle size={13} className="text-orange-400" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-orange-400/70 uppercase tracking-widest font-semibold">Watch out</span>
+                            <span className="text-xs text-orange-300 font-semibold ml-2">Edge Cases</span>
+                          </div>
+                        </div>
+                        <p className="text-[13px] text-gray-300 leading-relaxed pl-8">
+                          {selectedConfig.thinking.edgeCases}
+                        </p>
+                      </div>
+                    )}
+                    {selectedConfig.thinking.tradeOffs && (
+                      <div className="p-4 border-t md:border-t-0 border-gray-700/40 group">
+                        <div className="flex items-center gap-2.5 mb-2">
+                          <div className="w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                            <Scale size={13} className="text-violet-400" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-violet-400/70 uppercase tracking-widest font-semibold">Why this way</span>
+                            <span className="text-xs text-violet-300 font-semibold ml-2">Trade-offs</span>
+                          </div>
+                        </div>
+                        <p className="text-[13px] text-gray-300 leading-relaxed pl-8">
+                          {selectedConfig.thinking.tradeOffs}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           )}

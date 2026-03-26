@@ -26,6 +26,8 @@ const innerJoinConfig: VisualConfig = {
     logic: 'Combine data from two tables where they share a matching key.',
     decomposition: 'For each row in table A, find the matching row in table B. Only keep rows that match in BOTH tables.',
     translation: 'INNER JOIN ... ON a.key = b.key. Only matched rows survive.',
+    edgeCases: 'NULL in join key → row excluded (NULL ≠ NULL). Duplicate keys → produces multiple rows (fan-out). No matches at all → empty result.',
+    tradeOffs: 'INNER JOIN is the default — only matched rows. Use when you need data from BOTH tables. If you need unmatched rows, switch to LEFT JOIN.',
   },
   pseudoCode: `1. Take two tables (employees, departments)
 2. For each row in left table:
@@ -192,6 +194,8 @@ const leftJoinConfig: VisualConfig = {
     logic: 'Get all rows from the left table, even if they have no match on the right.',
     decomposition: 'Keep every left row. If match exists → combine. If no match → fill right columns with NULL.',
     translation: 'LEFT JOIN ... ON. Trigger: "never", "missing", "don\'t have". Filter NULLs with WHERE right.col IS NULL.',
+    edgeCases: 'Right side NULLs after join → COALESCE before any math. All rows match → same result as INNER JOIN. No matches → all right columns are NULL.',
+    tradeOffs: 'LEFT JOIN + WHERE IS NULL finds "missing" items. Alternative: NOT EXISTS — often faster on large tables. Both valid for interview, LEFT JOIN is more visual.',
   },
   pseudoCode: `1. Take two tables (employees, departments)
 2. For each row in LEFT table:
@@ -365,6 +369,8 @@ const groupByConfig: VisualConfig = {
     logic: 'Count employees per department, but only show departments with more than 1.',
     decomposition: 'Group rows by department. Count each group. Filter: only keep groups where count > 1.',
     translation: 'GROUP BY column. COUNT(*). HAVING COUNT(*) > 1. (HAVING = WHERE for groups.)',
+    edgeCases: 'NULL in GROUP BY column → NULLs form their own group. COUNT(*) counts all rows including NULLs. HAVING with no matches → empty result.',
+    tradeOffs: 'HAVING filters after grouping (on aggregates). WHERE filters before grouping (on raw rows). Common mistake: using WHERE where HAVING is needed.',
   },
   pseudoCode: `1. Look at all rows in the table
 2. GROUP BY: put rows with same department_id together
@@ -475,6 +481,8 @@ const caseWhenConfig: VisualConfig = {
     logic: 'Count how many users are active, inactive, and pending — as separate columns.',
     decomposition: 'For each row, check status. Assign 1 to the matching category column. COUNT each category.',
     translation: 'COUNT(CASE WHEN status = X THEN 1 END) for each category. Pivot: rows → columns.',
+    edgeCases: 'No ELSE clause → unmatched rows get NULL. NULL in the column being checked → falls through to ELSE. COUNT(CASE WHEN) counts all rows — use SUM instead.',
+    tradeOffs: 'CASE WHEN pivot (rows→columns) vs GROUP BY (keep rows). Pivot when you need side-by-side comparison. COUNT(CASE) vs SUM(CASE): SUM is safer because COUNT counts 0s too.',
   },
   pseudoCode: `1. For each row, check the status column
 2. CASE WHEN status = 'active' → count as 1 for active_count
@@ -571,6 +579,8 @@ const lagConfig: VisualConfig = {
     logic: 'Show each day\'s revenue alongside the previous day\'s, and the difference.',
     decomposition: 'Order by date. For each row, look at the previous row\'s revenue. Subtract to get change.',
     translation: 'LAG(revenue) OVER (ORDER BY date). Subtract: revenue - LAG(revenue). First row = NULL (no previous).',
+    edgeCases: 'First row has no previous → LAG returns NULL. COALESCE(LAG(...), 0) if you need a default. PARTITION BY resets the window per group.',
+    tradeOffs: 'LAG vs self-join: LAG is cleaner for "previous row." Self-join needed when comparing non-adjacent rows. Window functions go in CTE if you need to filter on the result.',
   },
   pseudoCode: `1. Order all rows by date
 2. For each row, LAG looks at the PREVIOUS row's revenue

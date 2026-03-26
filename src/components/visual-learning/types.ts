@@ -35,6 +35,8 @@ export interface ThinkingSteps {
   logic: string;
   decomposition: string;
   translation: string;
+  edgeCases?: string;
+  tradeOffs?: string;
 }
 
 export interface VisualConfig {

@@ -33,6 +33,8 @@ const twoSum: VisualConfig = {
     logic: 'Find two numbers in a list that add up to a target. Return their indices.',
     decomposition: 'For each number, check if the complement (target - num) was seen before. If yes → done. If no → remember this number.',
     translation: 'Dict as memory (seen[num] = index). One pass through the list. enumerate() for index + value.',
+    edgeCases: 'Empty list → return []. Only one element → return []. Multiple valid pairs → return first found. Negative numbers → works fine, complement math still applies.',
+    tradeOffs: 'Dict gives O(1) lookup per element → O(n) total. Brute force (two loops) would be O(n²). Space vs time: we use extra memory (the dict) to avoid slow nested loops.',
   },
   pseudoCode: `1. Create empty dict "seen"
 2. For each number in the list:
@@ -166,6 +168,8 @@ const containsDuplicate: VisualConfig = {
     logic: 'Check if any number appears more than once in the list.',
     decomposition: 'Track what we\'ve seen. For each number: already seen → duplicate. Not seen → add it.',
     translation: 'Set for O(1) lookup. One loop. Return True/False.',
+    edgeCases: 'Empty list → False. Single element → False. All same elements → True on second item.',
+    tradeOffs: 'Set gives O(1) membership check. Alternative: sort first O(n log n) then check neighbors — no extra space but slower. We trade space for speed.',
   },
   pseudoCode: `1. Create empty set "seen"
 2. For each number in the list:
@@ -267,6 +271,8 @@ const validAnagram: VisualConfig = {
     logic: 'Check if two strings use the exact same characters the same number of times.',
     decomposition: 'Count chars in string s (+1 each). Count chars in string t (-1 each). If any count goes negative → not anagram.',
     translation: 'Dict as counter. Two loops (one per string). Early return on negative.',
+    edgeCases: 'Empty strings → True (both empty). Different lengths → immediately False (early return saves time). Same string → True.',
+    tradeOffs: 'Counter dict is O(n). Alternative: sort both strings and compare O(n log n). Counter approach is faster and lets us exit early on mismatch.',
   },
   pseudoCode: `1. If lengths differ → not anagram, Return False
 2. Create empty dict "count"
@@ -399,6 +405,8 @@ const groupAnagrams: VisualConfig = {
     logic: 'Group strings that are anagrams of each other together.',
     decomposition: 'Anagrams have the same letters sorted. Sort each string → use as key → group strings with same key.',
     translation: 'Dict of lists. Key = sorted letters. sorted() + join(). Append original string to its group.',
+    edgeCases: 'Empty list → return []. Single string → one group with one item. Empty string "" → valid, sorts to "" as key.',
+    tradeOffs: 'Sorted string as key is O(k log k) per word. Alternative: use character count tuple as key — O(k) per word but harder to implement. Sorted is cleaner for interview.',
   },
   pseudoCode: `1. Create empty dict "groups"
 2. For each string in the list:
@@ -484,6 +492,8 @@ const topKFrequent: VisualConfig = {
     logic: 'Find the k numbers that appear most often in the list.',
     decomposition: 'Count how many times each number appears. Sort by count descending. Take first k.',
     translation: 'Dict as counter (+= 1). sorted() with key=lambda. Slice [:k].',
+    edgeCases: 'k = 0 → return []. k equals list length → return all unique elements. All elements same → return that one element.',
+    tradeOffs: 'Count + sort is O(n log n). Optimal: heap O(n log k). For interview, sort approach is simpler and fast enough. Mention heap if asked for optimization.',
   },
   pseudoCode: `1. Create empty dict "count"
 2. For each number: increment count[number]
@@ -584,6 +594,8 @@ const groupByDepartment: VisualConfig = {
     logic: 'Group employee names by their department.',
     decomposition: 'For each employee: get dept and name. If dept is new → create list. Append name to dept list.',
     translation: 'Dict of lists. if key not in dict → create []. .append() to add.',
+    edgeCases: 'Empty list → return {}. One employee → one department with one name. Employee with department not seen before → creates new key.',
+    tradeOffs: 'Dict of lists is the natural structure. Alternative: defaultdict(list) skips the "if key not in" check — cleaner but requires import. Both are O(n).',
   },
   pseudoCode: `1. Create empty dict "result"
 2. For each employee:
@@ -719,6 +731,8 @@ const highestPaidPerDept: VisualConfig = {
     logic: 'Find the highest-paid employee name in each department.',
     decomposition: 'Track the best name AND salary per dept. For each employee: new dept → store. Higher salary → replace. Lower → skip.',
     translation: 'Two dicts (top_name, top_salary). top_salary is the gatekeeper — only CHECK it. Update both together. Return top_name.',
+    edgeCases: 'Empty list → return {}. One employee → they win by default. Two employees same salary in same dept → first one seen wins (or last, depending on > vs >=).',
+    tradeOffs: 'Two dicts is O(n) one-pass. Alternative: group by dept first, then max() each group — two passes, cleaner but slower. Two-dict is more efficient and shows interviewer you can optimize.',
   },
   pseudoCode: `1. Create two empty dicts: "top_name" and "top_salary"
 2. For each employee:
@@ -924,6 +938,8 @@ const customersWhoBoughtAll: VisualConfig = {
     logic: 'Find customers who bought EVERY product in a given list.',
     decomposition: 'Turn required products into a set. Group each customer\'s purchases into a set. Check: is required a subset of what they bought?',
     translation: 'set() for required. Dict of sets for bought. .add() to build sets. issubset() to compare. List for results.',
+    edgeCases: 'Empty orders → no customers qualify. Empty products list → everyone qualifies (empty set is subset of everything). Customer bought same product twice → set handles dedup automatically.',
+    tradeOffs: 'Dict of sets + issubset. Alternative: count unique matching products per customer and compare to len(products). Set approach is cleaner and handles duplicates automatically.',
   },
   pseudoCode: `1. required = set of products we're checking for
 2. Create empty dict "bought" (customer → set of products)
@@ -1069,6 +1085,103 @@ const customersWhoBoughtAll: VisualConfig = {
   },
 };
 
+/* ═══════════════════════════════════════
+   Config 9 — Sort Employees by Salary
+   ═══════════════════════════════════════ */
+
+const SORT_SALARY_CODE = `def sort_by_salary(employees):
+    sorted_emps = sorted(employees,
+        key=lambda x: x["salary"],
+        reverse=True)
+    return [emp["name"] for emp in sorted_emps]`;
+
+const sortBySalary: VisualConfig = {
+  questionId: 'py-sortsalary',
+  template: 'array-to-dict',
+  title: 'Sort Employees by Salary',
+  subtitle: 'sorted() with key=lambda and list comprehension',
+  category: 'python',
+  thinking: {
+    logic: 'Return employee names sorted by salary, highest first.',
+    decomposition: 'Sort the list by a specific field (salary). Extract just the names in that order.',
+    translation: 'sorted() with key=lambda x: x["salary"]. reverse=True for descending. List comprehension to extract names.',
+    edgeCases: 'Empty list → return []. All same salary → original order preserved (stable sort). One employee → list with one name.',
+    tradeOffs: 'sorted() returns new list (safe). .sort() modifies original (risky). Lambda is a one-line function — cleaner than defining a separate function for something used once.',
+  },
+  pseudoCode: `1. Sort employees by salary (highest first)
+   - sorted() with key=lambda to pick the salary field
+   - reverse=True for descending order
+2. Extract just the names from the sorted list
+   - List comprehension: [emp["name"] for emp in sorted_emps]
+3. Return the list of names`,
+  solutionCode: SORT_SALARY_CODE,
+  inputs: [
+    {
+      key: 'array',
+      label: 'employees',
+      type: 'array',
+      defaultValue: DEFAULT_EMPLOYEES,
+      editable: true,
+    },
+  ],
+  generateSteps: (inputs) => {
+    const employees = inputs.array as Employee[];
+    const steps: AnimStep[] = [];
+
+    const names = employees.map(e => e.name);
+
+    // Step 0 — show input
+    steps.push(mkStep('start', 'Call sort_by_salary(employees)', {
+      code: SORT_SALARY_CODE, activeLine: 0,
+      array: names, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['employees'],
+      employees: employees.map(e => `${e.name} ($${e.salary})`),
+      changedVars: ['employees'],
+    }));
+
+    // Step 1 — sorted with lambda
+    const sorted = [...employees].sort((a, b) => b.salary - a.salary);
+    steps.push(mkStep('sort', `sorted by salary descending: ${sorted.map(e => `${e.name}($${e.salary})`).join(', ')}`, {
+      code: SORT_SALARY_CODE, activeLine: 1,
+      array: sorted.map(e => e.name), currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['employees', 'sorted_emps'],
+      employees: employees.map(e => `${e.name} ($${e.salary})`),
+      sorted_emps: sorted.map(e => `${e.name} ($${e.salary})`),
+      changedVars: ['sorted_emps'],
+      annotation: `key=lambda x: x["salary"] tells sorted() to compare by salary. reverse=True = highest first.`,
+    }));
+
+    // Step 2 — extract names
+    const result = sorted.map(e => e.name);
+    steps.push(mkStep('extract', `Extract names: [${result.map(n => `"${n}"`).join(', ')}]`, {
+      code: SORT_SALARY_CODE, activeLine: 4,
+      array: sorted.map(e => e.name), currentIndex: -1,
+      processedIndices: Array.from({ length: sorted.length }, (_, i) => i),
+      matchIndices: [],
+      visibleVars: ['employees', 'sorted_emps', 'result'],
+      employees: employees.map(e => `${e.name} ($${e.salary})`),
+      sorted_emps: sorted.map(e => `${e.name} ($${e.salary})`),
+      result,
+      changedVars: ['result'],
+      annotation: `List comprehension: [emp["name"] for emp in sorted_emps] → pull out just the names`,
+    }));
+
+    // Return
+    steps.push(mkStep('return', `Return ${result.length} names sorted by salary`, {
+      code: SORT_SALARY_CODE, activeLine: 4,
+      array: sorted.map(e => e.name), currentIndex: -1,
+      processedIndices: Array.from({ length: sorted.length }, (_, i) => i),
+      matchIndices: [],
+      visibleVars: ['result'],
+      result,
+      changedVars: [],
+      annotation: `✅ ${result.join(', ')}`,
+    }));
+
+    return steps;
+  },
+};
+
 /* ═══════════════════════════════════════ */
 
 const pythonConfigs: VisualConfig[] = [
@@ -1080,6 +1193,7 @@ const pythonConfigs: VisualConfig[] = [
   groupByDepartment,
   highestPaidPerDept,
   customersWhoBoughtAll,
+  sortBySalary,
 ];
 
 export default pythonConfigs;
