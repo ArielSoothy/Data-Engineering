@@ -1695,6 +1695,108 @@ const highPayingDepts: VisualConfig = {
   },
 };
 
+/* ═══════════════════════════════════════
+   Config 13 — Forward Fill (None handling)
+   ═══════════════════════════════════════ */
+
+const FORWARD_FILL_CODE = `def forward_fill(arr):
+    last_val = None
+    for i in range(len(arr)):
+        if arr[i] is not None:
+            last_val = arr[i]
+        else:
+            arr[i] = last_val
+    return arr`;
+
+const forwardFill: VisualConfig = {
+  questionId: 'py-forwardfill',
+  template: 'array-to-dict',
+  title: 'Forward Fill (Handle None)',
+  subtitle: 'Replace None with the last known value',
+  category: 'python',
+  thinking: {
+    logic: 'Given a list with None gaps, fill each None with the most recent non-None value before it.',
+    decomposition: 'Track the last seen real value. Walk through the list: if real value → update tracker. If None → replace with tracker.',
+    translation: 'last_val variable as memory. for i in range(len(arr)) for index access. is not None / is None checks. Direct assignment arr[i] = last_val.',
+    edgeCases: 'None at start (no previous value) → stays None. All Nones → all stay None. No Nones → return as-is. Empty list → return [].',
+    tradeOffs: 'Modifies list in-place (O(1) extra space). Alternative: build new list with append — uses O(n) space but safer (doesn\'t change original). In-place is what interviewers usually expect for this question.',
+  },
+  pseudoCode: `1. Set last_val = None (no value seen yet)
+2. For each index in the list:
+   a. If arr[i] is a real value → update last_val
+   b. If arr[i] is None → replace with last_val
+3. Return the filled list`,
+  solutionCode: FORWARD_FILL_CODE,
+  inputs: [
+    { key: 'array', label: 'arr', type: 'array', defaultValue: [1, null, null, 4, null, 6], editable: true },
+  ],
+  generateSteps: (inputs) => {
+    const arr = [...(inputs.array as (number | null)[])];
+    const steps: AnimStep[] = [];
+    let lastVal: number | null = null;
+
+    const display = (a: (number | null)[]) => a.map(v => v === null ? 'None' : String(v));
+
+    // Step 0
+    steps.push(mkStep('start', 'Start: last_val = None', {
+      code: FORWARD_FILL_CODE, activeLine: 1,
+      array: display(arr), currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['arr', 'last_val'],
+      arr: display(arr), last_val: 'None',
+      changedVars: ['last_val'],
+      annotation: 'No value seen yet — last_val starts as None',
+    }));
+
+    for (let i = 0; i < arr.length; i++) {
+      const val = arr[i];
+      const isNone = val === null;
+
+      if (!isNone) {
+        lastVal = val;
+        steps.push(mkStep(`real-${i}`, `arr[${i}] = ${val} — real value! last_val = ${val}`, {
+          code: FORWARD_FILL_CODE, activeLine: 3,
+          array: display(arr), currentIndex: i,
+          processedIndices: Array.from({ length: i }, (_, j) => j),
+          matchIndices: [],
+          visibleVars: ['arr', 'last_val', 'i'],
+          arr: display(arr), last_val: lastVal, i,
+          changedVars: ['last_val', 'i'],
+          annotation: `✅ Real value found: ${val}. Update last_val = ${val}`,
+        }));
+      } else {
+        arr[i] = lastVal;
+        steps.push(mkStep(`fill-${i}`, `arr[${i}] = None → fill with last_val = ${lastVal === null ? 'None' : lastVal}`, {
+          code: FORWARD_FILL_CODE, activeLine: 5,
+          array: display(arr), currentIndex: i,
+          processedIndices: Array.from({ length: i }, (_, j) => j),
+          matchIndices: [i],
+          visibleVars: ['arr', 'last_val', 'i'],
+          arr: display(arr), last_val: lastVal === null ? 'None' : lastVal, i,
+          changedVars: ['arr', 'i'],
+          annotation: lastVal === null
+            ? `⚠️ None at start — no previous value to fill with. Stays None.`
+            : `🔄 None → replaced with last_val = ${lastVal}`,
+        }));
+      }
+    }
+
+    // Return
+    steps.push(mkStep('return', `Return filled array: [${display(arr).join(', ')}]`, {
+      code: FORWARD_FILL_CODE, activeLine: 6,
+      array: display(arr), currentIndex: -1,
+      processedIndices: Array.from({ length: arr.length }, (_, i) => i),
+      matchIndices: [],
+      visibleVars: ['arr'],
+      arr: display(arr),
+      result: display(arr),
+      changedVars: [],
+      annotation: `✅ All Nones filled: [${display(arr).join(', ')}]`,
+    }));
+
+    return steps;
+  },
+};
+
 /* ═══════════════════════════════════════ */
 
 const pythonConfigs: VisualConfig[] = [
@@ -1710,6 +1812,7 @@ const pythonConfigs: VisualConfig[] = [
   mergeEmployeeData,
   parseLogs,
   highPayingDepts,
+  forwardFill,
 ];
 
 export default pythonConfigs;
