@@ -1093,7 +1093,10 @@ const SORT_SALARY_CODE = `def sort_by_salary(employees):
     sorted_emps = sorted(employees,
         key=lambda x: x["salary"],
         reverse=True)
-    return [emp["name"] for emp in sorted_emps]`;
+    result = []
+    for emp in sorted_emps:
+        result.append(emp["name"])
+    return result`;
 
 const sortBySalary: VisualConfig = {
   questionId: 'py-sortsalary',
@@ -1104,7 +1107,7 @@ const sortBySalary: VisualConfig = {
   thinking: {
     logic: 'Return employee names sorted by salary, highest first.',
     decomposition: 'Sort the list by a specific field (salary). Extract just the names in that order.',
-    translation: 'sorted() with key=lambda x: x["salary"]. reverse=True for descending. List comprehension to extract names.',
+    translation: 'sorted() with key=lambda x: x["salary"]. reverse=True for descending. Loop + append to extract names (or list comprehension shortcut).',
     edgeCases: 'Empty list → return []. All same salary → original order preserved (stable sort). One employee → list with one name.',
     tradeOffs: 'sorted() returns new list (safe). .sort() modifies original (risky). Lambda is a one-line function — cleaner than defining a separate function for something used once.',
   },
@@ -1112,7 +1115,8 @@ const sortBySalary: VisualConfig = {
    - sorted() with key=lambda to pick the salary field
    - reverse=True for descending order
 2. Extract just the names from the sorted list
-   - List comprehension: [emp["name"] for emp in sorted_emps]
+   Loop way:  result = [] → for emp → result.append(emp["name"])
+   Shortcut:  [emp["name"] for emp in sorted_emps]
 3. Return the list of names`,
   solutionCode: SORT_SALARY_CODE,
   inputs: [
@@ -1151,31 +1155,540 @@ const sortBySalary: VisualConfig = {
       annotation: `key=lambda x: x["salary"] tells sorted() to compare by salary. reverse=True = highest first.`,
     }));
 
-    // Step 2 — extract names
-    const result = sorted.map(e => e.name);
-    steps.push(mkStep('extract', `Extract names: [${result.map(n => `"${n}"`).join(', ')}]`, {
+    // Step 2 — init result list
+    steps.push(mkStep('init-result', 'Create empty result list', {
       code: SORT_SALARY_CODE, activeLine: 4,
-      array: sorted.map(e => e.name), currentIndex: -1,
-      processedIndices: Array.from({ length: sorted.length }, (_, i) => i),
-      matchIndices: [],
+      array: sorted.map(e => e.name), currentIndex: -1, processedIndices: [], matchIndices: [],
       visibleVars: ['employees', 'sorted_emps', 'result'],
       employees: employees.map(e => `${e.name} ($${e.salary})`),
       sorted_emps: sorted.map(e => `${e.name} ($${e.salary})`),
-      result,
+      result: [],
       changedVars: ['result'],
-      annotation: `List comprehension: [emp["name"] for emp in sorted_emps] → pull out just the names`,
     }));
+
+    // Step 3 — loop and append names
+    const result: string[] = [];
+    for (let i = 0; i < sorted.length; i++) {
+      result.push(sorted[i].name);
+      steps.push(mkStep(`name-${i}`, `Append "${sorted[i].name}" → result = [${result.map(n => `"${n}"`).join(', ')}]`, {
+        code: SORT_SALARY_CODE, activeLine: 6,
+        array: sorted.map(e => e.name), currentIndex: i,
+        processedIndices: Array.from({ length: i + 1 }, (_, j) => j),
+        matchIndices: [],
+        visibleVars: ['employees', 'sorted_emps', 'result', 'emp'],
+        employees: employees.map(e => `${e.name} ($${e.salary})`),
+        sorted_emps: sorted.map(e => `${e.name} ($${e.salary})`),
+        result: [...result],
+        emp: `${sorted[i].name} ($${sorted[i].salary})`,
+        changedVars: ['result', 'emp'],
+        annotation: `Loop: emp = ${sorted[i].name} → result.append("${sorted[i].name}")`,
+      }));
+    }
 
     // Return
     steps.push(mkStep('return', `Return ${result.length} names sorted by salary`, {
-      code: SORT_SALARY_CODE, activeLine: 4,
+      code: SORT_SALARY_CODE, activeLine: 7,
       array: sorted.map(e => e.name), currentIndex: -1,
       processedIndices: Array.from({ length: sorted.length }, (_, i) => i),
       matchIndices: [],
       visibleVars: ['result'],
-      result,
+      result: [...result],
       changedVars: [],
       annotation: `✅ ${result.join(', ')}`,
+    }));
+
+    return steps;
+  },
+};
+
+/* ═══════════════════════════════════════
+   Config 10 — Merge Employee Data (py-mergedata)
+   ═══════════════════════════════════════ */
+
+const MERGE_DATA_CODE = `def merge_employee_data(names_depts, salaries):
+    salary_map = {}
+    for s in salaries:
+        salary_map[s["name"]] = s["salary"]
+    result = []
+    for emp in names_depts:
+        merged = {"name": emp["name"],
+                  "department": emp["department"],
+                  "salary": salary_map[emp["name"]]}
+        result.append(merged)
+    return result`;
+
+const mergeEmployeeData: VisualConfig = {
+  questionId: 'py-mergedata',
+  template: 'array-to-dict',
+  title: 'Merge Employee Data',
+  subtitle: 'Build a lookup dict, then combine two data sources',
+  category: 'python',
+  thinking: {
+    logic: 'Combine two lists into one — names/depts from one, salaries from another, matched by name.',
+    decomposition: 'Build a lookup dict from salaries (name → salary). Loop names_depts, look up each salary, build merged dicts.',
+    translation: 'Dict as lookup table. Two loops: one to build map, one to merge. Append merged dicts to result list.',
+    edgeCases: 'Name missing from salaries → KeyError. Could use .get() with default. Empty lists → return [].',
+    tradeOffs: 'Dict lookup is O(1) per name → O(n) total. Without dict: nested loop O(n²) scanning salaries for each employee.',
+  },
+  pseudoCode: `1. Create empty dict "salary_map"
+2. For each entry in salaries:
+   - Store salary_map[name] = salary
+3. Create empty list "result"
+4. For each emp in names_depts:
+   - Look up salary from salary_map[emp["name"]]
+   - Build merged dict with name, department, salary
+   - Append to result
+5. Return result`,
+  solutionCode: MERGE_DATA_CODE,
+  inputs: [
+    {
+      key: 'array',
+      label: 'names_depts',
+      type: 'array',
+      defaultValue: [
+        { name: 'Alice', department: 'Engineering' },
+        { name: 'Bob', department: 'Marketing' },
+        { name: 'Charlie', department: 'Sales' },
+      ],
+      editable: true,
+    },
+    {
+      key: 'target',
+      label: 'salaries',
+      type: 'array',
+      defaultValue: [
+        { name: 'Alice', salary: 95000 },
+        { name: 'Bob', salary: 72000 },
+        { name: 'Charlie', salary: 85000 },
+      ],
+      editable: true,
+    },
+  ],
+  generateSteps: (inputs) => {
+    const namesDepts = inputs.array as { name: string; department: string }[];
+    const salaries = inputs.target as { name: string; salary: number }[];
+    const steps: AnimStep[] = [];
+    const salaryMap: Record<string, number> = {};
+
+    const labels = namesDepts.map(e => `${e.name} (${e.department})`);
+
+    // Step 0 — function entry
+    steps.push(mkStep('start', 'Call merge_employee_data(names_depts, salaries)', {
+      code: MERGE_DATA_CODE, activeLine: 0,
+      array: labels, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['names_depts', 'salaries'],
+      names_depts: namesDepts.map(e => `${e.name} (${e.department})`),
+      salaries: salaries.map(s => `${s.name}: $${s.salary}`),
+      changedVars: ['names_depts', 'salaries'],
+    }));
+
+    // Step 1 — init salary_map
+    steps.push(mkStep('init-map', 'Initialize empty salary_map dict', {
+      code: MERGE_DATA_CODE, activeLine: 1,
+      array: labels, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['names_depts', 'salaries', 'salary_map'],
+      names_depts: namesDepts.map(e => `${e.name} (${e.department})`),
+      salaries: salaries.map(s => `${s.name}: $${s.salary}`),
+      salary_map: {},
+      changedVars: ['salary_map'],
+    }));
+
+    // Phase 1: build salary_map from salaries
+    for (let i = 0; i < salaries.length; i++) {
+      const s = salaries[i];
+      salaryMap[s.name] = s.salary;
+
+      steps.push(mkStep(`map-${i}`, `salary_map["${s.name}"] = $${s.salary}`, {
+        code: MERGE_DATA_CODE, activeLine: 3,
+        array: salaries.map(x => `${x.name}: $${x.salary}`),
+        currentIndex: i,
+        processedIndices: Array.from({ length: i + 1 }, (_, j) => j),
+        matchIndices: [],
+        visibleVars: ['names_depts', 'salaries', 'salary_map', 's'],
+        names_depts: namesDepts.map(e => `${e.name} (${e.department})`),
+        salaries: salaries.map(x => `${x.name}: $${x.salary}`),
+        salary_map: { ...salaryMap },
+        s: `{name: "${s.name}", salary: ${s.salary}}`,
+        changedVars: ['salary_map', 's'],
+        annotation: `Store salary_map["${s.name}"] = $${s.salary}`,
+      }));
+    }
+
+    // Step — init result
+    steps.push(mkStep('init-result', 'Initialize empty result list', {
+      code: MERGE_DATA_CODE, activeLine: 4,
+      array: labels, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['names_depts', 'salaries', 'salary_map', 'result'],
+      names_depts: namesDepts.map(e => `${e.name} (${e.department})`),
+      salaries: salaries.map(s => `${s.name}: $${s.salary}`),
+      salary_map: { ...salaryMap },
+      result: [],
+      changedVars: ['result'],
+    }));
+
+    // Phase 2: merge loop
+    const result: { name: string; department: string; salary: number }[] = [];
+    const processed: number[] = [];
+    for (let i = 0; i < namesDepts.length; i++) {
+      const emp = namesDepts[i];
+      const salary = salaryMap[emp.name];
+
+      // Lookup step
+      steps.push(mkStep(`lookup-${i}`, `Look up salary_map["${emp.name}"] → $${salary}`, {
+        code: MERGE_DATA_CODE, activeLine: 7,
+        array: labels, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['names_depts', 'salary_map', 'result', 'emp', 'merged'],
+        names_depts: namesDepts.map(e => `${e.name} (${e.department})`),
+        salary_map: { ...salaryMap },
+        result: result.map(r => `${r.name} (${r.department}, $${r.salary})`),
+        emp: `{name: "${emp.name}", department: "${emp.department}"}`,
+        changedVars: ['emp'],
+        annotation: `Look up salary for "${emp.name}" → $${salary}`,
+      }));
+
+      // Build merged dict and append
+      const merged = { name: emp.name, department: emp.department, salary };
+      result.push(merged);
+      processed.push(i);
+
+      steps.push(mkStep(`merge-${i}`, `Append merged: {${emp.name}, ${emp.department}, $${salary}}`, {
+        code: MERGE_DATA_CODE, activeLine: 9,
+        array: labels, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['names_depts', 'salary_map', 'result', 'emp', 'merged'],
+        names_depts: namesDepts.map(e => `${e.name} (${e.department})`),
+        salary_map: { ...salaryMap },
+        result: result.map(r => `${r.name} (${r.department}, $${r.salary})`),
+        emp: `{name: "${emp.name}", department: "${emp.department}"}`,
+        merged: `{name: "${merged.name}", dept: "${merged.department}", salary: $${merged.salary}}`,
+        changedVars: ['result', 'merged'],
+        annotation: `Merged: ${emp.name} + ${emp.department} + $${salary}`,
+      }));
+    }
+
+    // Return
+    steps.push(mkStep('return', `Return ${result.length} merged employee records`, {
+      code: MERGE_DATA_CODE, activeLine: 10,
+      array: labels, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['result'],
+      result: result.map(r => `${r.name} (${r.department}, $${r.salary})`),
+      changedVars: [],
+      annotation: `✅ Merged ${result.length} records using salary_map for O(1) lookups`,
+    }));
+
+    return steps;
+  },
+};
+
+/* ═══════════════════════════════════════
+   Config 11 — Parse Log Entries (py-parselogs)
+   ═══════════════════════════════════════ */
+
+const PARSE_LOGS_CODE = `def get_errors(logs):
+    result = []
+    for log in logs:
+        parts = log.split(" ", 2)
+        level = parts[1].replace(":", "")
+        if level == "ERROR":
+            result.append(parts[2])
+    return result`;
+
+const parseLogs: VisualConfig = {
+  questionId: 'py-parselogs',
+  template: 'array-to-dict',
+  title: 'Parse Log Entries',
+  subtitle: 'split() strings, filter by condition, extract data',
+  category: 'python',
+  thinking: {
+    logic: 'Extract just the error messages from a list of log strings.',
+    decomposition: 'For each log: split into parts (date, level, message). Check if level is ERROR. If yes, keep the message.',
+    translation: 'str.split(" ", 2) to break into 3 parts. .replace(":", "") to clean level. if/append to filter.',
+    edgeCases: 'Empty logs list → return []. Log with no spaces → split returns fewer parts. Level with extra whitespace → .strip() if needed.',
+    tradeOffs: 'split(" ", 2) limits to 3 parts so the message can contain spaces. Without the limit, "Connection timeout" would split into two parts.',
+  },
+  pseudoCode: `1. Create empty list "result"
+2. For each log string:
+   a. Split into 3 parts: date, level, message
+      - split(" ", 2) limits to 3 splits
+   b. Clean the level: remove trailing ":"
+   c. If level == "ERROR" → append message to result
+3. Return result`,
+  solutionCode: PARSE_LOGS_CODE,
+  inputs: [
+    {
+      key: 'array',
+      label: 'logs',
+      type: 'array',
+      defaultValue: [
+        '2026-03-15 ERROR: Connection timeout',
+        '2026-03-15 INFO: User logged in',
+        '2026-03-16 ERROR: Disk full',
+        '2026-03-16 WARNING: High memory',
+        '2026-03-17 ERROR: Connection timeout',
+      ],
+      editable: true,
+    },
+  ],
+  generateSteps: (inputs) => {
+    const logs = inputs.array as string[];
+    const steps: AnimStep[] = [];
+    const result: string[] = [];
+    const processed: number[] = [];
+
+    // Step 0 — function entry
+    steps.push(mkStep('start', 'Call get_errors(logs)', {
+      code: PARSE_LOGS_CODE, activeLine: 0,
+      array: logs, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['logs'],
+      logs,
+      changedVars: ['logs'],
+    }));
+
+    // Step 1 — init result
+    steps.push(mkStep('init', 'Initialize empty result list', {
+      code: PARSE_LOGS_CODE, activeLine: 1,
+      array: logs, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['logs', 'result'],
+      logs, result: [],
+      changedVars: ['result'],
+    }));
+
+    for (let i = 0; i < logs.length; i++) {
+      const log = logs[i];
+      const parts = log.split(' ');
+      const datePart = parts[0];
+      const levelRaw = parts[1] || '';
+      const level = levelRaw.replace(':', '');
+      const message = parts.slice(2).join(' ');
+
+      // Split step
+      steps.push(mkStep(`split-${i}`, `Split: "${log}" → [${datePart}, ${levelRaw}, ${message}]`, {
+        code: PARSE_LOGS_CODE, activeLine: 3,
+        array: logs, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['logs', 'result', 'log', 'parts'],
+        logs, result: [...result],
+        log, parts: [datePart, levelRaw, message],
+        changedVars: ['log', 'parts'],
+        annotation: `Split "${log}" into 3 parts`,
+      }));
+
+      // Clean level
+      steps.push(mkStep(`level-${i}`, `level = "${levelRaw}".replace(":", "") → "${level}"`, {
+        code: PARSE_LOGS_CODE, activeLine: 4,
+        array: logs, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['logs', 'result', 'log', 'parts', 'level'],
+        logs, result: [...result],
+        log, parts: [datePart, levelRaw, message], level,
+        changedVars: ['level'],
+        annotation: `Clean level: "${levelRaw}" → "${level}"`,
+      }));
+
+      processed.push(i);
+
+      if (level === 'ERROR') {
+        result.push(message);
+        steps.push(mkStep(`match-${i}`, `level == "ERROR" → append "${message}"`, {
+          code: PARSE_LOGS_CODE, activeLine: 6,
+          array: logs, currentIndex: i, processedIndices: [...processed],
+          matchIndices: [i],
+          visibleVars: ['logs', 'result', 'log', 'parts', 'level'],
+          logs, result: [...result],
+          log, parts: [datePart, levelRaw, message], level,
+          changedVars: ['result'],
+          annotation: `✅ ERROR found → append "${message}"`,
+        }));
+      } else {
+        steps.push(mkStep(`skip-${i}`, `level == "${level}" ≠ "ERROR" → skip`, {
+          code: PARSE_LOGS_CODE, activeLine: 5,
+          array: logs, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+          visibleVars: ['logs', 'result', 'log', 'parts', 'level'],
+          logs, result: [...result],
+          log, parts: [datePart, levelRaw, message], level,
+          changedVars: [],
+          annotation: `❌ "${level}" is not ERROR → skip this log`,
+        }));
+      }
+    }
+
+    // Return
+    steps.push(mkStep('return', `Return ${result.length} error messages`, {
+      code: PARSE_LOGS_CODE, activeLine: 7,
+      array: logs, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['result'],
+      result: [...result],
+      changedVars: [],
+      annotation: `✅ Found ${result.length} errors: ${result.map(r => `"${r}"`).join(', ')}`,
+    }));
+
+    return steps;
+  },
+};
+
+/* ═══════════════════════════════════════
+   Config 12 — High Paying Departments (py-highpayingdepts)
+   ═══════════════════════════════════════ */
+
+const HIGH_PAYING_DEPTS_CODE = `def high_paying_depts(employees):
+    dept_totals = {}
+    dept_counts = {}
+    for emp in employees:
+        dept = emp["department"]
+        if dept not in dept_totals:
+            dept_totals[dept] = 0
+            dept_counts[dept] = 0
+        dept_totals[dept] += emp["salary"]
+        dept_counts[dept] += 1
+    result = []
+    for dept in dept_totals:
+        avg = dept_totals[dept] // dept_counts[dept]
+        if avg > 80000:
+            result.append({"department": dept, "avg_salary": avg})
+    return sorted(result,
+        key=lambda x: x["avg_salary"],
+        reverse=True)`;
+
+const highPayingDepts: VisualConfig = {
+  questionId: 'py-highpayingdepts',
+  template: 'array-to-dict',
+  title: 'High Paying Departments',
+  subtitle: 'Filter + Group + Sort — combine all patterns',
+  category: 'python',
+  thinking: {
+    logic: 'Find departments where average salary exceeds 80k, sorted by avg salary descending.',
+    decomposition: 'Group salaries by dept (track totals and counts). Calculate avg per dept. Filter > 80000. Sort by avg descending.',
+    translation: 'Two dicts (dept_totals, dept_counts). += to accumulate. Integer division // for avg. if to filter. sorted() + lambda to sort result.',
+    edgeCases: 'Empty list → return []. Department with one employee → avg = their salary. All depts below threshold → return [].',
+    tradeOffs: 'Two-dict accumulation is O(n). Alternative: group into lists first, then sum/len — uses more memory storing all salaries. Two-dict approach only stores running totals.',
+  },
+  pseudoCode: `1. Create two empty dicts: "dept_totals" and "dept_counts"
+2. For each employee:
+   a. Get their department
+   b. If dept not seen → initialize totals and counts to 0
+   c. Add salary to dept_totals[dept]
+   d. Increment dept_counts[dept]
+3. Create empty list "result"
+4. For each dept:
+   a. Calculate avg = dept_totals[dept] // dept_counts[dept]
+   b. If avg > 80000 → append {department, avg_salary} to result
+5. Return result sorted by avg_salary descending`,
+  solutionCode: HIGH_PAYING_DEPTS_CODE,
+  inputs: [
+    {
+      key: 'array',
+      label: 'employees',
+      type: 'array',
+      defaultValue: DEFAULT_EMPLOYEES,
+      editable: true,
+    },
+  ],
+  generateSteps: (inputs) => {
+    const employees = inputs.array as Employee[];
+    const steps: AnimStep[] = [];
+    const deptTotals: Record<string, number> = {};
+    const deptCounts: Record<string, number> = {};
+    const processed: number[] = [];
+
+    const names = employees.map(e => e.name);
+    const empInfo = (e: Employee) => `${e.name} (${e.department}, $${e.salary})`;
+
+    // Step 0 — function entry
+    steps.push(mkStep('start', 'Call high_paying_depts(employees)', {
+      code: HIGH_PAYING_DEPTS_CODE, activeLine: 0,
+      array: names, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['employees'],
+      employees: employees.map(empInfo),
+      changedVars: ['employees'],
+    }));
+
+    // Step 1 — init both dicts
+    steps.push(mkStep('init', 'Create two empty dicts — dept_totals and dept_counts', {
+      code: HIGH_PAYING_DEPTS_CODE, activeLine: 2,
+      array: names, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['employees', 'dept_totals', 'dept_counts'],
+      employees: employees.map(empInfo),
+      dept_totals: {}, dept_counts: {},
+      changedVars: ['dept_totals', 'dept_counts'],
+    }));
+
+    // Phase 1: accumulate totals and counts
+    for (let i = 0; i < employees.length; i++) {
+      const emp = employees[i];
+      const dept = emp.department;
+      const isNew = !(dept in deptTotals);
+
+      if (isNew) {
+        deptTotals[dept] = 0;
+        deptCounts[dept] = 0;
+      }
+      deptTotals[dept] += emp.salary;
+      deptCounts[dept] += 1;
+      processed.push(i);
+
+      steps.push(mkStep(`accum-${i}`, `${emp.name}: dept_totals["${dept}"] += $${emp.salary} → $${deptTotals[dept]}, count → ${deptCounts[dept]}`, {
+        code: HIGH_PAYING_DEPTS_CODE, activeLine: isNew ? 6 : 8,
+        array: names, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['employees', 'dept_totals', 'dept_counts', 'emp', 'dept'],
+        employees: employees.map(empInfo),
+        dept_totals: { ...deptTotals }, dept_counts: { ...deptCounts },
+        emp: `{name: "${emp.name}", dept: "${dept}", salary: $${emp.salary}}`,
+        dept,
+        changedVars: ['dept_totals', 'dept_counts', 'emp', 'dept'],
+        annotation: isNew
+          ? `🆕 New dept "${dept}" → totals=$${deptTotals[dept]}, count=${deptCounts[dept]}`
+          : `+= $${emp.salary} → totals["${dept}"]=$${deptTotals[dept]}, count=${deptCounts[dept]}`,
+      }));
+    }
+
+    // Phase 2: calculate avg and filter
+    const result: { department: string; avg_salary: number }[] = [];
+
+    steps.push(mkStep('phase2', 'Now calculate avg per dept and filter > $80,000', {
+      code: HIGH_PAYING_DEPTS_CODE, activeLine: 10,
+      array: names, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['dept_totals', 'dept_counts', 'result'],
+      dept_totals: { ...deptTotals }, dept_counts: { ...deptCounts },
+      result: [],
+      changedVars: ['result'],
+    }));
+
+    for (const dept of Object.keys(deptTotals)) {
+      const avg = Math.floor(deptTotals[dept] / deptCounts[dept]);
+      const passes = avg > 80000;
+
+      if (passes) {
+        result.push({ department: dept, avg_salary: avg });
+        steps.push(mkStep(`avg-${dept}`, `${dept}: $${deptTotals[dept]} / ${deptCounts[dept]} = $${avg} > $80,000 → YES`, {
+          code: HIGH_PAYING_DEPTS_CODE, activeLine: 14,
+          array: names, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+          visibleVars: ['dept_totals', 'dept_counts', 'result', 'dept', 'avg'],
+          dept_totals: { ...deptTotals }, dept_counts: { ...deptCounts },
+          result: result.map(r => `${r.department}: $${r.avg_salary}`),
+          dept, avg,
+          changedVars: ['result', 'dept', 'avg'],
+          annotation: `✅ ${dept}: avg=$${avg} > $80,000 → include`,
+        }));
+      } else {
+        steps.push(mkStep(`avg-${dept}`, `${dept}: $${deptTotals[dept]} / ${deptCounts[dept]} = $${avg} ≤ $80,000 → NO`, {
+          code: HIGH_PAYING_DEPTS_CODE, activeLine: 13,
+          array: names, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+          visibleVars: ['dept_totals', 'dept_counts', 'result', 'dept', 'avg'],
+          dept_totals: { ...deptTotals }, dept_counts: { ...deptCounts },
+          result: result.map(r => `${r.department}: $${r.avg_salary}`),
+          dept, avg,
+          changedVars: ['dept', 'avg'],
+          annotation: `❌ ${dept}: avg=$${avg} ≤ $80,000 → exclude`,
+        }));
+      }
+    }
+
+    // Sort and return
+    const sorted = [...result].sort((a, b) => b.avg_salary - a.avg_salary);
+    steps.push(mkStep('return', `Return ${sorted.length} departments sorted by avg salary`, {
+      code: HIGH_PAYING_DEPTS_CODE, activeLine: 15,
+      array: names, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['result'],
+      result: sorted.map(r => `${r.department}: $${r.avg_salary}`),
+      changedVars: [],
+      annotation: `✅ ${sorted.length} high-paying depts: ${sorted.map(r => `${r.department} ($${r.avg_salary})`).join(', ')}`,
     }));
 
     return steps;
@@ -1194,6 +1707,9 @@ const pythonConfigs: VisualConfig[] = [
   highestPaidPerDept,
   customersWhoBoughtAll,
   sortBySalary,
+  mergeEmployeeData,
+  parseLogs,
+  highPayingDepts,
 ];
 
 export default pythonConfigs;
