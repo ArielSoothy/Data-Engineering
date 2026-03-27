@@ -28,6 +28,7 @@ const twoSum: VisualConfig = {
   template: 'array-to-dict',
   title: 'Two Sum',
   subtitle: 'Build a HashMap for O(1) lookups',
+  question: 'Given a list of numbers and a target, return the indices of two numbers that add up to the target.',
   category: 'python',
   thinking: {
     logic: 'Find two numbers in a list that add up to a target. Return their indices.',
@@ -163,6 +164,7 @@ const containsDuplicate: VisualConfig = {
   template: 'array-to-set',
   title: 'Contains Duplicate',
   subtitle: 'Use a Set for O(1) membership checks',
+  question: 'Given a list of numbers, return True if any value appears at least twice, False if every element is distinct.',
   category: 'python',
   thinking: {
     logic: 'Check if any number appears more than once in the list.',
@@ -266,6 +268,7 @@ const validAnagram: VisualConfig = {
   template: 'array-to-dict',
   title: 'Valid Anagram',
   subtitle: 'Count character frequencies with a HashMap',
+  question: 'Given two strings s and t, return True if t is an anagram of s (uses the same characters the same number of times).',
   category: 'python',
   thinking: {
     logic: 'Check if two strings use the exact same characters the same number of times.',
@@ -400,6 +403,7 @@ const groupAnagrams: VisualConfig = {
   template: 'array-grouping',
   title: 'Group Anagrams',
   subtitle: 'Sort keys to group equivalent strings',
+  question: 'Given a list of strings, group the anagrams together. Return a list of groups.',
   category: 'python',
   thinking: {
     logic: 'Group strings that are anagrams of each other together.',
@@ -487,6 +491,7 @@ const topKFrequent: VisualConfig = {
   template: 'array-to-dict',
   title: 'Top K Frequent Elements',
   subtitle: 'Count frequencies, then sort',
+  question: 'Given a list of numbers and an integer k, return the k most frequent elements.',
   category: 'python',
   thinking: {
     logic: 'Find the k numbers that appear most often in the list.',
@@ -589,6 +594,7 @@ const groupByDepartment: VisualConfig = {
   template: 'array-grouping',
   title: 'Group Names by Department',
   subtitle: 'Build a dict of lists from object data',
+  question: 'Given a list of employee dicts, return a dict where each key is a department and each value is a list of employee names in that department.',
   category: 'python',
   thinking: {
     logic: 'Group employee names by their department.',
@@ -726,6 +732,7 @@ const highestPaidPerDept: VisualConfig = {
   template: 'array-to-dict',
   title: 'Highest Paid per Department',
   subtitle: 'Two-dict tracker: compare and replace the best',
+  question: 'Given a list of employee dicts (name, department, salary), return a dict where each key is a department and the value is the name of the highest-paid employee in that department.',
   category: 'python',
   thinking: {
     logic: 'Find the highest-paid employee name in each department.',
@@ -933,6 +940,7 @@ const customersWhoBoughtAll: VisualConfig = {
   template: 'array-grouping',
   title: 'Customers Who Bought All',
   subtitle: 'Group into sets, then check with issubset',
+  question: 'Given a list of order dicts and a list of required products, return the names of customers who bought EVERY product in the required list.',
   category: 'python',
   thinking: {
     logic: 'Find customers who bought EVERY product in a given list.',
@@ -1103,6 +1111,7 @@ const sortBySalary: VisualConfig = {
   template: 'array-to-dict',
   title: 'Sort Employees by Salary',
   subtitle: 'sorted() with key=lambda and list comprehension',
+  question: 'Given a list of employee dicts, return a list of names sorted by salary from highest to lowest.',
   category: 'python',
   thinking: {
     logic: 'Return employee names sorted by salary, highest first.',
@@ -1222,6 +1231,7 @@ const mergeEmployeeData: VisualConfig = {
   template: 'array-to-dict',
   title: 'Merge Employee Data',
   subtitle: 'Build a lookup dict, then combine two data sources',
+  question: 'Given two lists — one with names and departments, another with names and salaries — combine them into a single list where each dict has name, department, and salary.',
   category: 'python',
   thinking: {
     logic: 'Combine two lists into one — names/depts from one, salaries from another, matched by name.',
@@ -1397,6 +1407,7 @@ const parseLogs: VisualConfig = {
   template: 'array-to-dict',
   title: 'Parse Log Entries',
   subtitle: 'split() strings, filter by condition, extract data',
+  question: 'Given a list of log strings (format: "DATE LEVEL: message"), return only the messages from ERROR-level logs.',
   category: 'python',
   thinking: {
     logic: 'Extract just the error messages from a list of log strings.',
@@ -1551,6 +1562,7 @@ const highPayingDepts: VisualConfig = {
   template: 'array-to-dict',
   title: 'High Paying Departments',
   subtitle: 'Filter + Group + Sort — combine all patterns',
+  question: 'Given a list of employee dicts, return departments where the average salary exceeds 80,000, sorted by average salary descending.',
   category: 'python',
   thinking: {
     logic: 'Find departments where average salary exceeds 80k, sorted by avg salary descending.',
@@ -1713,6 +1725,7 @@ const forwardFill: VisualConfig = {
   template: 'array-to-dict',
   title: 'Forward Fill (Handle None)',
   subtitle: 'Replace None with the last known value',
+  question: 'Given a list that may contain None values, replace each None with the most recent non-None value that came before it.',
   category: 'python',
   thinking: {
     logic: 'Given a list with None gaps, fill each None with the most recent non-None value before it.',

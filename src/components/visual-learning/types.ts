@@ -45,6 +45,7 @@ export interface VisualConfig {
   title: string;
   subtitle: string;
   category: 'python' | 'sql';
+  question?: string;
   thinking: ThinkingSteps;
   pseudoCode: string;
   solutionCode: string;

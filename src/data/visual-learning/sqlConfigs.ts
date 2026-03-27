@@ -21,6 +21,7 @@ const innerJoinConfig: VisualConfig = {
   template: 'table-join',
   title: 'INNER JOIN',
   subtitle: 'Match rows from two tables by a shared column',
+  question: 'Write a query to show each employee\'s name along with their department name, only for employees who have a department assigned.',
   category: 'sql',
   thinking: {
     logic: 'Combine data from two tables where they share a matching key.',
@@ -189,6 +190,7 @@ const leftJoinConfig: VisualConfig = {
   template: 'table-join',
   title: 'LEFT JOIN',
   subtitle: 'Keep all left rows, NULL when no match on the right',
+  question: 'Write a query to show all employees and their department names, including employees who have no department assigned (show NULL).',
   category: 'sql',
   thinking: {
     logic: 'Get all rows from the left table, even if they have no match on the right.',
@@ -364,6 +366,7 @@ const groupByConfig: VisualConfig = {
   template: 'table-groupby',
   title: 'GROUP BY + HAVING',
   subtitle: 'Group rows and filter groups by aggregate condition',
+  question: 'Write a query to find departments with more than 1 employee. Show the department and the count.',
   category: 'sql',
   thinking: {
     logic: 'Count employees per department, but only show departments with more than 1.',
@@ -476,6 +479,7 @@ const caseWhenConfig: VisualConfig = {
   template: 'table-casewhen',
   title: 'CASE WHEN',
   subtitle: 'Categorize rows based on conditions',
+  question: 'Write a query to count how many users have each status (active, inactive, pending) as separate columns in a single row.',
   category: 'sql',
   thinking: {
     logic: 'Count how many users are active, inactive, and pending — as separate columns.',
@@ -574,6 +578,7 @@ const lagConfig: VisualConfig = {
   template: 'table-window',
   title: 'LAG — Day-Over-Day Change',
   subtitle: 'Access previous row values with window functions',
+  question: 'Write a query to show each day\'s revenue, the previous day\'s revenue, and the day-over-day change.',
   category: 'sql',
   thinking: {
     logic: 'Show each day\'s revenue alongside the previous day\'s, and the difference.',

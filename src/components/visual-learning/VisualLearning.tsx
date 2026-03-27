@@ -175,6 +175,21 @@ export default function VisualLearning() {
 
         {/* Main visualization area */}
         <div className="flex-1 min-w-0 space-y-4">
+          {/* Question prompt */}
+          {selectedConfig?.question && (
+            <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/5 dark:bg-indigo-500/10 p-4">
+              <div className="flex items-start gap-3">
+                <span className="text-indigo-400 text-lg mt-0.5">?</span>
+                <div>
+                  <span className="text-xs text-indigo-400 uppercase tracking-wider font-semibold">Question</span>
+                  <p className="text-sm text-gray-800 dark:text-gray-200 mt-1 leading-relaxed">
+                    {selectedConfig.question}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Editable inputs */}
           {selectedConfig && selectedConfig.inputs.length > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
