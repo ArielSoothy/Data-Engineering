@@ -14,7 +14,8 @@
 - **Interview style (inferred):** 500+ screens done. Won't go off-script. Has a scoring rubric. Will be patient if you think out loud. Respects practical data thinking over clever tricks.
 - **What he'll appreciate:** Honesty about approach ("I'd start with a CTE"), clear decomposition, mentioning real-world context (ETL migrations, pipeline validation). Won't appreciate charm or BS — he's seen too many candidates.
 - **Common ground with Ariel:** Both came from ETL/DWH background. Both know SSIS pain. Both pivoted careers into bigger companies. Both are self-driven learners.
-- **Strategy:** Be serious, polite, and persistent. Show your work. Don't give up on a problem — keep working even if stuck. Talk through your thinking. He'll respect effort over polish.
+- **From his Medium blog:** Calls himself "a mediocre data engineer." Values authenticity over performance. Philosophical thinker. Writes to "unlock an epiphany for someone." Doesn't care about political correctness — cares about honesty and self-improvement.
+- **Strategy:** Be yourself. Be honest when stuck ("I'm not sure about this part, let me think"). Don't perform or try to impress — he'll see through it instantly. Think out loud, show your reasoning, keep working even when it's hard. He respects the journey, not the polish.
 
 ---
 
