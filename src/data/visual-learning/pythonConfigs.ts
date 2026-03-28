@@ -1655,7 +1655,13 @@ Key: split(" ", 2) limits to 3 pieces so the message stays intact.`,
       - split(" ", 2) limits to 3 splits
    b. Clean the level: remove trailing ":"
    c. If level == "ERROR" → append message to result
-3. Return result`,
+3. Return result
+
+SIMPLER VERSION (no split):
+  for row in logs:
+      if "ERROR:" in row:
+          result.append(row.split("ERROR: ")[1])
+  (Checks if "ERROR:" exists, grabs everything after it)`,
   solutionCode: PARSE_LOGS_CODE,
   inputs: [
     {
