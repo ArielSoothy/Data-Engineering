@@ -23,7 +23,7 @@
 
 | Metric | Count | Target | Pace |
 |--------|-------|--------|------|
-| Python problems solved (blank screen) | 16 | 50 | 3 new medium drills locked (Days 17-22) |
+| Python problems solved (blank screen) | 20 | 50 | 7 medium drills locked (Days 17-22). All patterns covered. |
 | SQL problems solved (blank screen) | 12 | 50 | **CRITICAL: 0 new SQL since Day 16. Must drill Days 23-25** |
 | SQL Tier 1 skills (must know cold) | 10 of 11 | 11 | Only RIGHT/FULL JOIN missing (low priority) |
 | SQL Tier 2 skills (very likely) | 9 of 9 | 9 | ✅ COMPLETE |
@@ -32,7 +32,7 @@
 | StrataScratch Medium | 4 of 38 | 15-20 | Focus here for volume |
 | StrataScratch Hard | 0 of 16 | 5-8 | After mediums |
 | Days elapsed | 22 | 27 | — |
-| Ready for Meta screen | ~60% | 85%+ | Python patterns growing, SQL volume critical gap |
+| Ready for Meta screen | ~70% | 85%+ | Python patterns DONE. SQL volume is the last gap. |
 
 ---
 
@@ -84,11 +84,15 @@
 - `defaultdict(int)` / `defaultdict(list)` — no KeyError on first access
 - List comprehensions — `[x for x in nums if condition]`
 
-### PYTHON DRILLS REMAINING (on Visual Learning page, solutions seen)
-- **Problem 4: Merge Employee Data** — dict as lookup table (difficulty ~35)
-- **Problem 5: Parse Log Entries** — str.split(' ', 2) + filter (difficulty ~35)
-- **Problem 6: High Paying Departments** — filter + group + sort combined (difficulty ~40)
-- **Problem 7: Forward Fill** — None handling, last_val tracker (difficulty ~30)
+### PYTHON DRILLS ALL LOCKED (Day 22)
+- **Problem 1: Highest paid per dept** — two-dict tracker ✅
+- **Problem 2: Customers who bought all** — dict of sets + issubset ✅
+- **Problem 3: Sort by salary** — sorted + key=lambda ✅
+- **Problem 4: Merge employee data** — lookup dict (Python JOIN) ✅
+- **Problem 5: Parse log entries** — filter + split or 'in' check ✅
+- **Problem 6: High paying departments** — two-dict accumulation + filter + sort ✅
+- **Problem 7: Forward fill** — single tracker variable for None handling ✅
+- **All patterns covered for Meta screen difficulty (35-50)**
 
 ### PYTHON RECURRING BUGS (updating)
 - **#1 BUG: Indentation after for/if** — appeared in EVERY session Days 17-22. Must indent immediately after `:`.
