@@ -1396,6 +1396,143 @@ SIMPLER VERSION (mutates original):
 };
 
 /* ═══════════════════════════════════════
+   Config 10b — Merge (Simple Mutating Version)
+   ═══════════════════════════════════════ */
+
+const MERGE_SIMPLE_CODE = `def merge_dicts(names_depts, salaries):
+    salary_map = {}                          # lookup dict: name → salary
+    for s in salaries:                       # build the index
+        salary_map[s["name"]] = s["salary"]  # key=name, value=salary
+    for emp in names_depts:                  # loop other list
+        emp["salary"] = salary_map[emp["name"]]  # add salary key directly
+    return names_depts                       # return modified original`;
+
+const mergeSimple: VisualConfig = {
+  questionId: 'py-mergesimple',
+  template: 'array-to-dict',
+  title: 'Merge Data (Simple Version)',
+  subtitle: 'Lookup dict + mutate original — fewer lines, same result',
+  category: 'python',
+  question: 'Given two lists — one with names and departments, another with names and salaries — add the salary to each employee dict directly. Modify the original list.',
+  thinking: {
+    logic: 'Add salary data to each employee by looking it up from another list.',
+    decomposition: 'Build a name→salary lookup from the salaries list. Loop names_depts, look up each salary, add it as a new key directly.',
+    translation: 'Dict as lookup. One loop to build, one loop to mutate. emp["salary"] = salary_map[emp["name"]] adds the key.',
+    edgeCases: 'Mutates the original list — caller sees the changes. Name missing from salaries → KeyError (use .get() for safety).',
+    tradeOffs: 'Simpler than building new dicts (fewer lines). Trade-off: modifies original data. In interview say: "I\'m modifying directly. If we need to preserve original, I\'d create new dicts."',
+  },
+  pseudoCode: `1. Build lookup: salary_map = {name: salary}
+2. Loop names_depts:
+   - emp["salary"] = salary_map[emp["name"]]
+   - This ADDS a new key to the existing dict
+3. Return the modified names_depts
+
+Same result as the full version, just fewer lines.
+Original data is changed (mutated).`,
+  solutionCode: MERGE_SIMPLE_CODE,
+  inputs: [
+    {
+      key: 'array',
+      label: 'names_depts',
+      type: 'array',
+      defaultValue: [
+        { name: 'Alice', department: 'Engineering' },
+        { name: 'Bob', department: 'Marketing' },
+        { name: 'Charlie', department: 'Sales' },
+      ],
+      editable: true,
+    },
+    {
+      key: 'target',
+      label: 'salaries',
+      type: 'array',
+      defaultValue: [
+        { name: 'Alice', salary: 95000 },
+        { name: 'Bob', salary: 72000 },
+        { name: 'Charlie', salary: 110000 },
+      ],
+      editable: true,
+    },
+  ],
+  generateSteps: (inputs) => {
+    const namesDepts = (inputs.array as { name: string; department: string }[]).map(e => ({ ...e }));
+    const salariesList = inputs.target as { name: string; salary: number }[];
+    const steps: AnimStep[] = [];
+    const salaryMap: Record<string, number> = {};
+    const processed: number[] = [];
+    const labels = namesDepts.map(e => e.name);
+
+    // Step 0 — init
+    steps.push(mkStep('start', 'Build salary lookup first', {
+      code: MERGE_SIMPLE_CODE, activeLine: 1,
+      array: labels, currentIndex: -1, processedIndices: [], matchIndices: [],
+      visibleVars: ['names_depts', 'salary_map'],
+      names_depts: namesDepts.map(e => `${e.name} (${e.department})`),
+      salary_map: {},
+      changedVars: ['salary_map'],
+      annotation: 'Step 1: Build a lookup dict from salaries — name → salary',
+    }));
+
+    // Build lookup
+    for (let i = 0; i < salariesList.length; i++) {
+      const s = salariesList[i];
+      salaryMap[s.name] = s.salary;
+
+      steps.push(mkStep(`lookup-${i}`, `salary_map["${s.name}"] = ${s.salary}`, {
+        code: MERGE_SIMPLE_CODE, activeLine: 3,
+        array: labels, currentIndex: -1, processedIndices: [], matchIndices: [],
+        visibleVars: ['names_depts', 'salary_map'],
+        names_depts: namesDepts.map(e => `${e.name} (${e.department})`),
+        salary_map: { ...salaryMap },
+        changedVars: ['salary_map'],
+        annotation: `Add to lookup: "${s.name}" → $${s.salary}`,
+      }));
+    }
+
+    // Mutate original
+    for (let i = 0; i < namesDepts.length; i++) {
+      const emp = namesDepts[i];
+      const salary = salaryMap[emp.name];
+      (emp as Record<string, unknown>)['salary'] = salary;
+      processed.push(i);
+
+      steps.push(mkStep(`mutate-${i}`, `emp["salary"] = salary_map["${emp.name}"] → $${salary}`, {
+        code: MERGE_SIMPLE_CODE, activeLine: 5,
+        array: labels, currentIndex: i, processedIndices: [...processed], matchIndices: [],
+        visibleVars: ['names_depts', 'salary_map', 'emp'],
+        names_depts: namesDepts.map(e => {
+          const s = (e as Record<string, unknown>)['salary'];
+          return s ? `${e.name} (${e.department}, $${s})` : `${e.name} (${e.department})`;
+        }),
+        salary_map: { ...salaryMap },
+        emp: `{name: "${emp.name}", dept: "${emp.department}"}`,
+        changedVars: ['names_depts', 'emp'],
+        annotation: `✏️ emp["salary"] = salary_map["${emp.name}"] → Added salary $${salary} directly to ${emp.name}'s dict`,
+      }));
+    }
+
+    // Return
+    steps.push(mkStep('return', 'Return modified names_depts (same list, now with salary)', {
+      code: MERGE_SIMPLE_CODE, activeLine: 6,
+      array: labels, currentIndex: -1, processedIndices: [...processed], matchIndices: [],
+      visibleVars: ['names_depts'],
+      names_depts: namesDepts.map(e => {
+        const s = (e as Record<string, unknown>)['salary'];
+        return `${e.name} (${e.department}, $${s})`;
+      }),
+      result: namesDepts.map(e => {
+        const s = (e as Record<string, unknown>)['salary'];
+        return `${e.name}: ${e.department}, $${s}`;
+      }),
+      changedVars: [],
+      annotation: `✅ Original list now has salary added: ${namesDepts.map(e => e.name).join(', ')}`,
+    }));
+
+    return steps;
+  },
+};
+
+/* ═══════════════════════════════════════
    Config 11 — Parse Log Entries (py-parselogs)
    ═══════════════════════════════════════ */
 
@@ -1829,6 +1966,7 @@ const pythonConfigs: VisualConfig[] = [
   customersWhoBoughtAll,
   sortBySalary,
   mergeEmployeeData,
+  mergeSimple,
   parseLogs,
   highPayingDepts,
   forwardFill,
