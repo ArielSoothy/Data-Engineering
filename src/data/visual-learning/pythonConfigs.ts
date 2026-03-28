@@ -31,6 +31,14 @@ const twoSum: VisualConfig = {
   question: 'Given a list of numbers and a target, return the indices of two numbers that add up to the target.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Find two numbers that add up to target. Return indices.
+What do I see? → A list of numbers and a target number.
+What pattern is this? → "Find a pair" → complement check → dict as memory.
+My plan:
+  1. For each number, calculate what I NEED (target - num)
+  2. Check if I've seen that number before (dict lookup)
+  3. If yes → return both indices. If no → remember this one.
+This is one pass through the list. Dict gives O(1) lookup.`,
     logic: 'Find two numbers in a list that add up to a target. Return their indices.',
     decomposition: 'For each number, check if the complement (target - num) was seen before. If yes → done. If no → remember this number.',
     translation: 'Dict as memory (seen[num] = index). One pass through the list. enumerate() for index + value.',
@@ -167,6 +175,13 @@ const containsDuplicate: VisualConfig = {
   question: 'Given a list of numbers, return True if any value appears at least twice, False if every element is distinct.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Check if any number appears twice.
+What do I see? → A list of numbers.
+What pattern is this? → "Have I seen this before?" → set as memory.
+My plan:
+  1. Walk through the list
+  2. For each number: is it in my set? Yes → duplicate. No → add it.
+  3. If I finish the loop with no duplicates → return False.`,
     logic: 'Check if any number appears more than once in the list.',
     decomposition: 'Track what we\'ve seen. For each number: already seen → duplicate. Not seen → add it.',
     translation: 'Set for O(1) lookup. One loop. Return True/False.',
@@ -271,6 +286,14 @@ const validAnagram: VisualConfig = {
   question: 'Given two strings s and t, return True if t is an anagram of s (uses the same characters the same number of times).',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Check if two strings use same letters same number of times.
+What do I see? → Two strings.
+What pattern is this? → Counting → frequency counter dict.
+My plan:
+  1. Quick check: different lengths → immediately False
+  2. Count each char in string s (+1)
+  3. Subtract each char in string t (-1)
+  4. If any count goes negative → not anagram.`,
     logic: 'Check if two strings use the exact same characters the same number of times.',
     decomposition: 'Count chars in string s (+1 each). Count chars in string t (-1 each). If any count goes negative → not anagram.',
     translation: 'Dict as counter. Two loops (one per string). Early return on negative.',
@@ -406,6 +429,14 @@ const groupAnagrams: VisualConfig = {
   question: 'Given a list of strings, group the anagrams together. Return a list of groups.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Group strings that are anagrams together.
+What do I see? → A list of strings.
+What pattern is this? → Grouping → dict of lists. But what's the key?
+Key insight: anagrams have the same letters when sorted. "eat" and "tea" both sort to "aet".
+My plan:
+  1. For each string, sort its letters → that's the key
+  2. Group strings with the same key into lists
+  3. Return all the groups.`,
     logic: 'Group strings that are anagrams of each other together.',
     decomposition: 'Anagrams have the same letters sorted. Sort each string → use as key → group strings with same key.',
     translation: 'Dict of lists. Key = sorted letters. sorted() + join(). Append original string to its group.',
@@ -494,6 +525,13 @@ const topKFrequent: VisualConfig = {
   question: 'Given a list of numbers and an integer k, return the k most frequent elements.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Find the k most common numbers.
+What do I see? → A list of numbers and k.
+What pattern is this? → Count + sort → frequency counter then sort by count.
+My plan:
+  1. Count how often each number appears (dict)
+  2. Sort the numbers by their count (highest first)
+  3. Take the first k.`,
     logic: 'Find the k numbers that appear most often in the list.',
     decomposition: 'Count how many times each number appears. Sort by count descending. Take first k.',
     translation: 'Dict as counter (+= 1). sorted() with key=lambda. Slice [:k].',
@@ -597,6 +635,13 @@ const groupByDepartment: VisualConfig = {
   question: 'Given a list of employee dicts, return a dict where each key is a department and each value is a list of employee names in that department.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Group employee names by department.
+What do I see? → List of dicts with name + department.
+What pattern is this? → Grouping → dict of lists.
+My plan:
+  1. Create empty dict (dept → list of names)
+  2. For each employee: if dept not in dict → create list. Append name.
+  3. Return the dict.`,
     logic: 'Group employee names by their department.',
     decomposition: 'For each employee: get dept and name. If dept is new → create list. Append name to dept list.',
     translation: 'Dict of lists. if key not in dict → create []. .append() to add.',
@@ -735,6 +780,14 @@ const highestPaidPerDept: VisualConfig = {
   question: 'Given a list of employee dicts (name, department, salary), return a dict where each key is a department and the value is the name of the highest-paid employee in that department.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Highest-paid employee name per department.
+What do I see? → List of dicts with name, department, salary.
+What pattern is this? → "Best per group" → two-dict tracker.
+My plan:
+  1. Two dicts: top_name (the answer) and top_salary (the gatekeeper)
+  2. For each employee: is dept new OR salary beats current best?
+  3. If yes → update BOTH dicts. If no → skip.
+  4. Return top_name only. top_salary was just for comparing.`,
     logic: 'Find the highest-paid employee name in each department.',
     decomposition: 'Track the best name AND salary per dept. For each employee: new dept → store. Higher salary → replace. Lower → skip.',
     translation: 'Two dicts (top_name, top_salary). top_salary is the gatekeeper — only CHECK it. Update both together. Return top_name.',
@@ -943,6 +996,15 @@ const customersWhoBoughtAll: VisualConfig = {
   question: 'Given a list of order dicts and a list of required products, return the names of customers who bought EVERY product in the required list.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Customers who bought EVERY required product.
+What do I see? → Orders list + required products list.
+What pattern is this? → Group + compare → dict of sets + issubset.
+My plan:
+  1. Turn required products into a set
+  2. Group each customer's products into a set (dict of sets)
+  3. For each customer: is required a subset of what they bought?
+  4. If yes → add to result.
+Key line: required.issubset(their_set) = "is everything I need inside what they have?"`,
     logic: 'Find customers who bought EVERY product in a given list.',
     decomposition: 'Turn required products into a set. Group each customer\'s purchases into a set. Check: is required a subset of what they bought?',
     translation: 'set() for required. Dict of sets for bought. .add() to build sets. issubset() to compare. List for results.',
@@ -1114,6 +1176,13 @@ const sortBySalary: VisualConfig = {
   question: 'Given a list of employee dicts, return a list of names sorted by salary from highest to lowest.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Names sorted by salary, highest first.
+What do I see? → List of employee dicts.
+What pattern is this? → Sort by field → sorted() + key=lambda.
+My plan:
+  1. sorted(employees, key=lambda x: x["salary"], reverse=True)
+  2. Loop the sorted list, extract just the names
+  3. Return the names list.`,
     logic: 'Return employee names sorted by salary, highest first.',
     decomposition: 'Sort the list by a specific field (salary). Extract just the names in that order.',
     translation: 'sorted() with key=lambda x: x["salary"]. reverse=True for descending. Loop + append to extract names (or list comprehension shortcut).',
@@ -1234,6 +1303,13 @@ const mergeEmployeeData: VisualConfig = {
   question: 'Given two lists — one with names and departments, another with names and salaries — combine them into a single list where each dict has name, department, and salary.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Combine two lists into one — names/depts from one, salaries from another.
+What do I see? → Two lists with the same "name" field. This is a JOIN.
+What pattern is this? → Two sources, shared key → lookup dict (Python JOIN).
+My plan:
+  1. Build lookup from salaries: name → salary (so I can find any salary instantly)
+  2. Loop names_depts, look up each salary, build combined dict
+  3. Return the merged list.`,
     logic: 'Combine two lists into one — names/depts from one, salaries from another, matched by name.',
     decomposition: 'Build a lookup dict from salaries (name → salary). Loop names_depts, look up each salary, build merged dicts.',
     translation: 'Dict as lookup table. Two loops: one to build map, one to merge. Append merged dicts to result list.',
@@ -1415,6 +1491,12 @@ const mergeSimple: VisualConfig = {
   category: 'python',
   question: 'Given two lists — one with names and departments, another with names and salaries — add the salary to each employee dict directly. Modify the original list.',
   thinking: {
+    scenario: `Same as the full merge, but simpler — modify the original instead of building new dicts.
+My plan:
+  1. Build the same lookup: name → salary
+  2. Loop names_depts, add salary key directly: emp["salary"] = salary_map[emp["name"]]
+  3. Return the modified list.
+Trade-off: fewer lines but changes the original data. Mention this to interviewer.`,
     logic: 'Add salary data to each employee by looking it up from another list.',
     decomposition: 'Build a name→salary lookup from the salaries list. Loop names_depts, look up each salary, add it as a new key directly.',
     translation: 'Dict as lookup. One loop to build, one loop to mutate. emp["salary"] = salary_map[emp["name"]] adds the key.',
@@ -1553,6 +1635,14 @@ const parseLogs: VisualConfig = {
   question: 'Given a list of log strings (format: "DATE LEVEL: message"), return only the messages from ERROR-level logs.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Only the ERROR messages from log strings.
+What do I see? → List of strings like "2026-03-15 ERROR: Connection timeout".
+What pattern is this? → Filter → loop + check condition + append.
+My plan:
+  1. Split each string into 3 parts: date, level, message
+  2. Check if level is "ERROR"
+  3. If yes → keep the message part
+Key: split(" ", 2) limits to 3 pieces so the message stays intact.`,
     logic: 'Extract just the error messages from a list of log strings.',
     decomposition: 'For each log: split into parts (date, level, message). Check if level is ERROR. If yes, keep the message.',
     translation: 'str.split(" ", 2) to break into 3 parts. .replace(":", "") to clean level. if/append to filter.',
@@ -1708,6 +1798,14 @@ const highPayingDepts: VisualConfig = {
   question: 'Given a list of employee dicts, return departments where the average salary exceeds 80,000, sorted by average salary descending.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Departments where avg salary > 80k, sorted by avg.
+What do I see? → List of employee dicts.
+What pattern is this? → Group + calculate + filter + sort — combines everything.
+My plan:
+  1. Two-dict accumulation: dept_totals (+=salary), dept_counts (+=1)
+  2. Calculate avg per dept: totals // counts
+  3. Filter: only keep depts where avg > 80000
+  4. Sort by avg salary descending (sorted + lambda).`,
     logic: 'Find departments where average salary exceeds 80k, sorted by avg salary descending.',
     decomposition: 'Group salaries by dept (track totals and counts). Calculate avg per dept. Filter > 80000. Sort by avg descending.',
     translation: 'Two dicts (dept_totals, dept_counts). += to accumulate. Integer division // for avg. if to filter. sorted() + lambda to sort result.',
@@ -1871,6 +1969,14 @@ const forwardFill: VisualConfig = {
   question: 'Given a list that may contain None values, replace each None with the most recent non-None value that came before it.',
   category: 'python',
   thinking: {
+    scenario: `What do they want? → Replace None gaps with the last real value.
+What do I see? → A list with some None values mixed in.
+What pattern is this? → Tracker variable → remember last real value, fill gaps.
+My plan:
+  1. last_val = None (nothing seen yet)
+  2. Walk through the list by index
+  3. Real value → update last_val. None → replace with last_val.
+Edge case: None at the very start stays None (no previous value).`,
     logic: 'Given a list with None gaps, fill each None with the most recent non-None value before it.',
     decomposition: 'Track the last seen real value. Walk through the list: if real value → update tracker. If None → replace with tracker.',
     translation: 'last_val variable as memory. for i in range(len(arr)) for index access. is not None / is None checks. Direct assignment arr[i] = last_val.',

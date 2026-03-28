@@ -240,6 +240,21 @@ export default function VisualLearning() {
             />
           )}
 
+          {/* Interview Scenario Walkthrough */}
+          {selectedConfig?.thinking?.scenario && (
+            <div className="rounded-2xl border border-emerald-800/40 overflow-hidden bg-gradient-to-b from-[#0a1a14] to-[#0d1117]">
+              <div className="px-5 py-3 border-b border-emerald-800/30 flex items-center gap-2">
+                <span className="text-lg">🎯</span>
+                <span className="text-sm font-semibold text-emerald-400 tracking-wide">How to Approach This (Interview Thinking)</span>
+              </div>
+              <div className="p-5">
+                <pre className="text-[13px] text-emerald-200/80 leading-relaxed whitespace-pre-wrap font-sans">
+                  {selectedConfig.thinking.scenario}
+                </pre>
+              </div>
+            </div>
+          )}
+
           {/* 4-Step Thinking Framework */}
           {selectedConfig && selectedConfig.thinking && (
             <div className="rounded-2xl border border-gray-700/50 overflow-hidden bg-gradient-to-b from-[#0d1117] to-[#161b22]">

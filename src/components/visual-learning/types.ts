@@ -32,6 +32,7 @@ export interface InputField {
 }
 
 export interface ThinkingSteps {
+  scenario?: string;
   logic: string;
   decomposition: string;
   translation: string;
