@@ -50,7 +50,6 @@ const SUBJECT_GROUPS: SubjectGroup[] = [
   { id: 'py-basics', name: 'Python Basics', category: 'Python', difficulty: 1, topics: ['Syntax', 'Loops/Control Flow', 'Functions'] },
   { id: 'py-collections', name: 'Python Collections', category: 'Python', difficulty: 1, topics: ['Data Structures', 'Lists/Comprehensions', 'Dicts/Counters', 'Sets'] },
   { id: 'py-strings', name: 'Python Strings & Sorting', category: 'Python', difficulty: 2, topics: ['Strings', 'Sorting'] },
-  { id: 'py-pandas', name: 'Python Pandas', category: 'Python', difficulty: 2, topics: ['Pandas'] },
   { id: 'py-patterns', name: 'Python Interview Patterns', category: 'Python', difficulty: 1, topics: ['Triggers', 'Traps'] },
 ];
 
@@ -280,13 +279,25 @@ const Dashboard = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{group.name}</span>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{group.name}</span>
+                        {pct === 100 && (
+                          <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500">
+                            <Check size={12} className="text-white" />
+                          </span>
+                        )}
+                        {pct >= 80 && pct < 100 && (
+                          <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full border-2 border-green-400 dark:border-green-500">
+                            <Check size={12} className="text-green-500 dark:text-green-400" />
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 shrink-0 ml-2">
                         <span className={`text-[10px] font-bold ${DIFF_COLORS[group.difficulty]}`}>{DIFF_LABELS[group.difficulty]}</span>
                         <span className="text-xs text-gray-400">{stats.mastered}/{stats.total}</span>
                       </div>
                     </div>
-                    <ProgressBar value={pct} color={barColor as 'blue' | 'green'} size="sm" />
+                    <ProgressBar value={pct} color={pct === 100 ? 'green' : barColor as 'blue' | 'green'} size="sm" />
                   </div>
                   <ChevronDown size={16} className={`shrink-0 text-gray-400 transition-transform ${isGroupExpanded ? 'rotate-180' : ''}`} />
                 </button>

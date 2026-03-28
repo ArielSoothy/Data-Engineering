@@ -16,9 +16,6 @@ export interface CategoryProgress {
   pythonBasics: QuestionProgress[];
   pythonAdvanced: QuestionProgress[];
   decompositionScenarios: QuestionProgress[];
-  azureServices: QuestionProgress[];
-  mockInterviews: QuestionProgress[];
-  adaptive: QuestionProgress[];
   metaOfficial: QuestionProgress[];
 }
 
@@ -64,9 +61,6 @@ const AppContext = createContext<AppContextType>({
     pythonBasics: [],
     pythonAdvanced: [],
     decompositionScenarios: [],
-    azureServices: [],
-    mockInterviews: [],
-    adaptive: [],
     metaOfficial: []
   },
   updateProgress: () => {},
@@ -95,9 +89,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       pythonBasics: [],
       pythonAdvanced: [],
       decompositionScenarios: [],
-      azureServices: [],
-      mockInterviews: [],
-      adaptive: [],
       metaOfficial: []
     };
     const savedProgress = localStorage.getItem('msInterviewProgress');
@@ -177,8 +168,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const getEstimatedTimeRemaining = useCallback((): number => {
     const categoryTimeEstimates: Record<keyof CategoryProgress, number> = {
       sqlBasics: 5, sqlAdvanced: 10, pythonBasics: 6, pythonAdvanced: 12,
-      decompositionScenarios: 20, azureServices: 8, mockInterviews: 30,
-      adaptive: 8, metaOfficial: 10
+      decompositionScenarios: 20, metaOfficial: 10
     };
     let totalMinutes = 0;
     Object.entries(progress).forEach(([category, questions]) => {

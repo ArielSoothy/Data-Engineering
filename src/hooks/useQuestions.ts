@@ -59,7 +59,7 @@ export const useQuestions = (category: string) => {
   const { progress, updateProgress } = useAppContext();
   
   // Map category name to progress key and file path
-  const getCategoryInfo = (cat: string): { progressKey: keyof typeof progress, filePath: string } => {
+  const getCategoryInfo = (cat: string): { progressKey: keyof typeof progress | null, filePath: string } => {
     switch (cat) {
       case 'pythonBasics':
         return { progressKey: 'pythonBasics', filePath: '/python-basics.json' };
@@ -72,9 +72,9 @@ export const useQuestions = (category: string) => {
       case 'decomposition-scenarios':
         return { progressKey: 'decompositionScenarios', filePath: '/decomposition-scenarios.json' };
       case 'data-stack':
-        return { progressKey: 'azureServices', filePath: '/data-stack.json' };
+        return { progressKey: null, filePath: '/data-stack.json' };
       case 'mock-interviews':
-        return { progressKey: 'mockInterviews', filePath: '/mock-interviews.json' };
+        return { progressKey: null, filePath: '/mock-interviews.json' };
       case 'meta-official':
         return { progressKey: 'metaOfficial', filePath: '/meta-official.json' };
       default:
@@ -124,12 +124,14 @@ export const useQuestions = (category: string) => {
   // Get completion status for a question
   const getQuestionProgress = (questionId: number): QuestionProgress | undefined => {
     const { progressKey } = getCategoryInfo(category);
+    if (!progressKey) return undefined;
     return progress[progressKey].find(q => q.id === questionId);
   };
-  
+
   // Mark a question as completed or not completed
   const toggleQuestionCompletion = (questionId: number, completed?: boolean) => {
     const { progressKey } = getCategoryInfo(category);
+    if (!progressKey) return;
     // If completed is not provided, toggle the current state
     const newState = completed ?? !getQuestionProgress(questionId)?.completed;
     updateProgress(progressKey, questionId, newState);

@@ -13,10 +13,7 @@ export const CATEGORY_TOTALS: Record<string, number> = {
   sqlBasics: 37,
   sqlAdvanced: 52,
   pythonBasics: 15,
-  pythonAdvanced: 38,
+  pythonAdvanced: 43,
   decompositionScenarios: 5,
-  azureServices: 10,
-  mockInterviews: 12,
-  adaptive: 30,
-  metaOfficial: 50,
+  metaOfficial: 34,
 };
