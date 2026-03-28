@@ -1248,7 +1248,13 @@ const mergeEmployeeData: VisualConfig = {
    - Look up salary from salary_map[emp["name"]]
    - Build merged dict with name, department, salary
    - Append to result
-5. Return result`,
+5. Return result
+
+SIMPLER VERSION (mutates original):
+  for emp in names_depts:
+      emp["salary"] = salary_map[emp["name"]]
+  return names_depts
+  (Skips creating new dicts — adds salary key directly)`,
   solutionCode: MERGE_DATA_CODE,
   inputs: [
     {
