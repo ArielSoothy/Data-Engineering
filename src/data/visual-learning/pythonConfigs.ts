@@ -15,13 +15,13 @@ function mkStep(
    ═══════════════════════════════════════ */
 
 const TWO_SUM_CODE = `def two_sum(nums, target):
-    seen = {}
-    for i, num in enumerate(nums):
-        diff = target - num
-        if diff in seen:
-            return [seen[diff], i]
-        seen[num] = i
-    return []`;
+    seen = {}                        # lookup dict: number → its index
+    for i, num in enumerate(nums):   # loop with index + value
+        diff = target - num          # what number do we need?
+        if diff in seen:             # have we seen it before?
+            return [seen[diff], i]   # yes → return both indices
+        seen[num] = i                # no → remember this number's index
+    return []                        # no pair found`;
 
 const twoSum: VisualConfig = {
   questionId: 'lc-1',
@@ -152,12 +152,12 @@ const twoSum: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const CONTAINS_DUP_CODE = `def contains_duplicate(nums):
-    seen = set()
-    for num in nums:
-        if num in seen:
+    seen = set()             # track numbers we've seen
+    for num in nums:         # loop each number
+        if num in seen:      # already seen? → duplicate!
             return True
-        seen.add(num)
-    return False`;
+        seen.add(num)        # not seen → add to set
+    return False             # finished loop, no duplicates`;
 
 const containsDuplicate: VisualConfig = {
   questionId: 'lc-3',
@@ -252,16 +252,16 @@ const containsDuplicate: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const ANAGRAM_CODE = `def is_anagram(s, t):
-    if len(s) != len(t):
+    if len(s) != len(t):             # different lengths → impossible
         return False
-    count = {}
-    for c in s:
+    count = {}                       # character counter
+    for c in s:                      # count chars in s (+1)
         count[c] = count.get(c, 0) + 1
-    for c in t:
+    for c in t:                      # subtract chars in t (-1)
         count[c] = count.get(c, 0) - 1
-        if count[c] < 0:
+        if count[c] < 0:             # more in t than s → not anagram
             return False
-    return True`;
+    return True                      # all counts balanced`;
 
 const validAnagram: VisualConfig = {
   questionId: 'lc-2',
@@ -390,13 +390,13 @@ const validAnagram: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const GROUP_ANAGRAMS_CODE = `def group_anagrams(strs):
-    groups = {}
-    for s in strs:
-        key = ''.join(sorted(s))
-        if key not in groups:
-            groups[key] = []
-        groups[key].append(s)
-    return list(groups.values())`;
+    groups = {}                      # key=sorted letters, value=list of words
+    for s in strs:                   # loop each string
+        key = ''.join(sorted(s))     # sort letters: "eat" → "aet"
+        if key not in groups:        # new group?
+            groups[key] = []         # create empty list
+        groups[key].append(s)        # add original word to group
+    return list(groups.values())     # return all groups`;
 
 const groupAnagrams: VisualConfig = {
   questionId: 'lc-8',
@@ -479,12 +479,12 @@ const groupAnagrams: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const TOP_K_CODE = `def top_k_frequent(nums, k):
-    count = {}
-    for num in nums:
+    count = {}                       # frequency counter
+    for num in nums:                 # count each number
         count[num] = count.get(num, 0) + 1
-    sorted_keys = sorted(count.keys(),
+    sorted_keys = sorted(count.keys(),   # sort by frequency
         key=lambda x: count[x], reverse=True)
-    return sorted_keys[:k]`;
+    return sorted_keys[:k]           # take first k`;
 
 const topKFrequent: VisualConfig = {
   questionId: 'lc-23',
@@ -569,13 +569,13 @@ const topKFrequent: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const GROUP_BY_DEPT_CODE = `def group_by_department(employees):
-    result = {}
-    for emp in employees:
-        dept = emp["department"]
-        name = emp["name"]
-        if dept not in result:
-            result[dept] = []
-        result[dept].append(name)
+    result = {}                      # dept → list of names
+    for emp in employees:            # loop each employee
+        dept = emp["department"]     # get department
+        name = emp["name"]          # get name
+        if dept not in result:       # new department?
+            result[dept] = []        # create empty list
+        result[dept].append(name)    # add name to dept list
     return result`;
 
 const DEFAULT_EMPLOYEES = [
@@ -718,14 +718,14 @@ const groupByDepartment: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const HIGHEST_PAID_CODE = `def highest_paid_per_dept(employees):
-    top_name = {}
-    top_salary = {}
-    for emp in employees:
-        dept = emp["department"]
+    top_name = {}                    # answer dict: dept → name
+    top_salary = {}                  # gatekeeper: dept → salary (CHECK this)
+    for emp in employees:            # loop each employee
+        dept = emp["department"]     # get department
         if dept not in top_salary or emp["salary"] > top_salary[dept]:
-            top_name[dept] = emp["name"]
-            top_salary[dept] = emp["salary"]
-    return top_name`;
+            top_name[dept] = emp["name"]      # update answer
+            top_salary[dept] = emp["salary"]   # update gatekeeper
+    return top_name                  # return answer only`;
 
 const highestPaidPerDept: VisualConfig = {
   questionId: 'py-highpaid',
@@ -909,17 +909,17 @@ const highestPaidPerDept: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const BOUGHT_ALL_CODE = `def customers_who_bought_all(orders, products):
-    required = set(products)
-    bought = {}
-    for order in orders:
-        cust = order["customer"]
-        if cust not in bought:
-            bought[cust] = set()
-        bought[cust].add(order["product"])
-    result = []
-    for cust, prods in bought.items():
-        if required.issubset(prods):
-            result.append(cust)
+    required = set(products)         # what we check against
+    bought = {}                      # customer → set of products
+    for order in orders:             # loop each order
+        cust = order["customer"]     # get customer name
+        if cust not in bought:       # first time seeing them?
+            bought[cust] = set()     # create empty set
+        bought[cust].add(order["product"])  # add product to their set
+    result = []                      # list of qualifying customers
+    for cust, prods in bought.items():     # check each customer
+        if required.issubset(prods):       # did they buy everything?
+            result.append(cust)            # yes → add to result
     return result`;
 
 interface Order { customer: string; product: string; amount: number }
@@ -1098,12 +1098,12 @@ const customersWhoBoughtAll: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const SORT_SALARY_CODE = `def sort_by_salary(employees):
-    sorted_emps = sorted(employees,
-        key=lambda x: x["salary"],
-        reverse=True)
-    result = []
-    for emp in sorted_emps:
-        result.append(emp["name"])
+    sorted_emps = sorted(employees,  # sort the list
+        key=lambda x: x["salary"],   # by salary field
+        reverse=True)                # highest first
+    result = []                      # list for names
+    for emp in sorted_emps:          # loop sorted list
+        result.append(emp["name"])   # extract just the name
     return result`;
 
 const sortBySalary: VisualConfig = {
@@ -1215,15 +1215,15 @@ const sortBySalary: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const MERGE_DATA_CODE = `def merge_employee_data(names_depts, salaries):
-    salary_map = {}
-    for s in salaries:
-        salary_map[s["name"]] = s["salary"]
-    result = []
-    for emp in names_depts:
-        merged = {"name": emp["name"],
-                  "department": emp["department"],
-                  "salary": salary_map[emp["name"]]}
-        result.append(merged)
+    salary_map = {}                          # lookup dict: name → salary
+    for s in salaries:                       # build the index
+        salary_map[s["name"]] = s["salary"]  # key=name, value=salary
+    result = []                              # final combined list
+    for emp in names_depts:                  # loop other list
+        merged = {"name": emp["name"],       # name from this list
+                  "department": emp["department"],  # dept from this list
+                  "salary": salary_map[emp["name"]]}  # salary from LOOKUP
+        result.append(merged)                # add combined dict
     return result`;
 
 const mergeEmployeeData: VisualConfig = {
@@ -1394,12 +1394,12 @@ const mergeEmployeeData: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const PARSE_LOGS_CODE = `def get_errors(logs):
-    result = []
-    for log in logs:
-        parts = log.split(" ", 2)
-        level = parts[1].replace(":", "")
-        if level == "ERROR":
-            result.append(parts[2])
+    result = []                      # list for error messages
+    for log in logs:                 # loop each log string
+        parts = log.split(" ", 2)    # split into 3 parts max
+        level = parts[1].replace(":", "")  # "ERROR:" → "ERROR"
+        if level == "ERROR":         # is it an error?
+            result.append(parts[2])  # keep the message part
     return result`;
 
 const parseLogs: VisualConfig = {
@@ -1539,21 +1539,21 @@ const parseLogs: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const HIGH_PAYING_DEPTS_CODE = `def high_paying_depts(employees):
-    dept_totals = {}
-    dept_counts = {}
-    for emp in employees:
+    dept_totals = {}                 # running salary sum per dept
+    dept_counts = {}                 # employee count per dept
+    for emp in employees:            # loop each employee
         dept = emp["department"]
-        if dept not in dept_totals:
-            dept_totals[dept] = 0
-            dept_counts[dept] = 0
-        dept_totals[dept] += emp["salary"]
-        dept_counts[dept] += 1
+        if dept not in dept_totals:  # new department?
+            dept_totals[dept] = 0    # init sum
+            dept_counts[dept] = 0    # init count
+        dept_totals[dept] += emp["salary"]   # add to sum
+        dept_counts[dept] += 1               # increment count
     result = []
-    for dept in dept_totals:
-        avg = dept_totals[dept] // dept_counts[dept]
-        if avg > 80000:
+    for dept in dept_totals:         # check each department
+        avg = dept_totals[dept] // dept_counts[dept]  # calculate avg
+        if avg > 80000:              # above threshold?
             result.append({"department": dept, "avg_salary": avg})
-    return sorted(result,
+    return sorted(result,            # sort by avg salary
         key=lambda x: x["avg_salary"],
         reverse=True)`;
 
@@ -1712,12 +1712,12 @@ const highPayingDepts: VisualConfig = {
    ═══════════════════════════════════════ */
 
 const FORWARD_FILL_CODE = `def forward_fill(arr):
-    last_val = None
-    for i in range(len(arr)):
-        if arr[i] is not None:
-            last_val = arr[i]
-        else:
-            arr[i] = last_val
+    last_val = None                  # no value seen yet
+    for i in range(len(arr)):        # need index to overwrite
+        if arr[i] is not None:       # real value?
+            last_val = arr[i]        # update memory
+        else:                        # None (gap)?
+            arr[i] = last_val        # fill with last known value
     return arr`;
 
 const forwardFill: VisualConfig = {
