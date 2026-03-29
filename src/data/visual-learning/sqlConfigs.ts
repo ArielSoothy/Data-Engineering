@@ -24,6 +24,22 @@ const innerJoinConfig: VisualConfig = {
   question: 'Write a query to show each employee\'s name along with their department name, only for employees who have a department assigned.',
   category: 'sql',
   thinking: {
+    scenario: `What do they want? → Employee names with their department names. Only if they HAVE a department.
+What pattern? → Two tables, shared key → JOIN.
+
+BEFORE:
+employees: Alice(dept 1), Bob(dept 2), Eve(dept NULL)
+departments: 1=Engineering, 2=Marketing
+
+Step 1 — JOIN ON dept_id = id:
+  Alice + Engineering ✅ (match)
+  Bob + Marketing ✅ (match)
+  Eve → no match → EXCLUDED
+
+AFTER:
+  Alice | Engineering
+  Bob   | Marketing
+  (Eve is gone — INNER JOIN only keeps matches)`,
     logic: 'Combine data from two tables where they share a matching key.',
     decomposition: 'For each row in table A, find the matching row in table B. Only keep rows that match in BOTH tables.',
     translation: 'INNER JOIN ... ON a.key = b.key. Only matched rows survive.',
@@ -193,6 +209,25 @@ const leftJoinConfig: VisualConfig = {
   question: 'Write a query to show all employees and their department names, including employees who have no department assigned (show NULL).',
   category: 'sql',
   thinking: {
+    scenario: `What do they want? → ALL employees, even those without a department.
+What pattern? → Need everything from left table → LEFT JOIN.
+
+BEFORE:
+employees: Alice(dept 1), Bob(dept 2), Eve(dept NULL)
+departments: 1=Engineering, 2=Marketing
+
+Step 1 — LEFT JOIN ON dept_id = id:
+  Alice + Engineering ✅ (match)
+  Bob + Marketing ✅ (match)
+  Eve + NULL ✅ (kept! filled with NULL)
+
+AFTER:
+  Alice | Engineering
+  Bob   | Marketing
+  Eve   | NULL          ← LEFT JOIN keeps her
+
+To find "employees with no department":
+  Add WHERE dept_name IS NULL → only Eve remains.`,
     logic: 'Get all rows from the left table, even if they have no match on the right.',
     decomposition: 'Keep every left row. If match exists → combine. If no match → fill right columns with NULL.',
     translation: 'LEFT JOIN ... ON. Trigger: "never", "missing", "don\'t have". Filter NULLs with WHERE right.col IS NULL.',
@@ -369,6 +404,27 @@ const groupByConfig: VisualConfig = {
   question: 'Write a query to find departments with more than 1 employee. Show the department and the count.',
   category: 'sql',
   thinking: {
+    scenario: `What do they want? → Departments with more than 1 employee. Show count.
+What pattern? → "For each... more than N" → GROUP BY + HAVING.
+
+BEFORE:
+employees: Alice(dept 1), Bob(dept 2), Charlie(dept 1), Diana(dept 2), Eve(dept 1)
+
+Step 1 — GROUP BY dept_id (put into buckets):
+  Dept 1: [Alice, Charlie, Eve] → COUNT = 3
+  Dept 2: [Bob, Diana]         → COUNT = 2
+
+Step 2 — HAVING COUNT(*) > 1 (filter buckets):
+  Dept 1: 3 > 1 ✅ keep
+  Dept 2: 2 > 1 ✅ keep
+
+AFTER:
+  dept_id | emp_count
+  1       | 3
+  2       | 2
+
+WHY HAVING not WHERE? WHERE filters rows BEFORE grouping.
+HAVING filters groups AFTER grouping.`,
     logic: 'Count employees per department, but only show departments with more than 1.',
     decomposition: 'Group rows by department. Count each group. Filter: only keep groups where count > 1.',
     translation: 'GROUP BY column. COUNT(*). HAVING COUNT(*) > 1. (HAVING = WHERE for groups.)',
@@ -482,6 +538,28 @@ const caseWhenConfig: VisualConfig = {
   question: 'Write a query to count how many users have each status (active, inactive, pending) as separate columns in a single row.',
   category: 'sql',
   thinking: {
+    scenario: `What do they want? → Count active, inactive, and pending users as separate columns.
+What pattern? → Rows → columns (pivot) → SUM(CASE WHEN).
+
+BEFORE:
+users: active, inactive, active, pending, active, inactive
+
+Step 1 — CASE WHEN turns each row into 1 or 0:
+  active   → active=1, inactive=0, pending=0
+  inactive → active=0, inactive=1, pending=0
+  active   → active=1, inactive=0, pending=0
+  pending  → active=0, inactive=0, pending=1
+  active   → active=1, inactive=0, pending=0
+  inactive → active=0, inactive=1, pending=0
+
+Step 2 — SUM adds up the 1s:
+  active_count=3, inactive_count=2, pending_count=1
+
+AFTER:
+  active_count | inactive_count | pending_count
+  3            | 2              | 1
+
+Use SUM not COUNT — COUNT(0) counts the 0 too!`,
     logic: 'Count how many users are active, inactive, and pending — as separate columns.',
     decomposition: 'For each row, check status. Assign 1 to the matching category column. COUNT each category.',
     translation: 'COUNT(CASE WHEN status = X THEN 1 END) for each category. Pivot: rows → columns.',
@@ -581,6 +659,30 @@ const lagConfig: VisualConfig = {
   question: 'Write a query to show each day\'s revenue, the previous day\'s revenue, and the day-over-day change.',
   category: 'sql',
   thinking: {
+    scenario: `What do they want? → Each day's revenue with previous day's revenue and the change.
+What pattern? → "Compared to previous" → LAG.
+
+BEFORE:
+daily_revenue:
+  Jan: $50k, Feb: $62k, Mar: $55k
+
+Step 1 — ORDER BY date, LAG looks back one row:
+  Jan: revenue=$50k, prev=NULL (no previous!)
+  Feb: revenue=$62k, prev=$50k
+  Mar: revenue=$55k, prev=$62k
+
+Step 2 — Calculate change:
+  Jan: $50k - NULL = NULL
+  Feb: $62k - $50k = +$12k
+  Mar: $55k - $62k = -$7k
+
+AFTER:
+  month | revenue | prev_revenue | change
+  Jan   | 50000   | NULL         | NULL
+  Feb   | 62000   | 50000        | 12000
+  Mar   | 55000   | 62000        | -7000
+
+First row is always NULL — no previous to compare.`,
     logic: 'Show each day\'s revenue alongside the previous day\'s, and the difference.',
     decomposition: 'Order by date. For each row, look at the previous row\'s revenue. Subtract to get change.',
     translation: 'LAG(revenue) OVER (ORDER BY date). Subtract: revenue - LAG(revenue). First row = NULL (no previous).',
