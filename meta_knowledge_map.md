@@ -24,7 +24,7 @@
 | Metric | Count | Target | Pace |
 |--------|-------|--------|------|
 | Python problems solved (blank screen) | 20 | 50 | 7 medium drills locked (Days 17-22). All patterns covered. |
-| SQL problems solved (blank screen) | 12 | 50 | **CRITICAL: 0 new SQL since Day 16. Must drill Days 23-25** |
+| SQL problems solved (blank screen) | 20 | 50 | Day 22-24: drilled RANK+CTE, LAG, AVG CASE, LEFT JOIN, COUNT DISTINCT+HAVING, MIN/MAX, bookstore schema |
 | SQL Tier 1 skills (must know cold) | 10 of 11 | 11 | Only RIGHT/FULL JOIN missing (low priority) |
 | SQL Tier 2 skills (very likely) | 9 of 9 | 9 | ✅ COMPLETE |
 | SQL Tier 3 skills (possible) | 4 of 4 | 4 | ✅ COMPLETE |
@@ -32,7 +32,7 @@
 | StrataScratch Medium | 4 of 38 | 15-20 | Focus here for volume |
 | StrataScratch Hard | 0 of 16 | 5-8 | After mediums |
 | Days elapsed | 22 | 27 | — |
-| Ready for Meta screen | ~70% | 85%+ | Python patterns DONE. SQL volume is the last gap. |
+| Ready for Meta screen | ~80% | 85%+ | Python DONE. SQL patterns drilled. Need: timed mock + self-join practice + cold rewrites. |
 
 ---
 
@@ -344,14 +344,18 @@ Light review in morning. Screen at 1PM IST. No new material.
 
 ### How to Resume
 Start a new Claude Code conversation in this project directory and say:
-"Read meta_knowledge_map.md and meta_cheat_sheet.md. I'm Ariel, prepping for Meta DE screen March 31. We're drilling Python problems 4-7 (merge data, parse logs, high paying depts, forward fill) then SQL. Teach with etymology, one concept at a time (ZPD), and always explain the WHY. Use the 4-step framework: Logic → Decompose → Translate → Write."
+"Read meta_knowledge_map.md, meta_cheat_sheet.md, and .meta_prep_update1.md. I'm Ariel, prepping for Meta DE screen TOMORROW March 31 1PM IST. Python 7 patterns locked. SQL patterns drilled. Need: timed mock (25 min SQL + 25 min Python), self-join practice, and cold rewrites. Teach with etymology, one concept at a time (ZPD), show full answer then I write back. Pattern recognition > logic > syntax. Read the drill protocol in .meta_prep_update1.md."
 
-### Session Progress (Days 17-22)
+### Session Progress (Days 17-24)
 - Built 18 visual learning drills on website (13 Python + 5 SQL) with live values, pseudo code, edge cases, trade-offs
 - Added Screen Day Prep page at /screen-prep with Q&A scripts, SQL shapes, Python patterns, behavioral answers
 - Locked Python problems 1-3 through blank-screen drilling
 - Deep understanding sessions on: dicts, sets, O(1) lookups, function parameters, tuples, issubset direction
-- **NOT DONE YET:** Problems 4-7 (seen solutions, not written cold), SQL drilling (0 new problems since Day 16)
+- **Python DONE:** All 7 drill patterns locked. Pattern recognition working.
+- **SQL Day 22-24:** Drilled GROUP BY+HAVING, RANK+CTE+PARTITION BY, LAG+percentage, AVG CASE %, LEFT JOIN+IS NULL, COUNT DISTINCT+HAVING, MIN/MAX, bookstore schema questions, correlated subqueries, OFFSET/LIMIT
+- **NOT DONE:** Self-join (practiced 0 real problems), timed mock (25+25 min), cold rewrites under pressure
+- **Key SQL patterns covered:** top-N-per-group, percentage, never/missing, MoM growth, both-X-and-Y, first/last per group, UNION vs UNION ALL (concept)
+- **Website updates:** 14 Python + 5 SQL visual drills with interview scenarios, Write drill mode (65 questions), cheat sheet rewrite, Screen Day Prep page, dashboard cleanup
 
 ### Learning Preferences (for any AI tutor)
 - Explain etymology/naming origins of new keywords (builds confidence for non-CS background)
