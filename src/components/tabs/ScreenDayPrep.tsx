@@ -279,7 +279,7 @@ const ScreenDayPrep = () => {
         />
         <ScriptItem
           text="Let me walk through my thinking out loud..."
-          note="Emeka WANTS to hear this"
+          note="the interviewer WANTS to hear this"
         />
         <ScriptItem
           text="I know there might be a more efficient way, but let me get the correct logic first."
@@ -317,7 +317,7 @@ const ScreenDayPrep = () => {
         />
         <BehavioralCard
           question="Tell me about a challenging project"
-          answer="I built a unified data system at PayScale Inc — consolidating 14 sub-companies into Snowflake with a medallion architecture. The challenge was mapping different schemas to one canonical model."
+          answer="I built a unified data system at PayScale Inc — consolidating multiple subsidiaries into Snowflake with a medallion architecture. The challenge was mapping different schemas to one canonical model."
         />
         <BehavioralCard
           question="How do you handle disagreements?"

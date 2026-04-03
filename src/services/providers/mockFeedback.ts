@@ -36,7 +36,7 @@ Keep practicing at this level!`;
 **Missing for Meta:**
 - Add more detail about ${correctKeywords.slice(0, 2).join(', ')}
 - Include petabyte-scale and idempotency considerations
-- Reference your pipeline experience at Acme Corp/PayScale Inc when relevant
+- Reference your pipeline experience at previous companies when relevant
 
 **Next Steps:** Review the complete answer and practice explaining it concisely.`;
   } else {
