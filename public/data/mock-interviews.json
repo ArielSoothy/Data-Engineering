@@ -82,40 +82,40 @@
     },
     {
       "id": 3,
-      "title": "Azure Services & Architecture Mock Interview",
+      "title": "Meta Data Infrastructure Mock Interview",
       "duration": 30,
       "questions": [
         {
           "id": 1,
-          "question": "Compare Azure Data Factory and Azure Databricks. When would you choose one over the other?",
-          "expectedAnswer": "Azure Data Factory is an ETL service for creating data pipelines with a code-free experience, best for orchestration and simple transformations. Azure Databricks is a Spark-based analytics platform ideal for complex transformations, ML, and interactive data analysis. I'd use ADF for orchestration and simple ETL workflows, and Databricks for complex transformations, machine learning, or when Spark's distributed computing is needed.",
+          "question": "Compare Scribe and Spark at Meta. When would you choose one over the other?",
+          "expectedAnswer": "Scribe is Meta's distributed log aggregation and event streaming system, designed to reliably collect and deliver billions of events per day from thousands of services to downstream consumers. Spark (via Spark on YARN clusters) is Meta's distributed processing engine for large-scale data transformations, feature engineering, and ML training. I'd use Scribe for real-time event ingestion and log collection — it excels at high-throughput, low-latency delivery of raw event streams. I'd use Spark for complex batch transformations, joins across petabyte-scale datasets, and compute-heavy operations like training data generation. In practice, they work together: Scribe delivers raw events into data warehouse tables, and Spark processes those tables into curated datasets.",
           "difficulty": "Medium",
-          "category": "Azure Services",
+          "category": "Meta Infrastructure",
           "followUpQuestions": [
-            "How would you integrate these two services?",
-            "What are the cost considerations for each?"
+            "How do Scribe and Spark work together in a typical Meta data pipeline?",
+            "What are the throughput and latency characteristics of each?"
           ]
         },
         {
           "id": 2,
-          "question": "Design a data architecture for a retail company that needs real-time inventory management across 500 stores.",
-          "expectedAnswer": "I would design: 1) Store systems using Azure IoT Hub or Event Hubs to capture inventory changes, 2) Azure Stream Analytics for real-time processing, 3) Azure Cosmos DB with multi-region writes for the operational data store, 4) Azure Synapse Analytics for historical analysis, 5) Power BI for dashboards. This architecture provides real-time inventory visibility while supporting historical analysis.",
+          "question": "Design a data architecture for Meta Marketplace that needs to process real-time listing updates across billions of daily transactions.",
+          "expectedAnswer": "I would design: 1) Listing creation and update events flow into Scribe for reliable event streaming at billions of events per day, 2) A Flink streaming job consumes from Scribe for real-time indexing and fraud detection with sub-second latency, 3) Processed events land in Hive/warehouse tables partitioned by date for batch analytics, 4) Presto serves as the interactive SQL query engine for analysts running ad-hoc queries across petabytes of historical listing data, 5) Spark batch jobs compute daily aggregates like category trends, pricing signals, and seller quality scores. This architecture separates the real-time path (Scribe + Flink) from the analytical path (Hive + Presto + Spark) for independent scaling.",
           "difficulty": "Hard",
           "category": "System Design",
           "followUpQuestions": [
-            "How would you handle offline scenarios at the stores?",
-            "How would you scale this solution to handle seasonal traffic spikes?"
+            "How would you handle a sudden spike in listings during a holiday sale event?",
+            "How would you ensure data consistency between the real-time and batch paths?"
           ]
         },
         {
           "id": 3,
-          "question": "Explain the concept of data partitioning in Azure Synapse Analytics and best practices for choosing a partition key.",
-          "expectedAnswer": "Data partitioning in Synapse Analytics horizontally divides tables into smaller segments to improve query performance and manage data lifecycles. Best practices for choosing a partition key include: 1) Select a column with low-to-medium cardinality, 2) Pick columns frequently used in WHERE clauses, especially date columns, 3) Ensure even data distribution across partitions, 4) Limit the number of partitions to avoid overhead (typically <1000), 5) Align with the table's distribution key for optimal joins.",
+          "question": "Explain how data partitioning works in Presto at Meta and best practices for choosing a partition key for petabyte-scale tables.",
+          "expectedAnswer": "In Presto, data partitioning divides tables stored in Hive into smaller segments (typically backed by HDFS directories) to enable partition pruning — Presto only scans partitions that match the query's WHERE clause, which is critical at Meta's petabyte scale. Best practices for choosing a partition key: 1) Use date columns (ds) as the primary partition key since most queries filter by date range and this is Meta's standard convention, 2) Keep cardinality manageable — daily partitions work well, hourly only if query patterns require it, 3) Ensure even data distribution to avoid partition skew where one partition has 10x the data of others, 4) Align with downstream query patterns — if analysts always filter by country, consider it as a secondary partition, 5) Use columnar formats (ORC/Parquet) within partitions for additional column pruning. At Meta, a typical fact table partitioned by ds with billions of rows per day achieves sub-minute query times in Presto through partition pruning alone.",
           "difficulty": "Medium",
-          "category": "Azure Services",
+          "category": "Meta Infrastructure",
           "followUpQuestions": [
-            "How does partitioning differ from distribution in Synapse?",
-            "How would you implement partition switching for data lifecycle management?"
+            "How does partition pruning interact with Presto's query optimizer?",
+            "What happens when a partition has significantly more data than others and how do you handle the skew?"
           ]
         }
       ]

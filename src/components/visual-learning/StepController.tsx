@@ -60,7 +60,7 @@ export default function StepController({
           />
         </div>
         {/* Step dots */}
-        <div className="absolute inset-0 flex items-center justify-between px-0" style={{ pointerEvents: 'none' }}>
+        <div className="absolute inset-0 flex items-center justify-between px-0 pointer-events-none">
           {totalSteps <= 20 && Array.from({ length: totalSteps }).map((_, i) => (
             <div
               key={i}

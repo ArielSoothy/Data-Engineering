@@ -46,8 +46,8 @@ const Glossary = () => {
         const response = await fetch('./data/data-engineering-glossary.json');
         const data = await response.json();
         setGlossaryData(data);
-      } catch (error) {
-        console.error('Error loading glossary data:', error);
+      } catch {
+        // fetch failure — glossary will show loading state
       }
     };
 

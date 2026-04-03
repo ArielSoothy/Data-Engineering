@@ -1,7 +1,6 @@
 // Claude provider — extracted from the original claudeApi.ts
 // API key stored in localStorage key `claude_api_key`
 
-import axios from 'axios';
 import { CONTEXT_PROMPT } from './prompts';
 import { generateMockFeedback } from './mockFeedback';
 import { AI_MODELS } from '../../config';
@@ -61,45 +60,50 @@ Keep feedback practical and interview-focused (not academic).`
   };
 
   try {
-    const response = await axios.post(
-      CLAUDE_API_URL,
-      payload,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
-        },
-        timeout: 30000
-      }
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    if (response.data?.content?.[0]?.text) {
-      return response.data.content[0].text;
+    const response = await fetch(CLAUDE_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      if (response.status === 401) throw new Error('Invalid Claude API key. Please check your key in AI Settings.');
+      if (response.status === 429) throw new Error('Claude rate limit exceeded. Please try again in a moment.');
+      if (response.status === 404) throw new Error('Claude model not found. Please check the model name.');
+      if (response.status === 400) {
+        const errData = await response.json().catch(() => ({}));
+        const errorMessage = (errData as { error?: { message?: string } })?.error?.message || 'Invalid request';
+        throw new Error(`Claude API error: ${errorMessage}`);
+      }
+      throw new Error(`Claude API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data?.content?.[0]?.text) {
+      return data.content[0].text;
     }
 
     throw new Error('Unexpected response format from Claude API');
   } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 401) {
-        throw new Error('Invalid Claude API key. Please check your key in AI Settings.');
-      } else if (error.response?.status === 429) {
-        throw new Error('Claude rate limit exceeded. Please try again in a moment.');
-      } else if (error.response?.status === 400) {
-        const errorMessage = (error.response.data as { error?: { message?: string } })?.error?.message || 'Invalid request';
-        throw new Error(`Claude API error: ${errorMessage}`);
-      } else if (error.response?.status === 404) {
-        throw new Error('Claude model not found. Please check the model name.');
-      } else if (error.code === 'ECONNABORTED') {
-        throw new Error('Request timeout. Please try again.');
-      }
-      const msg = error.message;
-      if (msg.includes('Network Error')) {
-        throw new Error('Network error. Please check your internet connection.');
-      }
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('Request timeout. Please try again.');
     }
-
-    // Unexpected errors → fall back to mock
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Network error. Please check your internet connection.');
+    }
+    if (error instanceof Error && error.message.startsWith('Claude')) {
+      throw error;
+    }
     return generateMockFeedback(userAnswer, correctAnswer);
   }
 };
@@ -110,26 +114,31 @@ export const generateRaw = async (prompt: string): Promise<string> => {
   if (!apiKey) throw new Error('No Claude API key');
 
   const model = import.meta.env.VITE_CLAUDE_MODEL || DEFAULT_MODEL;
-  const response = await axios.post(
-    CLAUDE_API_URL,
-    {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  const response = await fetch(CLAUDE_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
       model,
       messages: [{ role: 'user', content: prompt }],
       system: CONTEXT_PROMPT,
       max_tokens: 800,
       temperature: 0.3
-    },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      timeout: 30000
-    }
-  );
+    }),
+    signal: controller.signal
+  });
 
-  const text = response.data?.content?.[0]?.text;
+  clearTimeout(timeoutId);
+
+  if (!response.ok) throw new Error(`Claude API error: ${response.status}`);
+  const data = await response.json();
+  const text = data?.content?.[0]?.text;
   if (!text) throw new Error('Empty Claude response');
   return text;
 };

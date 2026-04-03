@@ -105,7 +105,7 @@ const Dashboard = () => {
 
   const daysRemaining = useMemo(() => {
     const diff = Math.ceil((INTERVIEW_DATE.getTime() - Date.now()) / 86400000);
-    return Math.max(0, diff);
+    return diff;
   }, []);
 
   // Mark card as done/undone
@@ -237,14 +237,18 @@ const Dashboard = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">DE Prep</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            {daysRemaining > 0 ? `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} to Meta interview` : 'Interview day!'}
+            {daysRemaining > 0
+              ? `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} to Meta interview`
+              : 'Meta DE Interview Prep'}
           </p>
         </div>
-        <Card padding="none" className="px-4 py-2 text-center rounded-xl">
-          <Clock size={14} className="mx-auto mb-0.5 text-gray-400" />
-          <div className="text-lg font-bold">{daysRemaining}</div>
-          <div className="text-[10px] text-gray-400 uppercase tracking-wider">Days</div>
-        </Card>
+        {daysRemaining > 0 && (
+          <Card padding="none" className="px-4 py-2 text-center rounded-xl">
+            <Clock size={14} className="mx-auto mb-0.5 text-gray-400" />
+            <div className="text-lg font-bold">{daysRemaining}</div>
+            <div className="text-[10px] text-gray-400 uppercase tracking-wider">Days</div>
+          </Card>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -7,28 +7,18 @@ import { Spinner } from './components/ui';
 // Eagerly loaded (always visible)
 import Dashboard from './components/tabs/Dashboard';
 
-// Lazy-loaded tabs
-const SQLBasics = lazy(() => import('./components/tabs/SQLBasics'));
-const SQLAdvanced = lazy(() => import('./components/tabs/SQLAdvanced'));
-const PythonBasics = lazy(() => import('./components/tabs/PythonBasics'));
-const PythonAdvanced = lazy(() => import('./components/tabs/PythonAdvanced'));
-const Trivia = lazy(() => import('./components/tabs/Trivia'));
+// Lazy-loaded tabs (12 routes)
 const Glossary = lazy(() => import('./components/tabs/Glossary'));
 const Decomposition = lazy(() => import('./components/tabs/Decomposition'));
 const MetaTechStack = lazy(() => import('./components/tabs/MetaTechStack'));
 const MyProjects = lazy(() => import('./components/tabs/MyProjects'));
-const AdaptivePractice = lazy(() => import('./components/tabs/AdaptivePractice'));
-const MetaOfficial = lazy(() => import('./components/tabs/MetaOfficial'));
-const QuickDrill = lazy(() => import('./components/tabs/QuickDrill'));
-const StudyHub = lazy(() => import('./components/study-hub/StudyHub'));
 const QuickMode = lazy(() => import('./components/quick-mode/QuickMode'));
 const DeepMode = lazy(() => import('./components/deep-mode/DeepMode'));
 const CheatSheet = lazy(() => import('./components/tabs/CheatSheet'));
 const LeetCodePractice = lazy(() => import('./components/tabs/LeetCodePractice'));
-const ApiTest = lazy(() => import('./components/ApiTest').then(m => ({ default: m.ApiTest })));
-const ApiDiagnostic = lazy(() => import('./components/ApiDiagnostic').then(m => ({ default: m.ApiDiagnostic })));
 const VisualLearning = lazy(() => import('./components/visual-learning/VisualLearning'));
 const ScreenDayPrep = lazy(() => import('./components/tabs/ScreenDayPrep'));
+const CoderPad = lazy(() => import('./components/tabs/CoderPad'));
 
 const DarkModeInitializer = () => {
   const { preferences } = useAppContext();
@@ -57,30 +47,20 @@ function App() {
       <BrowserRouter>
         <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50">
           <TabNavigation />
-          <main className="pb-32 md:pb-8">
+          <main className="pb-20 md:pb-8">
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/sql-basics" element={<SQLBasics />} />
-                <Route path="/sql-advanced" element={<SQLAdvanced />} />
-                <Route path="/python-basics" element={<PythonBasics />} />
-                <Route path="/python-advanced" element={<PythonAdvanced />} />
-                <Route path="/trivia" element={<Trivia />} />
-                <Route path="/adaptive" element={<AdaptivePractice />} />
-                <Route path="/glossary" element={<Glossary />} />
-                <Route path="/decomposition" element={<Decomposition />} />
-                <Route path="/tech-stack" element={<MetaTechStack />} />
-                <Route path="/my-projects" element={<MyProjects />} />
-                <Route path="/meta-official" element={<MetaOfficial />} />
-                <Route path="/quick-drill" element={<QuickDrill />} />
                 <Route path="/quick" element={<QuickMode />} />
                 <Route path="/deep" element={<DeepMode />} />
                 <Route path="/cheat-sheet" element={<CheatSheet />} />
+                <Route path="/my-projects" element={<MyProjects />} />
+                <Route path="/decomposition" element={<Decomposition />} />
+                <Route path="/tech-stack" element={<MetaTechStack />} />
+                <Route path="/glossary" element={<Glossary />} />
                 <Route path="/code-practice" element={<LeetCodePractice />} />
-                <Route path="/study" element={<StudyHub />} />
-                <Route path="/api-test" element={<ApiTest />} />
-                <Route path="/api-diagnostic" element={<ApiDiagnostic />} />
                 <Route path="/visual" element={<VisualLearning />} />
+                <Route path="/coderpad" element={<CoderPad />} />
                 <Route path="/screen-prep" element={<ScreenDayPrep />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

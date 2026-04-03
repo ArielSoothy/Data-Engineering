@@ -146,8 +146,7 @@ export async function fetchAndNormalize(config: SourceConfig): Promise<UnifiedQu
 export async function fetchAllQuestions(): Promise<UnifiedQuestion[]> {
   const results = await Promise.all(
     SOURCE_CONFIGS.map(config =>
-      fetchAndNormalize(config).catch(err => {
-        console.warn(`[StudyHub] Failed to load ${config.source}:`, err);
+      fetchAndNormalize(config).catch(() => {
         return [] as UnifiedQuestion[];
       })
     )

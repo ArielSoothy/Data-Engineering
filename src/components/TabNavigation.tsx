@@ -5,7 +5,7 @@ import {
   LayoutDashboard, BarChart, Cloud,
   Book, Moon, Sun, GraduationCap,
   Briefcase, Menu, X,
-  Zap, Code2, FileText, Terminal, Eye
+  Zap, Code2, FileText, Terminal, Eye, Shield
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -44,6 +44,8 @@ const TabNavigation = () => {
     { id: 'glossary', label: 'Glossary', icon: <Book size={20} />, path: '/glossary' },
     { id: 'code-practice', label: 'Code Practice', icon: <Terminal size={20} />, path: '/code-practice' },
     { id: 'visual', label: 'Visual Learning', icon: <Eye size={20} />, path: '/visual' },
+    { id: 'coderpad', label: 'CoderPad Sim', icon: <Terminal size={20} />, path: '/coderpad' },
+    { id: 'screen-prep', label: 'Screen Prep', icon: <Shield size={20} />, path: '/screen-prep' },
   ];
 
   // Secondary tabs for More drawer (exclude primary tabs)

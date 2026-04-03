@@ -53,8 +53,8 @@ function loadProgress(): ProgressMap {
 function saveProgress(p: ProgressMap) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-  } catch (e) {
-    console.warn('[LeetCodePractice] Failed to save progress:', e);
+  } catch {
+    /* persist failure — non-critical */
   }
 }
 

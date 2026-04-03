@@ -110,7 +110,7 @@ export const useQuestions = (category: string) => {
         
         setError(null);
       } catch (err) {
-        console.error('Error fetching data:', err);
+        if (import.meta.env.DEV) console.error('Error fetching data:', err);
         setError('Failed to load data. Please try again later.');
         setData([]);
       } finally {

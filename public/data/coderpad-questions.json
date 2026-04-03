@@ -1,0 +1,192 @@
+[
+  {
+    "id": "sql-1",
+    "phase": "sql",
+    "difficulty": "Easy",
+    "title": "Daily Active Users",
+    "timeEstimate": 4,
+    "question": "Given a table of user events, find the number of unique users active on each day in March 2024.\n\nReturn columns: day, dau\nOrder by day ascending.",
+    "schema": "Table: user_events\n\n| Column     | Type    |\n|------------|---------|  \n| event_id   | INTEGER |\n| user_id    | INTEGER |\n| event_type | TEXT    |\n| event_ts   | TEXT    |\n\nevent_type values: page_view, click, search, add_to_cart, checkout_start, purchase, app_open\n\n100 events across 20 users.\nUsers 1-15: active in March 2024\nUsers 16-20: active in February only (churned)",
+    "sampleData": "event_id | user_id | event_type | event_ts\n---------|---------|------------|--------------------\n1        | 1       | page_view  | 2024-03-01 08:15:00\n2        | 1       | search     | 2024-03-01 08:20:00\n16       | 2       | page_view  | 2024-03-01 10:00:00\n26       | 3       | app_open   | 2024-03-01 07:00:00\n54       | 6       | page_view  | 2024-03-01 14:00:00",
+    "expectedOutput": "day        | dau\n-----------|----\n2024-03-01 | 9\n2024-03-02 | 8\n2024-03-03 | 8\n2024-03-04 | 7\n2024-03-05 | 8\n2024-03-06 | 5\n2024-03-07 | 4\n2024-03-08 | 3",
+    "starterCode": "-- Daily Active Users\n-- Find unique users per day in March 2024\n\nSELECT\n\nFROM user_events\n",
+    "solution": "SELECT\n  date(event_ts) AS day,\n  COUNT(DISTINCT user_id) AS dau\nFROM user_events\nWHERE event_ts >= '2024-03-01'\n  AND event_ts < '2024-04-01'\nGROUP BY date(event_ts)\nORDER BY day;",
+    "hints": [
+      "COUNT(DISTINCT user_id) counts unique users — not total events",
+      "date(event_ts) extracts just the date from a timestamp",
+      "GROUP BY the date, filter to March with WHERE"
+    ],
+    "pgNotes": "PostgreSQL: use event_ts::date or DATE(event_ts) instead of date(event_ts)"
+  },
+  {
+    "id": "sql-2",
+    "phase": "sql",
+    "difficulty": "Easy",
+    "title": "Customers Who Never Purchased",
+    "timeEstimate": 5,
+    "question": "Find all customers who registered but never made a purchase.\n\nReturn columns: customer_id, name\nOrder by customer_id ascending.",
+    "schema": "Table: bookstore_customers\n\n| Column            | Type    |\n|-------------------|---------|  \n| customer_id       | INTEGER |\n| name              | TEXT    |\n| email             | TEXT    |\n| phone             | TEXT    |\n| registration_date | TEXT    |\n| referred_by       | INTEGER |\n\n15 customers total.\n\nTable: bookstore_transactions\n\n| Column         | Type    |\n|----------------|---------|  \n| transaction_id | INTEGER |\n| customer_id    | INTEGER |\n| book_id        | INTEGER |\n| purchase_date  | TEXT    |\n| payment_type   | TEXT    |\n| amount         | REAL    |\n\n40 transactions. Not every customer has purchased.",
+    "sampleData": "bookstore_customers:\ncustomer_id | name           | registration_date\n------------|----------------|------------------\n1           | Olivia Harper  | 2023-01-10\n2           | Noah Bennett   | 2023-01-25\n11          | Mia Turner     | 2023-06-12\n\nbookstore_transactions:\ntransaction_id | customer_id | book_id | amount\n---------------|-------------|---------|-------\n1              | 1           | 1       | 24.99\n2              | 1           | 7       | 21.99",
+    "expectedOutput": "customer_id | name\n------------|------------------\n11          | Mia Turner\n12          | Alexander Ward\n13          | Charlotte Morgan\n14          | Benjamin Cooper\n15          | Amelia Gray",
+    "starterCode": "-- Customers Who Never Purchased\n-- Find registered customers with zero transactions\n\nSELECT\n\nFROM bookstore_customers\n",
+    "solution": "SELECT\n  c.customer_id,\n  c.name\nFROM bookstore_customers c\nLEFT JOIN bookstore_transactions t\n  ON c.customer_id = t.customer_id\nWHERE t.transaction_id IS NULL\nORDER BY c.customer_id;",
+    "hints": [
+      "LEFT JOIN keeps ALL customers, even those with no matching transactions",
+      "After LEFT JOIN, unmatched rows have NULL in the right table's columns",
+      "WHERE t.transaction_id IS NULL filters to only unmatched (never purchased) customers"
+    ],
+    "pgNotes": "Same syntax in PostgreSQL. Alternative: NOT EXISTS (SELECT 1 FROM bookstore_transactions t WHERE t.customer_id = c.customer_id)"
+  },
+  {
+    "id": "sql-3",
+    "phase": "sql",
+    "difficulty": "Medium",
+    "title": "Top Spender Each Month",
+    "timeEstimate": 6,
+    "question": "For each month, find the customer who spent the most total amount. Include ties.\n\nReturn columns: month, customer_name, total_spent\nOrder by month ascending.",
+    "schema": "Table: bookstore_customers\n| customer_id | name | email | phone | registration_date | referred_by |\n\nTable: bookstore_transactions\n| transaction_id | customer_id | book_id | purchase_date | payment_type | amount |\n\n40 transactions across 10 customers (IDs 1-10). Purchases span Jan-Nov 2023.",
+    "sampleData": "bookstore_transactions (sample):\ntxn_id | customer_id | purchase_date | amount\n-------|-------------|---------------|-------\n1      | 1           | 2023-01-10    | 24.99\n2      | 1           | 2023-01-10    | 21.99\n3      | 1           | 2023-01-10    | 15.99\n4      | 1           | 2023-01-10    | 14.99\n10     | 2           | 2023-02-03    | 19.99",
+    "expectedOutput": "month   | customer_name    | total_spent\n--------|------------------|------------\n2023-01 | Olivia Harper    | 77.96\n2023-02 | Emma Sullivan    | 27.99\n2023-03 | Ava Richardson   | 62.5\n2023-04 | Sophia Coleman   | 65.97\n2023-05 | Isabella Reed    | 28.99\n2023-06 | Sophia Coleman   | 25.5\n...(continues through Nov)",
+    "starterCode": "-- Top Spender Each Month\n-- Use CTE + window function to rank customers per month\n\n",
+    "solution": "WITH monthly_spend AS (\n  SELECT\n    t.customer_id,\n    strftime('%Y-%m', t.purchase_date) AS month,\n    ROUND(SUM(t.amount), 2) AS total_spent\n  FROM bookstore_transactions t\n  GROUP BY t.customer_id, strftime('%Y-%m', t.purchase_date)\n),\nranked AS (\n  SELECT\n    ms.month,\n    c.name AS customer_name,\n    ms.total_spent,\n    RANK() OVER (PARTITION BY ms.month ORDER BY ms.total_spent DESC) AS rnk\n  FROM monthly_spend ms\n  JOIN bookstore_customers c ON ms.customer_id = c.customer_id\n)\nSELECT month, customer_name, total_spent\nFROM ranked\nWHERE rnk = 1\nORDER BY month;",
+    "hints": [
+      "Step 1: CTE to calculate total spend per customer per month (GROUP BY customer + month)",
+      "Step 2: RANK() OVER (PARTITION BY month ORDER BY total DESC) — ranks within each month",
+      "Step 3: Filter WHERE rnk = 1 to get the top spender. RANK handles ties."
+    ],
+    "pgNotes": "PostgreSQL: use TO_CHAR(purchase_date::date, 'YYYY-MM') instead of strftime('%Y-%m', purchase_date)"
+  },
+  {
+    "id": "sql-4",
+    "phase": "sql",
+    "difficulty": "Medium",
+    "title": "Purchase Conversion Rate",
+    "timeEstimate": 6,
+    "question": "Calculate the purchase conversion rate: what percentage of users active in March 2024 made at least one purchase?\n\nReturn a single value: conversion_rate (rounded to 1 decimal place).",
+    "schema": "Table: user_events\n| event_id | user_id | event_type | event_ts |\n\nevent_type values: page_view, click, search, add_to_cart, checkout_start, purchase, app_open\n\n15 users active in March 2024 (users 1-15).\n6 of them made at least one purchase.",
+    "sampleData": "Users with purchases in March 2024:\nuser_id 1: 3 purchases (Mar 1, 3, 7)\nuser_id 2: 1 purchase (Mar 5)\nuser_id 3: 1 purchase (Mar 3)\nuser_id 4: 1 purchase (Mar 4)\nuser_id 5: 1 purchase (Mar 4)\nuser_id 6: 1 purchase (Mar 7)\n\nOther users (7-15): active but no purchases",
+    "expectedOutput": "conversion_rate\n---------------\n40.0",
+    "starterCode": "-- Purchase Conversion Rate\n-- What % of March 2024 users made a purchase?\n\n",
+    "solution": "WITH march_users AS (\n  SELECT DISTINCT user_id\n  FROM user_events\n  WHERE event_ts >= '2024-03-01'\n    AND event_ts < '2024-04-01'\n)\nSELECT\n  ROUND(\n    AVG(CASE\n      WHEN user_id IN (\n        SELECT DISTINCT user_id\n        FROM user_events\n        WHERE event_type = 'purchase'\n          AND event_ts >= '2024-03-01'\n          AND event_ts < '2024-04-01'\n      ) THEN 1.0\n      ELSE 0\n    END) * 100\n  , 1) AS conversion_rate\nFROM march_users;",
+    "hints": [
+      "AVG(CASE WHEN ... THEN 1.0 ELSE 0 END) * 100 = percentage trick",
+      "First find all March users (CTE), then check which ones purchased",
+      "1.0 not 1 — forces decimal math for accurate percentage"
+    ],
+    "pgNotes": "Same syntax in PostgreSQL. The AVG(CASE WHEN) percentage pattern is universal."
+  },
+  {
+    "id": "sql-5",
+    "phase": "sql",
+    "difficulty": "Hard",
+    "title": "Month-over-Month Revenue Growth",
+    "timeEstimate": 7,
+    "question": "Calculate the month-over-month bookstore revenue and growth rate.\n\nFor each month, show:\n- month (YYYY-MM format)\n- revenue (total sales, rounded to 2 decimals)\n- prev_revenue (previous month, NULL for first month)\n- growth_pct (percentage change, rounded to 1 decimal, NULL for first month)\n\nOrder by month ascending.",
+    "schema": "Table: bookstore_transactions\n| transaction_id | customer_id | book_id | purchase_date | payment_type | amount |\n\n40 transactions spanning January to November 2023.\nAmounts range from 13.99 to 29.99.",
+    "sampleData": "transaction_id | customer_id | purchase_date | amount\n---------------|-------------|---------------|-------\n1              | 1           | 2023-01-10    | 24.99\n2              | 1           | 2023-01-10    | 21.99\n10             | 2           | 2023-02-03    | 19.99\n18             | 5           | 2023-03-01    | 22.50",
+    "expectedOutput": "month   | revenue | prev_revenue | growth_pct\n--------|---------|--------------|----------\n2023-01 | 77.96   | NULL         | NULL\n2023-02 | 73.48   | 77.96        | -5.7\n2023-03 | 79.49   | 73.48        | 8.2\n2023-04 | 168.94  | 79.49        | 112.5\n2023-05 | 74.97   | 168.94       | -55.6\n...(continues through Nov)",
+    "starterCode": "-- Month-over-Month Revenue Growth\n-- Use CTE + LAG window function\n\n",
+    "solution": "WITH monthly_rev AS (\n  SELECT\n    strftime('%Y-%m', purchase_date) AS month,\n    ROUND(SUM(amount), 2) AS revenue\n  FROM bookstore_transactions\n  GROUP BY strftime('%Y-%m', purchase_date)\n)\nSELECT\n  month,\n  revenue,\n  LAG(revenue) OVER (ORDER BY month) AS prev_revenue,\n  ROUND(\n    (revenue - LAG(revenue) OVER (ORDER BY month)) * 100.0\n    / LAG(revenue) OVER (ORDER BY month)\n  , 1) AS growth_pct\nFROM monthly_rev\nORDER BY month;",
+    "hints": [
+      "Step 1: CTE to get total revenue per month using SUM + GROUP BY",
+      "LAG(revenue) OVER (ORDER BY month) gives the previous month's revenue",
+      "Growth formula: (new - old) * 100.0 / old — use 100.0 not 100 for decimal math"
+    ],
+    "pgNotes": "PostgreSQL: use TO_CHAR(purchase_date::date, 'YYYY-MM') instead of strftime. LAG works identically."
+  },
+  {
+    "id": "sql-6",
+    "phase": "sql",
+    "difficulty": "Hard",
+    "title": "Users with 3+ Consecutive Active Days",
+    "timeEstimate": 8,
+    "question": "Find users who were active for at least 3 consecutive days in March 2024. Show each user's longest streak.\n\nReturn columns: user_id, max_consecutive_days\nOrder by max_consecutive_days DESC, then user_id ASC.",
+    "schema": "Table: user_events\n| event_id | user_id | event_type | event_ts |\n\nUsers 1-5 are power users (active most days in March).\nUsers 6-10 are regular users (every 2-3 days).\nUsers 11-15 are casual users (weekly).",
+    "sampleData": "User 1 active days: Mar 1, 2, 3, 4, 5, 6, 7 (7 consecutive)\nUser 2 active days: Mar 1, 2, 3, 4, 5, 6 (6 consecutive)\nUser 3 active days: Mar 1, 2, 3, 4, 5 (5 consecutive)\nUser 6 active days: Mar 1, 3, 5, 7 (NOT consecutive)",
+    "expectedOutput": "user_id | max_consecutive_days\n--------|---------------------\n1       | 7\n2       | 6\n4       | 6\n3       | 5\n5       | 5",
+    "starterCode": "-- Consecutive Active Days\n-- Island detection: find streaks of consecutive days\n\n",
+    "solution": "WITH daily AS (\n  SELECT DISTINCT\n    user_id,\n    date(event_ts) AS d\n  FROM user_events\n  WHERE event_ts >= '2024-03-01'\n    AND event_ts < '2024-04-01'\n),\ngrouped AS (\n  SELECT\n    user_id,\n    d,\n    julianday(d) - ROW_NUMBER() OVER (\n      PARTITION BY user_id ORDER BY d\n    ) AS grp\n  FROM daily\n),\nstreaks AS (\n  SELECT\n    user_id,\n    COUNT(*) AS streak_len\n  FROM grouped\n  GROUP BY user_id, grp\n)\nSELECT\n  user_id,\n  MAX(streak_len) AS max_consecutive_days\nFROM streaks\nGROUP BY user_id\nHAVING MAX(streak_len) >= 3\nORDER BY max_consecutive_days DESC, user_id;",
+    "hints": [
+      "Island detection: subtract ROW_NUMBER from the date — consecutive dates produce the same group value",
+      "julianday() converts a date to a number. Consecutive dates differ by 1.",
+      "Three CTEs: (1) distinct user+date, (2) assign group via date-ROW_NUMBER, (3) count per group"
+    ],
+    "pgNotes": "PostgreSQL: use (d - ROW_NUMBER() OVER(...)::int * INTERVAL '1 day') as grp, or d - ROW_NUMBER()::int. The island detection pattern is the same."
+  },
+  {
+    "id": "py-1",
+    "phase": "python",
+    "difficulty": "Easy",
+    "title": "Group Users by Activity Level",
+    "timeEstimate": 5,
+    "question": "Given a list of user activity summaries, group users by activity level:\n- \"power\": 30+ events\n- \"regular\": 10-29 events\n- \"casual\": under 10 events\n\nReturn a dict with keys \"power\", \"regular\", \"casual\" mapping to lists of user_ids.\nOrder each list by user_id.",
+    "schema": "Input: list of dicts, each with 'user_id' (int) and 'events' (int)\nOutput: dict with 3 keys, each mapping to a list of user_ids",
+    "sampleData": "users = [\n  {\"user_id\": 1, \"events\": 45},   # power\n  {\"user_id\": 2, \"events\": 32},   # power\n  {\"user_id\": 3, \"events\": 8},    # casual\n  {\"user_id\": 6, \"events\": 15},   # regular\n  ...\n]",
+    "expectedOutput": "power: [1, 2, 4, 9]\nregular: [6, 7]\ncasual: [3, 5, 8, 10]",
+    "starterCode": "users = [\n    {\"user_id\": 1, \"events\": 45},\n    {\"user_id\": 2, \"events\": 32},\n    {\"user_id\": 3, \"events\": 8},\n    {\"user_id\": 4, \"events\": 52},\n    {\"user_id\": 5, \"events\": 3},\n    {\"user_id\": 6, \"events\": 15},\n    {\"user_id\": 7, \"events\": 28},\n    {\"user_id\": 8, \"events\": 5},\n    {\"user_id\": 9, \"events\": 41},\n    {\"user_id\": 10, \"events\": 1}\n]\n\ndef group_by_activity(users):\n    # Your code here\n    pass\n\nresult = group_by_activity(users)\nfor level in [\"power\", \"regular\", \"casual\"]:\n    print(f\"{level}: {result[level]}\")\n",
+    "solution": "users = [\n    {\"user_id\": 1, \"events\": 45},\n    {\"user_id\": 2, \"events\": 32},\n    {\"user_id\": 3, \"events\": 8},\n    {\"user_id\": 4, \"events\": 52},\n    {\"user_id\": 5, \"events\": 3},\n    {\"user_id\": 6, \"events\": 15},\n    {\"user_id\": 7, \"events\": 28},\n    {\"user_id\": 8, \"events\": 5},\n    {\"user_id\": 9, \"events\": 41},\n    {\"user_id\": 10, \"events\": 1}\n]\n\ndef group_by_activity(users):\n    result = {\"power\": [], \"regular\": [], \"casual\": []}\n    for user in users:\n        uid = user[\"user_id\"]\n        count = user[\"events\"]\n        if count >= 30:\n            result[\"power\"].append(uid)\n        elif count >= 10:\n            result[\"regular\"].append(uid)\n        else:\n            result[\"casual\"].append(uid)\n    return result\n\nresult = group_by_activity(users)\nfor level in [\"power\", \"regular\", \"casual\"]:\n    print(f\"{level}: {result[level]}\")\n",
+    "hints": [
+      "Start with an empty dict with 3 keys, each mapping to an empty list",
+      "Loop through users, check the event count with if/elif/else",
+      "Append user_id to the right list based on the threshold"
+    ],
+    "pgNotes": null
+  },
+  {
+    "id": "py-2",
+    "phase": "python",
+    "difficulty": "Medium",
+    "title": "Most Popular Item per Category",
+    "timeEstimate": 7,
+    "question": "Given a list of orders, find the most popular item (highest total quantity) in each category.\n\nIf there's a tie, return the item that appears first in the data.\n\nPrint each category and its top item.",
+    "schema": "Input: list of dicts with 'category' (str), 'item' (str), 'qty' (int)\nOutput: dict mapping category -> item name with highest total qty",
+    "sampleData": "orders = [\n  {\"category\": \"electronics\", \"item\": \"phone\", \"qty\": 12},\n  {\"category\": \"electronics\", \"item\": \"laptop\", \"qty\": 5},\n  {\"category\": \"food\", \"item\": \"pizza\", \"qty\": 30},\n  {\"category\": \"food\", \"item\": \"burger\", \"qty\": 30},\n  ...\n]",
+    "expectedOutput": "electronics: phone (total: 12)\nclothing: shirt (total: 20)\nfood: pizza (total: 50)",
+    "starterCode": "orders = [\n    {\"category\": \"electronics\", \"item\": \"laptop\", \"qty\": 5},\n    {\"category\": \"electronics\", \"item\": \"phone\", \"qty\": 12},\n    {\"category\": \"electronics\", \"item\": \"tablet\", \"qty\": 8},\n    {\"category\": \"electronics\", \"item\": \"phone\", \"qty\": 3},\n    {\"category\": \"clothing\", \"item\": \"shirt\", \"qty\": 20},\n    {\"category\": \"clothing\", \"item\": \"pants\", \"qty\": 15},\n    {\"category\": \"food\", \"item\": \"pizza\", \"qty\": 30},\n    {\"category\": \"food\", \"item\": \"salad\", \"qty\": 25},\n    {\"category\": \"food\", \"item\": \"pizza\", \"qty\": 20}\n]\n\ndef most_popular_per_category(orders):\n    # Your code here\n    pass\n\nresult = most_popular_per_category(orders)\nfor cat, (item, total) in sorted(result.items()):\n    print(f\"{cat}: {item} (total: {total})\")\n",
+    "solution": "orders = [\n    {\"category\": \"electronics\", \"item\": \"laptop\", \"qty\": 5},\n    {\"category\": \"electronics\", \"item\": \"phone\", \"qty\": 12},\n    {\"category\": \"electronics\", \"item\": \"tablet\", \"qty\": 8},\n    {\"category\": \"electronics\", \"item\": \"phone\", \"qty\": 3},\n    {\"category\": \"clothing\", \"item\": \"shirt\", \"qty\": 20},\n    {\"category\": \"clothing\", \"item\": \"pants\", \"qty\": 15},\n    {\"category\": \"food\", \"item\": \"pizza\", \"qty\": 30},\n    {\"category\": \"food\", \"item\": \"salad\", \"qty\": 25},\n    {\"category\": \"food\", \"item\": \"pizza\", \"qty\": 20}\n]\n\ndef most_popular_per_category(orders):\n    # Step 1: accumulate total qty per category+item\n    totals = {}\n    for order in orders:\n        cat = order[\"category\"]\n        item = order[\"item\"]\n        key = (cat, item)\n        if key not in totals:\n            totals[key] = 0\n        totals[key] += order[\"qty\"]\n    \n    # Step 2: find max per category (two-dict tracker)\n    top_item = {}\n    top_qty = {}\n    for (cat, item), qty in totals.items():\n        if cat not in top_qty or qty > top_qty[cat]:\n            top_item[cat] = item\n            top_qty[cat] = qty\n    \n    result = {}\n    for cat in top_item:\n        result[cat] = (top_item[cat], top_qty[cat])\n    return result\n\nresult = most_popular_per_category(orders)\nfor cat, (item, total) in sorted(result.items()):\n    print(f\"{cat}: {item} (total: {total})\")\n",
+    "hints": [
+      "First pass: accumulate total qty per (category, item) pair using a dict",
+      "Second pass: two-dict tracker — top_item[cat] and top_qty[cat]",
+      "Check: if cat not in top_qty OR qty > top_qty[cat], update both dicts"
+    ],
+    "pgNotes": null
+  },
+  {
+    "id": "py-3",
+    "phase": "python",
+    "difficulty": "Medium",
+    "title": "Funnel Drop-off Analysis",
+    "timeEstimate": 8,
+    "question": "Given a list of user events in a conversion funnel, calculate the number of unique users at each step and the drop-off percentage from the previous step.\n\nFunnel steps in order: view → click → add_to_cart → purchase\n\nA user counts at a step if they have at least one event of that type.\n\nPrint each step with user count and drop-off rate.",
+    "schema": "Input: list of dicts with 'user_id' (int) and 'step' (str)\nFunnel order: [\"view\", \"click\", \"add_to_cart\", \"purchase\"]\nOutput: for each step, count of unique users and drop-off % from previous",
+    "sampleData": "events include:\n- 5 users viewed\n- 4 users clicked\n- 3 users added to cart\n- 2 users purchased",
+    "expectedOutput": "view: 5 users (drop-off: 0.0%)\nclick: 4 users (drop-off: 20.0%)\nadd_to_cart: 3 users (drop-off: 25.0%)\npurchase: 2 users (drop-off: 33.3%)",
+    "starterCode": "events = [\n    {\"user_id\": 1, \"step\": \"view\"},\n    {\"user_id\": 2, \"step\": \"view\"},\n    {\"user_id\": 3, \"step\": \"view\"},\n    {\"user_id\": 4, \"step\": \"view\"},\n    {\"user_id\": 5, \"step\": \"view\"},\n    {\"user_id\": 1, \"step\": \"click\"},\n    {\"user_id\": 2, \"step\": \"click\"},\n    {\"user_id\": 3, \"step\": \"click\"},\n    {\"user_id\": 4, \"step\": \"click\"},\n    {\"user_id\": 1, \"step\": \"add_to_cart\"},\n    {\"user_id\": 2, \"step\": \"add_to_cart\"},\n    {\"user_id\": 3, \"step\": \"add_to_cart\"},\n    {\"user_id\": 1, \"step\": \"purchase\"},\n    {\"user_id\": 2, \"step\": \"purchase\"}\n]\n\nfunnel_steps = [\"view\", \"click\", \"add_to_cart\", \"purchase\"]\n\ndef calculate_funnel(events, funnel_steps):\n    # Your code here\n    pass\n\ncalculate_funnel(events, funnel_steps)\n",
+    "solution": "events = [\n    {\"user_id\": 1, \"step\": \"view\"},\n    {\"user_id\": 2, \"step\": \"view\"},\n    {\"user_id\": 3, \"step\": \"view\"},\n    {\"user_id\": 4, \"step\": \"view\"},\n    {\"user_id\": 5, \"step\": \"view\"},\n    {\"user_id\": 1, \"step\": \"click\"},\n    {\"user_id\": 2, \"step\": \"click\"},\n    {\"user_id\": 3, \"step\": \"click\"},\n    {\"user_id\": 4, \"step\": \"click\"},\n    {\"user_id\": 1, \"step\": \"add_to_cart\"},\n    {\"user_id\": 2, \"step\": \"add_to_cart\"},\n    {\"user_id\": 3, \"step\": \"add_to_cart\"},\n    {\"user_id\": 1, \"step\": \"purchase\"},\n    {\"user_id\": 2, \"step\": \"purchase\"}\n]\n\nfunnel_steps = [\"view\", \"click\", \"add_to_cart\", \"purchase\"]\n\ndef calculate_funnel(events, funnel_steps):\n    # Count unique users per step\n    step_users = {}\n    for event in events:\n        step = event[\"step\"]\n        uid = event[\"user_id\"]\n        if step not in step_users:\n            step_users[step] = set()\n        step_users[step].add(uid)\n    \n    prev_count = 0\n    for step in funnel_steps:\n        count = len(step_users.get(step, set()))\n        if prev_count == 0:\n            drop_off = 0.0\n        else:\n            drop_off = round((prev_count - count) / prev_count * 100, 1)\n        print(f\"{step}: {count} users (drop-off: {drop_off}%)\") \n        prev_count = count\n\ncalculate_funnel(events, funnel_steps)\n",
+    "hints": [
+      "Use a dict of sets to count unique users per step: step_users[step].add(user_id)",
+      "Loop through funnel_steps in order, calculate drop-off from previous step",
+      "Drop-off formula: (prev_count - current_count) / prev_count * 100"
+    ],
+    "pgNotes": null
+  },
+  {
+    "id": "py-4",
+    "phase": "python",
+    "difficulty": "Hard",
+    "title": "Session Attribution",
+    "timeEstimate": 10,
+    "question": "Given a list of user events with timestamps and traffic sources, group events into sessions and attribute each session to its source.\n\nA session is a group of events by the same user where no two consecutive events are more than 30 minutes apart.\n\nAttribute each session to the source of its FIRST event.\n\nReturn a dict mapping source → total number of sessions across all users.",
+    "schema": "Input: list of dicts with 'user_id', 'ts' (timestamp string), 'action', 'source'\nGap threshold: 30 minutes\nOutput: dict mapping source name → count of sessions attributed to that source",
+    "sampleData": "User 1:\n  08:00 google → 08:05 google  (session 1: google)\n  10:00 email → 10:02 email    (session 2: email, 115 min gap)\nUser 2:\n  09:00 direct → 09:10 direct  (session 3: direct)\n  12:00 google                  (session 4: google, 170 min gap)",
+    "expectedOutput": "google: 2\ndirect: 1\nemail: 1",
+    "starterCode": "events = [\n    {\"user_id\": 1, \"ts\": \"2024-03-01 08:00\", \"action\": \"view\", \"source\": \"google\"},\n    {\"user_id\": 1, \"ts\": \"2024-03-01 08:05\", \"action\": \"click\", \"source\": \"google\"},\n    {\"user_id\": 1, \"ts\": \"2024-03-01 10:00\", \"action\": \"view\", \"source\": \"email\"},\n    {\"user_id\": 1, \"ts\": \"2024-03-01 10:02\", \"action\": \"purchase\", \"source\": \"email\"},\n    {\"user_id\": 2, \"ts\": \"2024-03-01 09:00\", \"action\": \"view\", \"source\": \"direct\"},\n    {\"user_id\": 2, \"ts\": \"2024-03-01 09:10\", \"action\": \"click\", \"source\": \"direct\"},\n    {\"user_id\": 2, \"ts\": \"2024-03-01 12:00\", \"action\": \"view\", \"source\": \"google\"}\n]\n\ndef count_sessions_by_source(events, gap_minutes=30):\n    # Your code here\n    pass\n\nresult = count_sessions_by_source(events)\nfor source, count in sorted(result.items(), key=lambda x: -x[1]):\n    print(f\"{source}: {count}\")\n",
+    "solution": "from datetime import datetime\n\nevents = [\n    {\"user_id\": 1, \"ts\": \"2024-03-01 08:00\", \"action\": \"view\", \"source\": \"google\"},\n    {\"user_id\": 1, \"ts\": \"2024-03-01 08:05\", \"action\": \"click\", \"source\": \"google\"},\n    {\"user_id\": 1, \"ts\": \"2024-03-01 10:00\", \"action\": \"view\", \"source\": \"email\"},\n    {\"user_id\": 1, \"ts\": \"2024-03-01 10:02\", \"action\": \"purchase\", \"source\": \"email\"},\n    {\"user_id\": 2, \"ts\": \"2024-03-01 09:00\", \"action\": \"view\", \"source\": \"direct\"},\n    {\"user_id\": 2, \"ts\": \"2024-03-01 09:10\", \"action\": \"click\", \"source\": \"direct\"},\n    {\"user_id\": 2, \"ts\": \"2024-03-01 12:00\", \"action\": \"view\", \"source\": \"google\"}\n]\n\ndef count_sessions_by_source(events, gap_minutes=30):\n    # Step 1: group events by user\n    by_user = {}\n    for e in events:\n        uid = e[\"user_id\"]\n        if uid not in by_user:\n            by_user[uid] = []\n        by_user[uid].append(e)\n    \n    # Step 2: sort each user's events by timestamp\n    for uid in by_user:\n        by_user[uid].sort(key=lambda x: x[\"ts\"])\n    \n    # Step 3: walk through each user's events, detect session boundaries\n    source_counts = {}\n    for uid, user_events in by_user.items():\n        session_source = user_events[0][\"source\"]\n        prev_time = datetime.strptime(user_events[0][\"ts\"], \"%Y-%m-%d %H:%M\")\n        \n        for i in range(1, len(user_events)):\n            curr_time = datetime.strptime(user_events[i][\"ts\"], \"%Y-%m-%d %H:%M\")\n            diff_minutes = (curr_time - prev_time).total_seconds() / 60\n            \n            if diff_minutes > gap_minutes:\n                # Close previous session\n                if session_source not in source_counts:\n                    source_counts[session_source] = 0\n                source_counts[session_source] += 1\n                # Start new session\n                session_source = user_events[i][\"source\"]\n            \n            prev_time = curr_time\n        \n        # Close final session\n        if session_source not in source_counts:\n            source_counts[session_source] = 0\n        source_counts[session_source] += 1\n    \n    return source_counts\n\nresult = count_sessions_by_source(events)\nfor source, count in sorted(result.items(), key=lambda x: -x[1]):\n    print(f\"{source}: {count}\")\n",
+    "hints": [
+      "Step 1: Group events by user_id into a dict of lists, then sort each by timestamp",
+      "Step 2: Walk through each user's events. If gap > 30 min, close session and start new one",
+      "Track session_source (first event's source) and count sessions in a source_counts dict"
+    ],
+    "pgNotes": null
+  }
+]

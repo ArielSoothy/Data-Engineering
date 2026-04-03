@@ -3,13 +3,10 @@ import { DEFAULT_SYNC_CODE } from '../config';
 
 const DEVICE_ID_KEY = 'de_prep_device_id';
 const SYNC_KEYS = [
-  'msInterviewProgress',
-  'msInterviewPreferences',
+  'deInterviewProgress',
+  'deInterviewPreferences',
   'quick_drill_progress',
   'quick_drill_fsrs',
-  'study_hub_fsrs',
-  'daily_plan_completion',
-  'daily_plan_streak',
 ];
 
 function getDeviceId(): string {
@@ -65,7 +62,7 @@ function mergeProgressArrays(local: ProgressEntry[], cloud: ProgressEntry[]): Pr
   return Array.from(map.values());
 }
 
-/** Merge msInterviewProgress — per-category array merge */
+/** Merge deInterviewProgress — per-category array merge */
 function mergeInterviewProgress(local: Record<string, ProgressEntry[]>, cloud: Record<string, ProgressEntry[]>): Record<string, ProgressEntry[]> {
   const allKeys = new Set([...Object.keys(local), ...Object.keys(cloud)]);
   const merged: Record<string, ProgressEntry[]> = {};
@@ -106,7 +103,7 @@ function mergeAndApply(cloud: Record<string, unknown>) {
     if (raw) { try { local = JSON.parse(raw); } catch { /* skip */ } }
 
     let merged: any;
-    if (key === 'msInterviewProgress' && local && typeof local === 'object') {
+    if (key === 'deInterviewProgress' && local && typeof local === 'object') {
       merged = mergeInterviewProgress(local, cloud[key] as any);
     } else if (key === 'quick_drill_progress' && local && typeof local === 'object') {
       merged = mergeDrillProgress(local, cloud[key] as any);
@@ -142,7 +139,7 @@ export async function pushProgress(): Promise<void> {
     .upsert({ device_id: deviceId, data, updated_at: now }, { onConflict: 'device_id' });
 
   if (error) {
-    console.warn('[sync] push failed:', error.message);
+    if (import.meta.env.DEV) console.warn('[sync] push failed:', error.message);
   }
 }
 

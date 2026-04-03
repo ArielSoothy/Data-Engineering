@@ -95,7 +95,7 @@ export const useTimer = ({
             
             // Play sound if enabled
             if (playSound && audioRef.current) {
-              audioRef.current.play().catch(e => console.error('Error playing sound:', e));
+              audioRef.current.play().catch(e => { if (import.meta.env.DEV) console.error('Error playing sound:', e); });
             }
             
             // Call onComplete callback if provided

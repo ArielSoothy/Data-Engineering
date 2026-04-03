@@ -26,36 +26,6 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    // Debug logging
-    console.log('=== API Debug Info ===');
-    const rawKey = import.meta.env.VITE_CLAUDE_API_KEY;
-    const cleanedKey = typeof rawKey === 'string' 
-      ? rawKey.replace(/^["'](.*)["']$/, '$1').trim() 
-      : rawKey;
-      
-    console.log('Environment check:', {
-      hasKey: !!rawKey,
-      keyLength: rawKey?.length,
-      cleanedKeyLength: cleanedKey?.length,
-      firstChars: rawKey?.substring(0, 10),
-      lastChars: rawKey?.slice(-5),
-      keyType: typeof rawKey,
-      containsQuotes: typeof rawKey === 'string' && (rawKey.startsWith('"') || rawKey.startsWith("'"))
-    });
-    
-    if (typeof rawKey === 'string' && rawKey !== cleanedKey) {
-      console.log('⚠️ API key contains quotes or extra whitespace that may need to be removed');
-    }
-    
-    // Try to load API key from localStorage as a fallback 
-    // (will be there if user successfully tested on the test page)
-    const localStorageKey = localStorage.getItem('claude_api_key');
-    if (localStorageKey && (!rawKey || rawKey === 'undefined')) {
-      console.log('Using API key from localStorage instead of environment variables');
-    }
-    
-    console.log('===================');
-
     const userMessage = { role: 'user' as const, content: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
@@ -65,8 +35,6 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
       const feedback = await generateFeedback(question, input, answer);
       setMessages(prev => [...prev, { role: 'assistant', content: feedback }]);
     } catch (error: any) {
-      console.error('Failed to get feedback:', error);
-      
       // Provide a more helpful error message to the user
       const errorMessage = error.message || 'Unknown error';
       const isApiKeyError = errorMessage.includes('401') || 
@@ -155,10 +123,9 @@ export const PracticeChat = ({ question, answer }: PracticeChatProps) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type your answer here. Be comprehensive and detailed to get the best feedback..."
-            className="w-full p-2 md:p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm md:text-base"
+            className="w-full p-2 md:p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm md:text-base resize-y"
             disabled={isLoading}
             rows={3}
-            style={{ resize: 'vertical' }}
           />
           <div className="flex justify-end">
             <button

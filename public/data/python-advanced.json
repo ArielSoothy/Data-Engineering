@@ -8,7 +8,8 @@
       "metaRelevant": false,
       "answer": "# Before: Slow loop\nfor i in range(len(df)):\n    df.iloc[i, 'new_col'] = process(df.iloc[i, 'col'])\n\n# After: Vectorized operation\ndf['new_col'] = df['col'].map(process)\n\n# Memory optimization\ndf['category_col'] = df['category_col'].astype('category')\ndf['small_int'] = df['small_int'].astype('int32')\n\n# Chunking for large files\nimport pandas as pd\nchunk_size = 100000\nresult = []\n\nfor chunk in pd.read_csv('large_file.csv', chunksize=chunk_size):\n    processed = process_data(chunk)\n    result.append(processed)\n\nfinal_df = pd.concat(result)",
       "pseudoCode": "# Before: Slow loop\nfor i in range(len(df)):\n    df.iloc[i, 'new_col'] = process(df.iloc[i, 'col'])\n\n# After: Vectorized operation\ndf['new_col'] = df['col'].map(process)\n\n# Memory optimization\ndf['category_col'] = df['category_col'].astype('category')\ndf['small_int'] = df['small_int'].astype('int32')\n\n# Chunking for large files\nimport pandas as pd\nchunk_size = 100000\nresult = []\n\nfor chunk in pd.read_csv('large_file.csv', chunksize=chunk_size):\n    processed = process_data(chunk)\n    result.append(processed)\n\nfinal_df = pd.concat(result)",
-      "aiApproach": "Profiling is key to optimization. Use %timeit in Jupyter or the built-in timeit module to measure performance before and after changes. Focus on the bottlenecks, not premature optimization."
+      "aiApproach": "Profiling is key to optimization. Use %timeit in Jupyter or the built-in timeit module to measure performance before and after changes. Focus on the bottlenecks, not premature optimization.",
+      "category": "Pandas / Performance Optimization"
     },
     {
       "id": 2,
@@ -18,7 +19,8 @@
       "metaRelevant": false,
       "answer": "import pandas as pd\nimport numpy as np\nfrom statsmodels.tsa.seasonal import seasonal_decompose\nfrom sklearn.cluster import KMeans\n\ndf = pd.read_csv('timeseries.csv', parse_dates=['date'])\ndf.set_index('date', inplace=True)\ndecomposition = seasonal_decompose(df['value'], period=30)\n\ndef extract_features(window):\n    return {\n        'mean': window.mean(),\n        'std': window.std(),\n        'fft': np.abs(np.fft.fft(window))[:5]\n    }\n\nwindow_size = 24\nfeatures = []\nfor i in range(len(df) - window_size + 1):\n    window = df['value'].iloc[i:i+window_size]\n    features.append(extract_features(window))\n\nkmeans = KMeans(n_clusters=5)\npattern_labels = kmeans.fit_predict(features)",
       "pseudoCode": "import pandas as pd\nimport numpy as np\nfrom statsmodels.tsa.seasonal import seasonal_decompose\nfrom sklearn.cluster import KMeans\n\ndf = pd.read_csv('timeseries.csv', parse_dates=['date'])\ndf.set_index('date', inplace=True)\ndecomposition = seasonal_decompose(df['value'], period=30)\n\ndef extract_features(window):\n    return {\n        'mean': window.mean(),\n        'std': window.std(),\n        'fft': np.abs(np.fft.fft(window))[:5]\n    }\n\nwindow_size = 24\nfeatures = []\nfor i in range(len(df) - window_size + 1):\n    window = df['value'].iloc[i:i+window_size]\n    features.append(extract_features(window))\n\nkmeans = KMeans(n_clusters=5)\npattern_labels = kmeans.fit_predict(features)",
-      "aiApproach": "Dimensionality reduction techniques like PCA or t-SNE can be valuable preprocessing steps before clustering time series patterns, especially with high-dimensional feature spaces."
+      "aiApproach": "Dimensionality reduction techniques like PCA or t-SNE can be valuable preprocessing steps before clustering time series patterns, especially with high-dimensional feature spaces.",
+      "category": "Algorithms / Time Series"
     },
     {
       "id": 3,
@@ -27,7 +29,8 @@
       "timeEstimate": 15,
       "answer": "from collections import deque\n\nclass SlidingWindowAggregator:\n    def __init__(self, window_size):\n        self.window = deque(maxlen=window_size)\n        self.window_sum = 0\n        \n    def add(self, value):\n        if len(self.window) == self.window.maxlen:\n            self.window_sum -= self.window[0]\n        self.window.append(value)\n        self.window_sum += value\n        \n    def get_average(self):\n        if not self.window:\n            return None\n        return self.window_sum / len(self.window)\n        \n    def get_max(self):\n        if not self.window:\n            return None\n        return max(self.window)",
       "pseudoCode": "from collections import deque\n\nclass SlidingWindowAggregator:\n    def __init__(self, window_size):\n        self.window = deque(maxlen=window_size)\n        self.window_sum = 0\n        \n    def add(self, value):\n        if len(self.window) == self.window.maxlen:\n            self.window_sum -= self.window[0]\n        self.window.append(value)\n        self.window_sum += value\n        \n    def get_average(self):\n        if not self.window:\n            return None\n        return self.window_sum / len(self.window)\n        \n    def get_max(self):\n        if not self.window:\n            return None\n        return max(self.window)",
-      "aiApproach": "For streaming data, consider using algorithms like Count-Min Sketch for approximate frequency counting or HyperLogLog for cardinality estimation when exact answers aren't required but memory efficiency is critical."
+      "aiApproach": "For streaming data, consider using algorithms like Count-Min Sketch for approximate frequency counting or HyperLogLog for cardinality estimation when exact answers aren't required but memory efficiency is critical.",
+      "category": "Data Structures / Streaming"
     },
     {
       "id": 4,
@@ -36,7 +39,8 @@
       "timeEstimate": 18,
       "answer": "from multiprocessing import Pool\nimport numpy as np\n\ndef process_chunk(data):\n    return complex_transformation(data)\n\ndef parallel_process(data, num_processes=None):\n    chunks = np.array_split(data, num_processes)\n    with Pool(processes=num_processes) as pool:\n        results = pool.map(process_chunk, chunks)\n    return np.concatenate(results)",
       "pseudoCode": "from multiprocessing import Pool\nimport numpy as np\n\ndef process_chunk(data):\n    return complex_transformation(data)\n\ndef parallel_process(data, num_processes=None):\n    chunks = np.array_split(data, num_processes)\n    with Pool(processes=num_processes) as pool:\n        results = pool.map(process_chunk, chunks)\n    return np.concatenate(results)",
-      "aiApproach": "When designing parallel solutions, consider the overhead of process creation and data serialization. For small datasets or simple operations, the overhead might outweigh the benefits of parallelization."
+      "aiApproach": "When designing parallel solutions, consider the overhead of process creation and data serialization. For small datasets or simple operations, the overhead might outweigh the benefits of parallelization.",
+      "category": "Concurrency / Multiprocessing"
     },
     {
       "id": 5,
@@ -46,7 +50,8 @@
       "metaRelevant": false,
       "answer": "import pandas as pd\nimport numpy as np\nfrom sklearn.ensemble import IsolationForest\n\ndef detect_anomalies(df, contamination=0.05):\n    from sklearn.preprocessing import StandardScaler\n    scaler = StandardScaler()\n    scaled_data = scaler.fit_transform(df)\n    model = IsolationForest(contamination=contamination)\n    predictions = model.fit_predict(scaled_data)\n    scores = model.decision_function(scaled_data)\n    return predictions, scores",
       "pseudoCode": "import pandas as pd\nimport numpy as np\nfrom sklearn.ensemble import IsolationForest\n\ndef detect_anomalies(df, contamination=0.05):\n    from sklearn.preprocessing import StandardScaler\n    scaler = StandardScaler()\n    scaled_data = scaler.fit_transform(df)\n    model = IsolationForest(contamination=contamination)\n    predictions = model.fit_predict(scaled_data)\n    scores = model.decision_function(scaled_data)\n    return predictions, scores",
-      "aiApproach": "For real-world anomaly detection, ensemble multiple methods for higher accuracy. Consider the domain context when setting thresholds."
+      "aiApproach": "For real-world anomaly detection, ensemble multiple methods for higher accuracy. Consider the domain context when setting thresholds.",
+      "category": "Algorithms / Anomaly Detection"
     },
     {
       "id": 6,
@@ -55,7 +60,8 @@
       "timeEstimate": 6,
       "answer": "import json\nimport msgpack\n\n# JSON serialization\ndata = {'name': 'Alice', 'scores': [95, 87, 92]}\nwith open('data.json', 'w') as f:\n    json.dump(data, f)\n\nwith open('data.json', 'r') as f:\n    loaded = json.load(f)\n\n# MessagePack (faster binary format)\nwith open('data.msgpack', 'wb') as f:\n    packed = msgpack.packb(data)\n    f.write(packed)\n\nwith open('data.msgpack', 'rb') as f:\n    unpacked = msgpack.unpackb(f.read())",
       "pseudoCode": "import json\nimport msgpack\n\n# JSON serialization\ndata = {'name': 'Alice', 'scores': [95, 87, 92]}\nwith open('data.json', 'w') as f:\n    json.dump(data, f)\n\nwith open('data.json', 'r') as f:\n    loaded = json.load(f)\n\n# MessagePack (faster binary format)\nwith open('data.msgpack', 'wb') as f:\n    packed = msgpack.packb(data)\n    f.write(packed)\n\nwith open('data.msgpack', 'rb') as f:\n    unpacked = msgpack.unpackb(f.read())",
-      "aiApproach": "I choose serialization based on use case: JSON for interoperability and human readability, MessagePack for performance-critical binary serialization, Parquet for columnar analytics workloads."
+      "aiApproach": "I choose serialization based on use case: JSON for interoperability and human readability, MessagePack for performance-critical binary serialization, Parquet for columnar analytics workloads.",
+      "category": "Serialization / File I/O"
     },
     {
       "id": 7,
@@ -64,7 +70,8 @@
       "timeEstimate": 5,
       "answer": "# CPU-bound: Use multiprocessing\nfrom multiprocessing import Pool\n\ndef cpu_intensive_task(data):\n    return heavy_computation(data)\n\nwith Pool(processes=4) as pool:\n    results = pool.map(cpu_intensive_task, data)\n\n# I/O-bound: Threading works fine\nfrom threading import Thread\n\ndef io_task(url):\n    response = requests.get(url)\n    process_response(response)\n\nthreads = [Thread(target=io_task, args=(url,)) for url in urls]\nfor t in threads: t.start()\nfor t in threads: t.join()",
       "pseudoCode": "# CPU-bound: Use multiprocessing\nfrom multiprocessing import Pool\n\ndef cpu_intensive_task(data):\n    return heavy_computation(data)\n\nwith Pool(processes=4) as pool:\n    results = pool.map(cpu_intensive_task, data)\n\n# I/O-bound: Threading works fine\nfrom threading import Thread\n\ndef io_task(url):\n    response = requests.get(url)\n    process_response(response)\n\nthreads = [Thread(target=io_task, args=(url,)) for url in urls]\nfor t in threads: t.start()\nfor t in threads: t.join()",
-      "aiApproach": "Understanding GIL helps architect data processing systems correctly. For CPU-intensive transformations, use multiprocessing."
+      "aiApproach": "Understanding GIL helps architect data processing systems correctly. For CPU-intensive transformations, use multiprocessing.",
+      "category": "Concurrency / GIL"
     },
     {
       "id": 8,
@@ -74,7 +81,8 @@
       "metaRelevant": false,
       "answer": "from confluent_kafka import Consumer, Producer\nimport apache_beam as beam\n\nclass StreamProcessor:\n    def process_message(self, msg):\n        data = parse_message(msg)\n        result = quick_process(data)\n        save_to_speed_layer(result)\n\nclass BatchProcessor:\n    def process_window(self, data_window):\n        result = accurate_process(data_window)\n        save_to_batch_layer(result)\n\ndef combine_results(speed_layer, batch_layer):\n    return merge_strategies[data_type](speed_layer, batch_layer)",
       "pseudoCode": "from confluent_kafka import Consumer, Producer\nimport apache_beam as beam\n\nclass StreamProcessor:\n    def process_message(self, msg):\n        data = parse_message(msg)\n        result = quick_process(data)\n        save_to_speed_layer(result)\n\nclass BatchProcessor:\n    def process_window(self, data_window):\n        result = accurate_process(data_window)\n        save_to_batch_layer(result)\n\ndef combine_results(speed_layer, batch_layer):\n    return merge_strategies[data_type](speed_layer, batch_layer)",
-      "aiApproach": "I design hybrid streaming/batch architectures based on latency requirements and data volume."
+      "aiApproach": "I design hybrid streaming/batch architectures based on latency requirements and data volume.",
+      "category": "ETL / Stream Processing"
     },
     {
       "id": 9,
@@ -83,7 +91,8 @@
       "timeEstimate": 8,
       "answer": "import re\nfrom pathlib import Path\nimport mmap\n\ndef process_large_text(file_path):\n    with Path(file_path).open('r') as f:\n        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:\n            for line in iter(mm.readline, b''):\n                text = line.decode('utf-8')\n                yield text\n\ndef batch_process_documents(file_list, pattern):\n    compiled_pattern = re.compile(pattern)\n    for file_path in file_list:\n        for text in process_large_text(file_path):\n            matches = compiled_pattern.findall(text)\n            yield from matches",
       "pseudoCode": "import re\nfrom pathlib import Path\nimport mmap\n\ndef process_large_text(file_path):\n    with Path(file_path).open('r') as f:\n        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:\n            for line in iter(mm.readline, b''):\n                text = line.decode('utf-8')\n                yield text\n\ndef batch_process_documents(file_list, pattern):\n    compiled_pattern = re.compile(pattern)\n    for file_path in file_list:\n        for text in process_large_text(file_path):\n            matches = compiled_pattern.findall(text)\n            yield from matches",
-      "aiApproach": "For large text processing, I focus on memory efficiency and use specialized NLP libraries."
+      "aiApproach": "For large text processing, I focus on memory efficiency and use specialized NLP libraries.",
+      "category": "String Processing / File I/O"
     },
     {
       "id": 10,
@@ -92,7 +101,8 @@
       "timeEstimate": 7,
       "answer": "from functools import lru_cache\nimport time\n\n@lru_cache(maxsize=1000)\ndef expensive_computation(x):\n    return x ** 2\n\nclass TTLCache:\n    def __init__(self, ttl_seconds):\n        self.cache = {}\n        self.ttl = ttl_seconds\n    \n    def get(self, key):\n        if key in self.cache:\n            value, timestamp = self.cache[key]\n            if time.time() - timestamp < self.ttl:\n                return value\n            del self.cache[key]\n        return None\n    \n    def set(self, key, value):\n        self.cache[key] = (value, time.time())",
       "pseudoCode": "from functools import lru_cache\nimport time\n\n@lru_cache(maxsize=1000)\ndef expensive_computation(x):\n    return x ** 2\n\nclass TTLCache:\n    def __init__(self, ttl_seconds):\n        self.cache = {}\n        self.ttl = ttl_seconds\n    \n    def get(self, key):\n        if key in self.cache:\n            value, timestamp = self.cache[key]\n            if time.time() - timestamp < self.ttl:\n                return value\n            del self.cache[key]\n        return None\n    \n    def set(self, key, value):\n        self.cache[key] = (value, time.time())",
-      "aiApproach": "I implement caching strategies based on data size, access patterns, and consistency requirements."
+      "aiApproach": "I implement caching strategies based on data size, access patterns, and consistency requirements.",
+      "category": "Data Structures / Caching"
     },
     {
       "id": 11,
@@ -101,7 +111,8 @@
       "timeEstimate": 7,
       "answer": "class DatabaseRecordIterator:\n    def __init__(self, connection, query, batch_size=1000):\n        self.connection = connection\n        self.query = query\n        self.batch_size = batch_size\n        self.cursor = None\n        self.current_batch = []\n        self.batch_index = 0\n    \n    def __iter__(self):\n        self.cursor = self.connection.cursor()\n        self.cursor.execute(self.query)\n        return self\n    \n    def __next__(self):\n        if self.batch_index >= len(self.current_batch):\n            self.current_batch = self.cursor.fetchmany(self.batch_size)\n            self.batch_index = 0\n            if not self.current_batch:\n                self.cursor.close()\n                raise StopIteration\n        record = self.current_batch[self.batch_index]\n        self.batch_index += 1\n        return record",
       "pseudoCode": "class DatabaseRecordIterator:\n    def __init__(self, connection, query, batch_size=1000):\n        self.connection = connection\n        self.query = query\n        self.batch_size = batch_size\n        self.cursor = None\n        self.current_batch = []\n        self.batch_index = 0\n    \n    def __iter__(self):\n        self.cursor = self.connection.cursor()\n        self.cursor.execute(self.query)\n        return self\n    \n    def __next__(self):\n        if self.batch_index >= len(self.current_batch):\n            self.current_batch = self.cursor.fetchmany(self.batch_size)\n            self.batch_index = 0\n            if not self.current_batch:\n                self.cursor.close()\n                raise StopIteration\n        record = self.current_batch[self.batch_index]\n        self.batch_index += 1\n        return record",
-      "aiApproach": "I create custom iterators for complex data sources that don't fit standard patterns."
+      "aiApproach": "I create custom iterators for complex data sources that don't fit standard patterns.",
+      "category": "Generators / Iterators"
     },
     {
       "id": 12,
@@ -110,7 +121,8 @@
       "timeEstimate": 8,
       "answer": "import asyncio\nimport aiohttp\n\nasync def fetch_api_data(session, url):\n    async with session.get(url) as response:\n        return await response.json()\n\nasync def collect_data_from_apis(urls):\n    async with aiohttp.ClientSession() as session:\n        tasks = [fetch_api_data(session, url) for url in urls]\n        return await asyncio.gather(*tasks)",
       "pseudoCode": "import asyncio\nimport aiohttp\n\nasync def fetch_api_data(session, url):\n    async with session.get(url) as response:\n        return await response.json()\n\nasync def collect_data_from_apis(urls):\n    async with aiohttp.ClientSession() as session:\n        tasks = [fetch_api_data(session, url) for url in urls]\n        return await asyncio.gather(*tasks)",
-      "aiApproach": "I use async programming for I/O-intensive data collection and storage operations."
+      "aiApproach": "I use async programming for I/O-intensive data collection and storage operations.",
+      "category": "Concurrency / Async"
     },
     {
       "id": 13,
@@ -119,7 +131,8 @@
       "timeEstimate": 6,
       "answer": "Generators: Memory-efficient, process one item at a time, lazy evaluation. Use for large datasets that don't fit in memory.\nLists: Store all items in memory, faster random access. Use when you need to access items multiple times or need indexing.",
       "pseudoCode": "# Generator - memory efficient\ndef process_large_file(filename):\n    with open(filename, 'r') as f:\n        for line in f:\n            yield process_line(line)\n\n# List - loads everything\ndef load_all_data(filename):\n    with open(filename, 'r') as f:\n        return [process_line(line) for line in f]",
-      "aiApproach": "I architect data pipelines using generators for memory-constrained environments."
+      "aiApproach": "I architect data pipelines using generators for memory-constrained environments.",
+      "category": "Generators / Iterators"
     },
     {
       "id": 14,
@@ -129,7 +142,8 @@
       "metaRelevant": false,
       "answer": "Key strategies:\n1. Use generators/iterators instead of loading all data\n2. Process data in chunks (pandas.read_csv with chunksize)\n3. Use efficient data types (numpy arrays vs Python lists)\n4. Delete unused objects with 'del' and gc.collect()\n5. Use memory profiling tools to identify bottlenecks",
       "pseudoCode": "import pandas as pd\nimport gc\n\ndef process_large_csv(filename):\n    chunk_size = 10000\n    for chunk in pd.read_csv(filename, chunksize=chunk_size):\n        processed = chunk.groupby('category').sum()\n        yield processed\n        del chunk\n        gc.collect()",
-      "aiApproach": "I design memory-efficient data pipelines by profiling first, then optimizing based on data."
+      "aiApproach": "I design memory-efficient data pipelines by profiling first, then optimizing based on data.",
+      "category": "Memory Optimization"
     },
     {
       "id": 15,
@@ -138,7 +152,8 @@
       "timeEstimate": 6,
       "answer": "Multiprocessing: True parallelism, separate memory spaces, good for CPU-bound tasks like data transformation.\nMultithreading: Concurrent execution (not parallel due to GIL), shared memory, good for I/O-bound tasks like file/database operations.",
       "pseudoCode": "from multiprocessing import Pool\nfrom concurrent.futures import ThreadPoolExecutor\n\n# Multiprocessing for CPU-intensive tasks\nwith Pool(processes=4) as pool:\n    results = pool.map(transform_data_chunk, data_chunks)\n\n# Threading for I/O-bound operations\nwith ThreadPoolExecutor(max_workers=10) as executor:\n    api_results = list(executor.map(fetch_api_data, api_urls))",
-      "aiApproach": "I choose multiprocessing for data transformations and threading for I/O operations."
+      "aiApproach": "I choose multiprocessing for data transformations and threading for I/O operations.",
+      "category": "Concurrency / Multiprocessing"
     },
     {
       "id": 16,
@@ -147,7 +162,8 @@
       "timeEstimate": 7,
       "answer": "import time\nimport logging\nfrom functools import wraps\n\ndef retry_with_backoff(max_retries=3, backoff_factor=2):\n    def decorator(func):\n        @wraps(func)\n        def wrapper(*args, **kwargs):\n            for attempt in range(max_retries):\n                try:\n                    return func(*args, **kwargs)\n                except (ConnectionError, TimeoutError) as e:\n                    if attempt == max_retries - 1:\n                        raise\n                    wait_time = backoff_factor ** attempt\n                    time.sleep(wait_time)\n        return wrapper\n    return decorator",
       "pseudoCode": "import time\nimport logging\nfrom functools import wraps\n\ndef retry_with_backoff(max_retries=3, backoff_factor=2):\n    def decorator(func):\n        @wraps(func)\n        def wrapper(*args, **kwargs):\n            for attempt in range(max_retries):\n                try:\n                    return func(*args, **kwargs)\n                except (ConnectionError, TimeoutError) as e:\n                    if attempt == max_retries - 1:\n                        raise\n                    wait_time = backoff_factor ** attempt\n                    time.sleep(wait_time)\n        return wrapper\n    return decorator",
-      "aiApproach": "I design fault-tolerant pipelines with comprehensive error handling and monitoring."
+      "aiApproach": "I design fault-tolerant pipelines with comprehensive error handling and monitoring.",
+      "category": "Error Handling / Decorators"
     },
     {
       "id": 17,
@@ -156,7 +172,8 @@
       "timeEstimate": 5,
       "answer": "from contextlib import contextmanager\nimport sqlite3\n\n@contextmanager\ndef database_connection(db_path):\n    conn = sqlite3.connect(db_path)\n    try:\n        yield conn\n    finally:\n        conn.close()\n\nwith database_connection('data.db') as conn:\n    cursor = conn.cursor()\n    cursor.execute('SELECT * FROM table')",
       "pseudoCode": "from contextlib import contextmanager\nimport sqlite3\n\n@contextmanager\ndef database_connection(db_path):\n    conn = sqlite3.connect(db_path)\n    try:\n        yield conn\n    finally:\n        conn.close()\n\nwith database_connection('data.db') as conn:\n    cursor = conn.cursor()\n    cursor.execute('SELECT * FROM table')",
-      "aiApproach": "I use context managers to ensure resource cleanup in data pipelines."
+      "aiApproach": "I use context managers to ensure resource cleanup in data pipelines.",
+      "category": "Context Managers"
     },
     {
       "id": 18,
@@ -165,7 +182,8 @@
       "timeEstimate": 12,
       "answer": "def flatten(obj, parent_key='', sep='.'):\n    \"\"\"\n    Flatten a nested dict/list into a flat dict with dot-notation keys.\n    Example:\n        {'a': {'b': 1, 'c': [2, 3]}} -> {'a.b': 1, 'a.c.0': 2, 'a.c.1': 3}\n    \"\"\"\n    items = {}\n    if isinstance(obj, dict):\n        for k, v in obj.items():\n            new_key = f\"{parent_key}{sep}{k}\" if parent_key else str(k)\n            items.update(flatten(v, new_key, sep=sep))\n    elif isinstance(obj, list):\n        for i, v in enumerate(obj):\n            new_key = f\"{parent_key}{sep}{i}\" if parent_key else str(i)\n            items.update(flatten(v, new_key, sep=sep))\n    else:\n        items[parent_key] = obj\n    return items\n\nnested = {\n    'user': {\n        'id': 42,\n        'tags': ['data', 'eng'],\n        'address': {'city': 'Seattle', 'zip': '98101'}\n    }\n}\nprint(flatten(nested))\n# {'user.id': 42, 'user.tags.0': 'data', 'user.tags.1': 'eng',\n#  'user.address.city': 'Seattle', 'user.address.zip': '98101'}",
       "pseudoCode": "def flatten(obj, parent_key='', sep='.'):\n    \"\"\"\n    Flatten a nested dict/list into a flat dict with dot-notation keys.\n    Example:\n        {'a': {'b': 1, 'c': [2, 3]}} -> {'a.b': 1, 'a.c.0': 2, 'a.c.1': 3}\n    \"\"\"\n    items = {}\n    if isinstance(obj, dict):\n        for k, v in obj.items():\n            new_key = f\"{parent_key}{sep}{k}\" if parent_key else str(k)\n            items.update(flatten(v, new_key, sep=sep))\n    elif isinstance(obj, list):\n        for i, v in enumerate(obj):\n            new_key = f\"{parent_key}{sep}{i}\" if parent_key else str(i)\n            items.update(flatten(v, new_key, sep=sep))\n    else:\n        items[parent_key] = obj\n    return items\n\nnested = {\n    'user': {\n        'id': 42,\n        'tags': ['data', 'eng'],\n        'address': {'city': 'Seattle', 'zip': '98101'}\n    }\n}\nprint(flatten(nested))\n# {'user.id': 42, 'user.tags.0': 'data', 'user.tags.1': 'eng',\n#  'user.address.city': 'Seattle', 'user.address.zip': '98101'}",
-      "aiApproach": "The recursive approach is clean but risks hitting Python's recursion limit on deeply nested data. For production code, convert to an iterative approach using a stack or deque. Also discuss key collision handling: if an existing key would be overwritten by a nested value, raise an error or choose a disambiguation strategy."
+      "aiApproach": "The recursive approach is clean but risks hitting Python's recursion limit on deeply nested data. For production code, convert to an iterative approach using a stack or deque. Also discuss key collision handling: if an existing key would be overwritten by a nested value, raise an error or choose a disambiguation strategy.",
+      "category": "Nested Traversal / Recursion"
     },
     {
       "id": 19,
@@ -175,7 +193,8 @@
       "metaRelevant": false,
       "answer": "import pandas as pd\n\ndf = pd.DataFrame({\n    'date': pd.date_range('2024-01-01', periods=30, freq='D'),\n    'dau': [1000 + i * 10 for i in range(30)]\n})\ndf = df.sort_values('date').reset_index(drop=True)\ndf['dau_7d_avg'] = df['dau'].rolling(window=7, min_periods=1).mean()\ndf = df.set_index('date')\ndf['dau_7d_avg_time'] = df['dau'].rolling('7D').mean()\nprint(df[['dau', 'dau_7d_avg_time']].head(10))",
       "pseudoCode": "import pandas as pd\n\ndf = pd.DataFrame({\n    'date': pd.date_range('2024-01-01', periods=30, freq='D'),\n    'dau': [1000 + i * 10 for i in range(30)]\n})\ndf = df.sort_values('date').reset_index(drop=True)\ndf['dau_7d_avg'] = df['dau'].rolling(window=7, min_periods=1).mean()\ndf = df.set_index('date')\ndf['dau_7d_avg_time'] = df['dau'].rolling('7D').mean()\nprint(df[['dau', 'dau_7d_avg_time']].head(10))",
-      "aiApproach": "The distinction between integer-based rolling(7) and time-based rolling('7D') matters when your date series has gaps. The time-based window correctly includes only the last 7 calendar days of data, while the integer window always looks back exactly 7 rows regardless of the dates involved."
+      "aiApproach": "The distinction between integer-based rolling(7) and time-based rolling('7D') matters when your date series has gaps. The time-based window correctly includes only the last 7 calendar days of data, while the integer window always looks back exactly 7 rows regardless of the dates involved.",
+      "category": "Pandas / Rolling Window"
     },
     {
       "id": 20,
@@ -185,7 +204,8 @@
       "metaRelevant": false,
       "answer": "import pandas as pd\n\ndf = pd.DataFrame({\n    'user_id': [1, 2, 3, 4, 5, 6],\n    'region':  ['APAC', 'APAC', 'APAC', 'EMEA', 'EMEA', 'EMEA'],\n    'revenue': [500, 300, 500, 700, 200, 700]\n})\n\ndf['revenue_rank'] = (\n    df.groupby('region')['revenue']\n    .rank(method='dense', ascending=False)\n    .astype(int)\n)\ndf = df.sort_values(['region', 'revenue_rank'])\nprint(df)",
       "pseudoCode": "import pandas as pd\n\ndf = pd.DataFrame({\n    'user_id': [1, 2, 3, 4, 5, 6],\n    'region':  ['APAC', 'APAC', 'APAC', 'EMEA', 'EMEA', 'EMEA'],\n    'revenue': [500, 300, 500, 700, 200, 700]\n})\n\ndf['revenue_rank'] = (\n    df.groupby('region')['revenue']\n    .rank(method='dense', ascending=False)\n    .astype(int)\n)\ndf = df.sort_values(['region', 'revenue_rank'])\nprint(df)",
-      "aiApproach": "pandas rank() supports four methods mirroring SQL: 'min' = RANK(), 'dense' = DENSE_RANK(), 'first' = ROW_NUMBER() (by order of appearance), and 'average' for statistical ranking. Using transform ensures the rank values are aligned back to the original index."
+      "aiApproach": "pandas rank() supports four methods mirroring SQL: 'min' = RANK(), 'dense' = DENSE_RANK(), 'first' = ROW_NUMBER() (by order of appearance), and 'average' for statistical ranking. Using transform ensures the rank values are aligned back to the original index.",
+      "category": "Pandas / Ranking"
     },
     {
       "id": 21,
@@ -195,7 +215,8 @@
       "metaRelevant": false,
       "answer": "import pandas as pd\n\ndf = pd.DataFrame({\n    'user_id':    [1, 1, 1, 2, 2],\n    'event_type': ['click', 'click', 'view', 'click', 'click'],\n    'event_ts':   pd.to_datetime([\n        '2024-01-03', '2024-01-01', '2024-01-02',\n        '2024-01-05', '2024-01-04'\n    ])\n})\n\nresult = (\n    df.sort_values('event_ts', ascending=False)\n    .drop_duplicates(subset=['user_id', 'event_type'], keep='first')\n    .sort_values(['user_id', 'event_type'])\n    .reset_index(drop=True)\n)\nprint(result)",
       "pseudoCode": "import pandas as pd\n\ndf = pd.DataFrame({\n    'user_id':    [1, 1, 1, 2, 2],\n    'event_type': ['click', 'click', 'view', 'click', 'click'],\n    'event_ts':   pd.to_datetime([\n        '2024-01-03', '2024-01-01', '2024-01-02',\n        '2024-01-05', '2024-01-04'\n    ])\n})\n\nresult = (\n    df.sort_values('event_ts', ascending=False)\n    .drop_duplicates(subset=['user_id', 'event_type'], keep='first')\n    .sort_values(['user_id', 'event_type'])\n    .reset_index(drop=True)\n)\nprint(result)",
-      "aiApproach": "This pattern is equivalent to a SQL ROW_NUMBER() window query with PARTITION BY user_id, event_type ORDER BY event_ts DESC WHERE rn = 1."
+      "aiApproach": "This pattern is equivalent to a SQL ROW_NUMBER() window query with PARTITION BY user_id, event_type ORDER BY event_ts DESC WHERE rn = 1.",
+      "category": "Pandas / Deduplication"
     },
     {
       "id": 22,
@@ -205,7 +226,8 @@
       "metaRelevant": false,
       "answer": "import pandas as pd\n\ndef top_users_by_daily_minutes(filepath, chunksize=500_000, top_n=10):\n    partial_results = []\n    for chunk in pd.read_csv(\n        filepath,\n        usecols=['user_id', 'date', 'active_minutes'],\n        dtype={'user_id': 'int32', 'active_minutes': 'float32'},\n        parse_dates=['date'],\n        chunksize=chunksize\n    ):\n        agg = (\n            chunk.groupby(['user_id', 'date'], observed=True)['active_minutes']\n            .sum().reset_index()\n        )\n        partial_results.append(agg)\n    combined = pd.concat(partial_results, ignore_index=True)\n    final = (\n        combined.groupby(['user_id', 'date'], observed=True)['active_minutes']\n        .sum().reset_index()\n    )\n    top10 = (\n        final.groupby('user_id')['active_minutes']\n        .sum().nlargest(top_n).reset_index()\n    )\n    return top10",
       "pseudoCode": "import pandas as pd\n\ndef top_users_by_daily_minutes(filepath, chunksize=500_000, top_n=10):\n    partial_results = []\n    for chunk in pd.read_csv(\n        filepath,\n        usecols=['user_id', 'date', 'active_minutes'],\n        dtype={'user_id': 'int32', 'active_minutes': 'float32'},\n        parse_dates=['date'],\n        chunksize=chunksize\n    ):\n        agg = (\n            chunk.groupby(['user_id', 'date'], observed=True)['active_minutes']\n            .sum().reset_index()\n        )\n        partial_results.append(agg)\n    combined = pd.concat(partial_results, ignore_index=True)\n    final = (\n        combined.groupby(['user_id', 'date'], observed=True)['active_minutes']\n        .sum().reset_index()\n    )\n    top10 = (\n        final.groupby('user_id')['active_minutes']\n        .sum().nlargest(top_n).reset_index()\n    )\n    return top10",
-      "aiApproach": "Three memory levers: (1) usecols to avoid loading irrelevant columns, (2) dtype downcasting (int32/float32 halve memory vs int64/float64), (3) partial aggregation before concat so the list of DataFrames stays small."
+      "aiApproach": "Three memory levers: (1) usecols to avoid loading irrelevant columns, (2) dtype downcasting (int32/float32 halve memory vs int64/float64), (3) partial aggregation before concat so the list of DataFrames stays small.",
+      "category": "Pandas / Chunked Processing"
     },
     {
       "id": 23,
@@ -215,7 +237,8 @@
       "metaRelevant": false,
       "answer": "import pandas as pd\nimport numpy as np\nfrom typing import Dict, Any\n\ndef data_quality_report(df: pd.DataFrame, expected_schema: Dict[str, str] = None) -> Dict[str, Any]:\n    report = {}\n    null_counts = df.isnull().sum()\n    report['null_counts'] = null_counts[null_counts > 0].to_dict()\n    numeric_cols = df.select_dtypes(include=[np.number]).columns\n    outlier_counts = {}\n    for col in numeric_cols:\n        col_data = df[col].dropna()\n        if col_data.std() > 0:\n            z_scores = (col_data - col_data.mean()) / col_data.std()\n            outlier_counts[col] = int((z_scores.abs() > 3).sum())\n    report['outlier_counts'] = outlier_counts\n    report['duplicate_rows'] = int(df.duplicated().sum())\n    schema_issues = {}\n    if expected_schema:\n        for col, expected_dtype in expected_schema.items():\n            if col not in df.columns:\n                schema_issues[col] = {'issue': 'missing_column'}\n            elif str(df[col].dtype) != expected_dtype:\n                schema_issues[col] = {'expected': expected_dtype, 'actual': str(df[col].dtype)}\n    report['schema_mismatches'] = schema_issues\n    return report",
       "pseudoCode": "import pandas as pd\nimport numpy as np\nfrom typing import Dict, Any\n\ndef data_quality_report(df: pd.DataFrame, expected_schema: Dict[str, str] = None) -> Dict[str, Any]:\n    report = {}\n    null_counts = df.isnull().sum()\n    report['null_counts'] = null_counts[null_counts > 0].to_dict()\n    numeric_cols = df.select_dtypes(include=[np.number]).columns\n    outlier_counts = {}\n    for col in numeric_cols:\n        col_data = df[col].dropna()\n        if col_data.std() > 0:\n            z_scores = (col_data - col_data.mean()) / col_data.std()\n            outlier_counts[col] = int((z_scores.abs() > 3).sum())\n    report['outlier_counts'] = outlier_counts\n    report['duplicate_rows'] = int(df.duplicated().sum())\n    schema_issues = {}\n    if expected_schema:\n        for col, expected_dtype in expected_schema.items():\n            if col not in df.columns:\n                schema_issues[col] = {'issue': 'missing_column'}\n            elif str(df[col].dtype) != expected_dtype:\n                schema_issues[col] = {'expected': expected_dtype, 'actual': str(df[col].dtype)}\n    report['schema_mismatches'] = schema_issues\n    return report",
-      "aiApproach": "This pattern is used in Meta's data validation pipelines before metrics are published. In production, extend it with row count checks, referential integrity checks, and freshness checks."
+      "aiApproach": "This pattern is used in Meta's data validation pipelines before metrics are published. In production, extend it with row count checks, referential integrity checks, and freshness checks.",
+      "category": "Data Quality / Validation"
     },
     {
       "id": 500,

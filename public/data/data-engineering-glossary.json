@@ -55,7 +55,7 @@
       },
       "Data Lake": {
         "definition": "A storage repository that holds vast amounts of raw data in its native format",
-        "example": "Azure Data Lake storing unstructured logs, images, videos, and structured data files"
+        "example": "Meta's data lake on HDFS storing petabytes of unstructured logs, images, videos, and structured event data from billions of daily user interactions"
       },
       "Apache Kafka": {
         "definition": "A distributed streaming platform for building real-time data pipelines and streaming applications",

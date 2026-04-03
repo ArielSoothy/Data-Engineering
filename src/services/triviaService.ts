@@ -230,7 +230,6 @@ WRONG ANSWER 2: [answer]`;
     throw new Error('Could not parse AI response');
     
   } catch (error) {
-    console.log('Claude API not available, using fallback answer generation');
     // Signal that we should use fallback
     throw error;
   }
@@ -245,15 +244,13 @@ export const generateTriviaAnswers = async (
   try {
     const enhancedAnswers = await generateEnhancedAnswers(question);
     if (enhancedAnswers) {
-      console.log('✨ Generated enhanced trivia answers using Claude API');
       return enhancedAnswers;
     }
-  } catch (error) {
-    console.log('Claude API unavailable, using fallback method');
+  } catch {
+    // Fall through to fallback method
   }
-  
+
   // Fall back to our smart logic-based generation
-  console.log('📚 Generated trivia answers using fallback logic');
   return generateFallbackAnswers(question, allQuestions);
 };
 

@@ -82,8 +82,8 @@ export default function QuickQuiz({ questions, allQuestions }: Props) {
       setSelected(null);
       setShowResult(false);
       setStarted(true);
-    } catch (e) {
-      console.error('Quiz generation failed:', e);
+    } catch {
+      // quiz generation failed — non-critical
     } finally {
       setIsLoading(false);
     }

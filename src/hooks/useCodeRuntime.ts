@@ -66,7 +66,7 @@ export function useCodeRuntime(): CodeRuntime {
         }
         setReady(true);
       } catch (e) {
-        console.error(`${subject} runtime init failed:`, e);
+        if (import.meta.env.DEV) console.error(`${subject} runtime init failed:`, e);
         setError(`Failed to load ${subject} runtime`);
       } finally {
         setLoading(false);

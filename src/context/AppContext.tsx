@@ -81,6 +81,16 @@ const AppContext = createContext<AppContextType>({
 
 // Provider component
 export const AppProvider = ({ children }: { children: ReactNode }) => {
+  // One-time migration from old MS-branded localStorage keys
+  if (localStorage.getItem('deInterviewProgress') && !localStorage.getItem('deInterviewProgress')) {
+    localStorage.setItem('deInterviewProgress', localStorage.getItem('deInterviewProgress')!);
+    localStorage.removeItem('deInterviewProgress');
+  }
+  if (localStorage.getItem('deInterviewPreferences') && !localStorage.getItem('deInterviewPreferences')) {
+    localStorage.setItem('deInterviewPreferences', localStorage.getItem('deInterviewPreferences')!);
+    localStorage.removeItem('deInterviewPreferences');
+  }
+
   // Initialize state from localStorage if available
   const [progress, setProgress] = useState<CategoryProgress>(() => {
     const defaults: CategoryProgress = {
@@ -91,14 +101,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       decompositionScenarios: [],
       metaOfficial: []
     };
-    const savedProgress = localStorage.getItem('msInterviewProgress');
+    const savedProgress = localStorage.getItem('deInterviewProgress');
     return savedProgress ? { ...defaults, ...JSON.parse(savedProgress) } : defaults;
   });
   
   const [currentSession, setCurrentSession] = useState<TimerSession | null>(null);
   
   const [preferences, setPreferences] = useState<UserPreferences>(() => {
-    const savedPrefs = localStorage.getItem('msInterviewPreferences');
+    const savedPrefs = localStorage.getItem('deInterviewPreferences');
     return savedPrefs ? JSON.parse(savedPrefs) : {
       darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
       timerSound: true,
@@ -127,7 +137,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       const next = { ...prev, [category]: categoryQuestions };
       // Write synchronously so data survives immediate refresh
-      try { localStorage.setItem('msInterviewProgress', JSON.stringify(next)); } catch { /* full */ }
+      try { localStorage.setItem('deInterviewProgress', JSON.stringify(next)); } catch { /* full */ }
       return next;
     });
   }, []);
@@ -187,9 +197,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     pullProgress().then(merged => {
       if (merged) {
         // Reload state from localStorage (which pullProgress just merged)
-        const saved = localStorage.getItem('msInterviewProgress');
+        const saved = localStorage.getItem('deInterviewProgress');
         if (saved) setProgress(prev => ({ ...prev, ...JSON.parse(saved) }));
-        const savedPrefs = localStorage.getItem('msInterviewPreferences');
+        const savedPrefs = localStorage.getItem('deInterviewPreferences');
         if (savedPrefs) setPreferences(prev => ({ ...prev, ...JSON.parse(savedPrefs) }));
         // Push the merged result back so cloud has the union too
         pushProgress();
@@ -209,12 +219,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // Save progress and preferences to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('msInterviewProgress', JSON.stringify(progress));
+    localStorage.setItem('deInterviewProgress', JSON.stringify(progress));
     pushProgressDebounced();
   }, [progress]);
 
   useEffect(() => {
-    localStorage.setItem('msInterviewPreferences', JSON.stringify(preferences));
+    localStorage.setItem('deInterviewPreferences', JSON.stringify(preferences));
     pushProgressDebounced();
 
     // Apply dark mode to document
