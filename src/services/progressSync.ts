@@ -1,7 +1,6 @@
 import { createClient } from '../lib/supabase/client';
-import { DEFAULT_SYNC_CODE } from '../config';
+import { USER_CODE_KEY } from '../config';
 
-const DEVICE_ID_KEY = 'de_prep_device_id';
 const SYNC_KEYS = [
   'deInterviewProgress',
   'deInterviewPreferences',
@@ -9,13 +8,12 @@ const SYNC_KEYS = [
   'quick_drill_fsrs',
 ];
 
-function getDeviceId(): string {
-  let id = localStorage.getItem(DEVICE_ID_KEY);
-  if (!id) {
-    id = DEFAULT_SYNC_CODE;
-    localStorage.setItem(DEVICE_ID_KEY, id);
-  }
-  return id;
+export function getUserCode(): string | null {
+  return localStorage.getItem(USER_CODE_KEY);
+}
+
+export function setUserCode(code: string): void {
+  localStorage.setItem(USER_CODE_KEY, code.trim().toLowerCase());
 }
 
 function gatherLocalData(): Record<string, unknown> {
@@ -129,8 +127,9 @@ function mergeAndApply(cloud: Record<string, unknown>) {
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 export async function pushProgress(): Promise<void> {
+  const deviceId = getUserCode();
+  if (!deviceId) return;
   const supabase = createClient();
-  const deviceId = getDeviceId();
   const data = gatherLocalData();
   const now = new Date().toISOString();
 
@@ -152,7 +151,8 @@ export function flushSync(): void {
   if (debounceTimer) {
     clearTimeout(debounceTimer);
     debounceTimer = null;
-    const deviceId = getDeviceId();
+    const deviceId = getUserCode();
+    if (!deviceId) return;
     const data = gatherLocalData();
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -177,8 +177,9 @@ export function flushSync(): void {
 // --- Pull (auto on every load — merges cloud + local, never loses data) ---
 
 export async function pullProgress(): Promise<boolean> {
+  const deviceId = getUserCode();
+  if (!deviceId) return false;
   const supabase = createClient();
-  const deviceId = getDeviceId();
 
   const { data: row, error } = await supabase
     .from('user_progress')

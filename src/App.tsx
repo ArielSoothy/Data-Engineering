@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import TabNavigation from './components/TabNavigation';
+import UserGate from './components/UserGate';
 import { Spinner } from './components/ui';
+import { getUserCode } from './services/progressSync';
 
 // Eagerly loaded (always visible)
 import Dashboard from './components/tabs/Dashboard';
@@ -41,6 +43,12 @@ const PageLoader = () => (
 );
 
 function App() {
+  const [hasUser, setHasUser] = useState(() => !!getUserCode());
+
+  if (!hasUser) {
+    return <UserGate onReady={() => setHasUser(true)} />;
+  }
+
   return (
     <AppProvider>
       <DarkModeInitializer />

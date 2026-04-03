@@ -7,7 +7,7 @@ export const AI_MODELS = {
   groq: 'llama-3.3-70b-versatile',
 } as const;
 
-export const DEFAULT_SYNC_CODE = 'my-code-123';
+export const USER_CODE_KEY = 'de_prep_device_id';
 
 export const CATEGORY_TOTALS: Record<string, number> = {
   sqlBasics: 37,

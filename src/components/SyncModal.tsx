@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RefreshCw, Copy, Check, X, Cloud, CloudOff } from 'lucide-react';
 import { Button } from './ui';
-import { pullProgress, pushProgress } from '../services/progressSync';
+import { pullProgress, pushProgress, getUserCode, setUserCode } from '../services/progressSync';
 
 interface SyncModalProps {
   open: boolean;
@@ -10,7 +10,7 @@ interface SyncModalProps {
 }
 
 export const SyncModal = ({ open, onClose, onSynced }: SyncModalProps) => {
-  const existing = localStorage.getItem('de_prep_device_id');
+  const existing = getUserCode();
   const [code, setCode] = useState(existing ?? '');
   const [status, setStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
@@ -21,7 +21,7 @@ export const SyncModal = ({ open, onClose, onSynced }: SyncModalProps) => {
     const trimmed = code.trim().toLowerCase();
     if (trimmed.length < 3) return;
     setStatus('syncing');
-    localStorage.setItem('de_prep_device_id', trimmed);
+    setUserCode(trimmed);
     try {
       const restored = await pullProgress();
       if (!restored) {
