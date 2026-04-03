@@ -1,19 +1,20 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Layers, Zap, PenLine, ChevronDown, Check } from 'lucide-react';
+import { Layers, Zap, PenLine, ChevronDown, Check, RefreshCw } from 'lucide-react';
 import { Spinner, Badge, Button, ProgressBar } from '../ui';
 import { useUnifiedQuestions } from '../../hooks/useUnifiedQuestions';
 import { useAppContext } from '../../context/AppContext';
 import { getTopicsForSubject } from '../../data/topics';
 import QuickFlashcard from './QuickFlashcard';
 import QuickWrite from './QuickWrite';
+import QuickSpaced from './QuickSpaced';
 import type { Subject, Difficulty } from '../../types/studyHub';
 
 // Only show flashcard-appropriate sources — advanced coding questions belong in Deep Mode
 const QUICK_SOURCES = new Set(['quickDrill', 'sqlBasics', 'pythonBasics', 'metaOfficial']);
 const MAX_ANSWER_LENGTH = 400; // Hide questions with very long answers
 
-type QuickModeType = 'flashcard' | 'write';
+type QuickModeType = 'flashcard' | 'write' | 'spaced';
 type SubjectFilter = 'all' | Subject;
 type DifficultyFilter = 'all' | Difficulty;
 
@@ -177,6 +178,7 @@ export default function QuickMode() {
   const modeTabs: { value: QuickModeType; label: string; icon: React.ReactNode }[] = [
     { value: 'flashcard', label: 'Flashcard', icon: <Layers size={16} /> },
     { value: 'write', label: 'Write', icon: <PenLine size={16} /> },
+    { value: 'spaced', label: 'Spaced', icon: <RefreshCw size={16} /> },
   ];
 
   return (
@@ -369,6 +371,8 @@ export default function QuickMode() {
         </div>
       ) : mode === 'flashcard' ? (
         <QuickFlashcard questions={filtered} />
+      ) : mode === 'spaced' ? (
+        <QuickSpaced questions={filtered} />
       ) : (
         <QuickWrite subject={subject} difficulty={difficulty} />
       )}
