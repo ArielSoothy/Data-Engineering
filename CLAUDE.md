@@ -89,4 +89,4 @@ Set in `.env` (local) and Vercel dashboard (production):
 
 - **Interview date:** `src/config.ts` — `INTERVIEW_DATE = new Date('2026-03-31')`
 - **Category totals:** `src/context/AppContext.tsx` — `categoryTotals` object (used for progress %)
-- **Supabase project:** `agwjyldyfmytsueskvql` (Prep, ap-southeast-2)
+- **Supabase project:** none. The `agwjyldyfmytsueskvql` (Prep) cloud project was deleted 2026-09-17; the app runs on its localStorage fallback (`src/lib/supabase/client.ts` no-op stub).
